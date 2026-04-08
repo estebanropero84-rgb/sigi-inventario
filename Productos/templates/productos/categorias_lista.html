@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="fas fa-tags"></i> Categorías</h1>
+    <p>Gestión de categorías de productos</p>
+</div>
+
+<div class="table-container">
+    <div class="section-header">
+        <h2><i class="fas fa-list"></i> Lista de Categorías</h2>
+        <a href="{% url 'productos:crear_categoria' %}" class="btn-primary">
+            <i class="fas fa-plus"></i> Nueva Categoría
+        </a>
+    </div>
+
+    <div class="filters">
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="Buscar categoría...">
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Descripción</th>
+                <th>Productos</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="tablaBody">
+            {% for categoria in categorias %}
+            <tr class="categoria-row" data-nombre="{{ categoria.nombre|lower }}">
+                <td>{{ categoria.id }}</td>
+                <td>{{ categoria.nombre }}</td>
+                <td>{{ categoria.descripcion|default:"-" }}</td>
+                <td>{{ categoria.productos.count }}</td>
+                <td class="acciones">
+                    <a href="{% url 'productos:editar_categoria' categoria.id %}" class="btn-warning">
+                        <i class="fas fa-edit"></i> Editar
+                    </a>
+                    <a href="{% url 'productos:eliminar_categoria' categoria.id %}" class="btn-danger">
+                        <i class="fas fa-trash"></i> Eliminar
+                    </a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" style="text-align: center;">No hay categorías registradas</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+    document.getElementById('searchInput').addEventListener('keyup', function() {
+        let filter = this.value.toLowerCase();
+        let rows = document.querySelectorAll('.categoria-row');
+        rows.forEach(row => {
+            let nombre = row.getAttribute('data-nombre');
+            row.style.display = nombre.includes(filter) ? '' : 'none';
+        });
+    });
+</script>
+{% endblock %}

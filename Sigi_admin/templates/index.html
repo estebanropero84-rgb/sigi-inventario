@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Index -SIGI - Sistema de Inventario</title>
+    <!-- Font Awesome para iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* RESET CSS */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f4f7fc;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* ===== SIDEBAR (MENÚ LATERAL) ===== */
+        .sidebar {
+            width: 280px;
+            background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+            color: white;
+            padding: 2rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 4px 0 10px rgba(0,0,0,0.1);
+        }
+
+        /* Logo del sistema */
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 3rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #334155;
+        }
+
+        .logo i {
+            font-size: 2rem;
+            color: #3b82f6;
+        }
+
+        .logo span {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        /* Menú de navegación */
+        .nav-menu {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            color: #cbd5e1;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .nav-item i {
+            width: 24px;
+            font-size: 1.2rem;
+        }
+
+        .nav-item:hover {
+            background: #334155;
+            color: white;
+            transform: translateX(5px);
+        }
+
+        /* Item activo (página actual) */
+        .nav-item.active {
+            background: #3b82f6;
+            color: white;
+            box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
+        }
+
+        /* ===== CONTENIDO PRINCIPAL ===== */
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 2rem;
+        }
+
+        /* Encabezado de bienvenida */
+        .welcome-header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 2rem;
+            border-radius: 20px;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .welcome-header h1 {
+            font-size: 2.2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .welcome-header p {
+            font-size: 1.1rem;
+            opacity: 0.95;
+        }
+
+        /* ===== TARJETAS DE ACCESO RÁPIDO ===== */
+        .quick-access {
+            margin-bottom: 2rem;
+        }
+
+        .quick-access h2 {
+            font-size: 1.5rem;
+            color: #1e293b;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .quick-access h2 i {
+            color: #3b82f6;
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .access-card {
+            background: white;
+            padding: 2rem 1.5rem;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            text-align: center;
+            text-decoration: none;
+            color: #1e293b;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .access-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+            border-color: #3b82f6;
+        }
+
+        .access-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            font-size: 2.5rem;
+        }
+
+        .icon-blue { background: #e8f0fe; color: #3b82f6; }
+        .icon-green { background: #e6f7e6; color: #22c55e; }
+        .icon-orange { background: #fff3e6; color: #f97316; }
+        .icon-purple { background: #f3e8ff; color: #a855f7; }
+        .icon-red { background: #fee9e9; color: #ef4444; }
+
+        .access-card h3 {
+            font-size: 1.3rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .access-card p {
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+
+        /* ===== TARJETAS DE ESTADÍSTICAS RÁPIDAS ===== */
+        .stats-section {
+            margin-bottom: 2rem;
+        }
+
+        .stats-section h2 {
+            font-size: 1.5rem;
+            color: #1e293b;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+        }
+
+        .stat-icon.blue { background: #e8f0fe; color: #3b82f6; }
+        .stat-icon.green { background: #e6f7e6; color: #22c55e; }
+        .stat-icon.orange { background: #fff3e6; color: #f97316; }
+        .stat-icon.purple { background: #f3e8ff; color: #a855f7; }
+
+        .stat-info h3 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .stat-info p {
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+
+        /* ===== ACCESOS DIRECTOS ADICIONALES ===== */
+        .quick-links {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .quick-link {
+            background: white;
+            padding: 1.2rem;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            text-decoration: none;
+            color: #1e293b;
+            transition: all 0.3s ease;
+            border: 1px solid #e2e8f0;
+        }
+
+        .quick-link:hover {
+            background: #f8fafc;
+            transform: translateX(5px);
+            border-color: #3b82f6;
+        }
+
+        .quick-link i {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .quick-link span {
+            flex: 1;
+            font-weight: 500;
+        }
+
+        .quick-link .arrow {
+            color: #94a3b8;
+            transition: all 0.3s ease;
+        }
+
+        .quick-link:hover .arrow {
+            color: #3b82f6;
+            transform: translateX(5px);
+        }
+
+        /* ===== FOOTER ===== */
+        .footer {
+            margin-top: 3rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #e2e8f0;
+            text-align: center;
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+
+        .footer i {
+            color: #ef4444;
+        }
+    </style>
+</head>
+<body>
+    <!-- SIDEBAR - MENÚ DE NAVEGACIÓN -->
+    <div class="sidebar">
+        <!-- Logo del sistema -->
+        <div class="logo">
+            <i class="fas fa-cubes"></i>
+            <span>SIGI</span>
+        </div>
+        
+        <!-- Menú principal -->
+        <nav class="nav-menu">
+            <a href="index.html" class="nav-item active">
+                <i class="fas fa-home"></i>
+                <span>Inicio</span>
+            </a>
+            <a href="dashboard.html" class="nav-item">
+                <i class="fas fa-chart-pie"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="compras.html" class="nav-item">
+                <i class="fas fa-shopping-cart"></i>
+                <span>Compras</span>
+            </a>
+            <a href="movimientos.html" class="nav-item">
+                <i class="fas fa-exchange-alt"></i>
+                <span>Movimientos</span>
+            </a>
+            <a href="usuarios.html" class="nav-item">
+                <i class="fas fa-users"></i>
+                <span>Usuarios</span>
+            </a>
+            <a href="productos.html" class="nav-item">
+                <i class="fas fa-boxes"></i>
+                <span>Productos</span>
+            </a>
+        </nav>
+        
+        <!-- Versión del sistema -->
+        <div style="color: #64748b; font-size: 0.8rem; text-align: center; margin-top: 2rem;">
+            <i class="fas fa-code-branch"></i> v1.0.0
+        </div>
+    </div>
+
+    <!-- CONTENIDO PRINCIPAL DEL INDEX -->
+    <div class="main-content">
+        <!-- ENCABEZADO DE BIENVENIDA -->
+        <div class="welcome-header">
+            <h1>
+                <i class="fas fa-hand-wave"></i>
+                ¡Bienvenido al Sistema de Inventario!
+            </h1>
+            <p>Gestiona tus compras, productos y movimientos de inventario de manera eficiente.</p>
+        </div>
+
+        <!-- ACCESO RÁPIDO A MÓDULOS PRINCIPALES -->
+        <div class="quick-access">
+            <h2>
+                <i class="fas fa-rocket"></i>
+                Acceso Rápido
+            </h2>
+            <div class="cards-grid">
+                <!-- Tarjeta: Dashboard -->
+                <a href="dashboard.html" class="access-card">
+                    <div class="access-icon icon-blue">
+                        <i class="fas fa-chart-pie"></i>
+                    </div>
+                    <h3>Dashboard</h3>
+                    <p>Visualiza estadísticas y resúmenes</p>
+                </a>
+
+                <!-- Tarjeta: Compras -->
+                <a href="compras.html" class="access-card">
+                    <div class="access-icon icon-green">
+                        <i class="fas fa-shopping-cart"></i>
+                    </div>
+                    <h3>Compras</h3>
+                    <p>Gestiona tus órdenes de compra</p>
+                </a>
+
+                <!-- Tarjeta: Productos -->
+                <a href="productos.html" class="access-card">
+                    <div class="access-icon icon-orange">
+                        <i class="fas fa-boxes"></i>
+                    </div>
+                    <h3>Productos</h3>
+                    <p>Administra tu catálogo</p>
+                </a>
+
+                <!-- Tarjeta: Movimientos -->
+                <a href="movimientos.html" class="access-card">
+                    <div class="access-icon icon-purple">
+                        <i class="fas fa-exchange-alt"></i>
+                    </div>
+                    <h3>Movimientos</h3>
+                    <p>Control de entradas y salidas</p>
+                </a>
+
+                <!-- Tarjeta: Usuarios -->
+                <a href="usuarios.html" class="access-card">
+                    <div class="access-icon icon-red">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h3>Usuarios</h3>
+                    <p>Gestiona accesos al sistema</p>
+                </a>
+            </div>
+        </div>
+
+        <!-- ESTADÍSTICAS RÁPIDAS -->
+        <div class="stats-section">
+            <h2>
+                <i class="fas fa-chart-line"></i>
+                Resumen General
+            </h2>
+            <div class="stats-grid">
+                <!-- Total Productos -->
+                <div class="stat-card">
+                    <div class="stat-icon blue">
+                        <i class="fas fa-boxes"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>1,234</h3>
+                        <p>Total Productos</p>
+                    </div>
+                </div>
+
+                <!-- Compras del mes -->
+                <div class="stat-card">
+                    <div class="stat-icon green">
+                        <i class="fas fa-shopping-cart"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>45</h3>
+                        <p>Compras del mes</p>
+                    </div>
+                </div>
+
+                <!-- Movimientos hoy -->
+                <div class="stat-card">
+                    <div class="stat-icon orange">
+                        <i class="fas fa-exchange-alt"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>89</h3>
+                        <p>Movimientos hoy</p>
+                    </div>
+                </div>
+
+                <!-- Usuarios activos -->
+                <div class="stat-card">
+                    <div class="stat-icon purple">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>2</h3>
+                        <p>Usuarios activos</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ACCESOS DIRECTOS ADICIONALES -->
+        <h2 style="color: #1e293b; margin-bottom: 1rem; font-size: 1.3rem;">
+            <i class="fas fa-link"></i>
+            Accesos Directos
+        </h2>
+        <div class="quick-links">
+            <!-- Ver todas las compras -->
+            <a href="compras.html" class="quick-link">
+                <i class="fas fa-shopping-cart icon-blue"></i>
+                <span>Ver todas las compras</span>
+                <i class="fas fa-chevron-right arrow"></i>
+            </a>
+
+            <!-- Productos con stock bajo -->
+            <a href="productos.html?filter=lowstock" class="quick-link">
+                <i class="fas fa-exclamation-triangle icon-orange"></i>
+                <span>Productos con stock bajo</span>
+                <i class="fas fa-chevron-right arrow"></i>
+            </a>
+
+            <!-- Últimos movimientos -->
+            <a href="movimientos.html" class="quick-link">
+                <i class="fas fa-history icon-purple"></i>
+                <span>Últimos movimientos</span>
+                <i class="fas fa-chevron-right arrow"></i>
+            </a>
+
+            <!-- Crear nueva compra -->
+            <a href="compras.html?action=new" class="quick-link">
+                <i class="fas fa-plus-circle icon-green"></i>
+                <span>Registrar nueva compra</span>
+                <i class="fas fa-chevron-right arrow"></i>
+            </a>
+
+            <!-- Gestionar usuarios -->
+            <a href="usuarios.html" class="quick-link">
+                <i class="fas fa-user-cog icon-red"></i>
+                <span>Gestionar usuarios</span>
+                <i class="fas fa-chevron-right arrow"></i>
+            </a>
+
+            <!-- Ver reportes (si los tienes) -->
+            <a href="dashboard.html" class="quick-link">
+                <i class="fas fa-file-alt icon-blue"></i>
+                <span>Ver reportes</span>
+                <i class="fas fa-chevron-right arrow"></i>
+            </a>
+        </div>
+
+        <!-- FOOTER -->
+        <div class="footer">
+            <p>
+                <i class="fas fa-copyright"></i> 2026 Sistema de Inventario - Todos los derechos reservados
+                <br>
+                <span style="font-size: 0.8rem;">Desarrollado para gestión de inventario y compras</span>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

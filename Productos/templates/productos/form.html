@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIGI - {% if producto %}Editar{% else %}Nuevo{% endif %} Producto</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #f4f7fc; display: flex; height: 100vh; overflow: hidden; }
+        .sidebar { width: 280px; background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); color: white; padding: 2rem 1.5rem; display: flex; flex-direction: column; }
+        .logo { display: flex; align-items: center; gap: 12px; margin-bottom: 3rem; padding-bottom: 1rem; border-bottom: 1px solid #334155; }
+        .logo i { font-size: 2rem; color: #3b82f6; }
+        .logo span { font-size: 1.5rem; font-weight: 700; }
+        .nav-menu { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+        .nav-item { display: flex; align-items: center; gap: 15px; padding: 12px 16px; border-radius: 12px; color: #cbd5e1; text-decoration: none; transition: all 0.3s; }
+        .nav-item:hover { background: #334155; color: white; transform: translateX(5px); }
+        .nav-item.active { background: #3b82f6; color: white; box-shadow: 0 4px 10px rgba(59,130,246,0.3); }
+        .main-content { flex: 1; overflow-y: auto; padding: 2rem; }
+        .page-header { margin-bottom: 2rem; }
+        .page-header h1 { font-size: 2rem; color: #1e293b; display: flex; align-items: center; gap: 10px; }
+        .page-header h1 i { color: #3b82f6; }
+        .form-card { background: white; border-radius: 16px; padding: 2rem; box-shadow: 0 4px 6px rgba(0,0,0,0.05); max-width: 800px; margin: 0 auto; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+        .form-group { margin-bottom: 1.5rem; }
+        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; color: #1e293b; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 10px; font-family: inherit; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: #3b82f6; }
+        .btn-primary { background: #3b82f6; color: white; border: none; padding: 12px 24px; border-radius: 10px; cursor: pointer; font-size: 1rem; }
+        .btn-primary:hover { background: #2563eb; }
+        .btn-secondary { background: #64748b; color: white; border: none; padding: 12px 24px; border-radius: 10px; cursor: pointer; text-decoration: none; display: inline-block; }
+        .btn-secondary:hover { background: #475569; }
+        .buttons { display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem; }
+        .btn-logout { background: #ef4444; color: white; padding: 8px 16px; border-radius: 8px; text-decoration: none; margin-left: 15px; }
+        .user-info { display: flex; align-items: center; justify-content: flex-end; margin-bottom: 20px; gap: 10px; }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="logo"><i class="fas fa-cubes"></i><span>SIGI</span></div>
+        <nav class="nav-menu">
+            <a href="{% url 'inventarios:dashboard' %}" class="nav-item"><i class="fas fa-chart-pie"></i><span>Dashboard</span></a>
+            <a href="{% url 'compras:listar' %}" class="nav-item"><i class="fas fa-shopping-cart"></i><span>Compras</span></a>
+            <a href="{% url 'movimientos:listar' %}" class="nav-item"><i class="fas fa-exchange-alt"></i><span>Movimientos</span></a>
+            {% if user.rol == 'admin' %}
+            <a href="{% url 'usuarios:listar' %}" class="nav-item"><i class="fas fa-users"></i><span>Usuarios</span></a>
+            {% endif %}
+            <a href="{% url 'productos:listar' %}" class="nav-item active"><i class="fas fa-boxes"></i><span>Productos</span></a>
+        </nav>
+    </div>
+
+    <div class="main-content">
+        <div class="user-info">
+            <i class="fas fa-user-circle"></i>
+            <span>{{ user.get_full_name|default:user.username }}</span>
+            <a href="{% url 'logout' %}" class="btn-logout"><i class="fas fa-sign-out-alt"></i> Salir</a>
+        </div>
+
+        <div class="page-header">
+            <h1><i class="fas fa-{% if producto %}edit{% else %}plus{% endif %}"></i> {% if producto %}Editar{% else %}Nuevo{% endif %} Producto</h1>
+            <p>{% if producto %}Modificar los datos del producto{% else %}Registrar un nuevo producto en el inventario{% endif %}</p>
+        </div>
+
+        <div class="form-card">
+            <form method="post">
+                {% csrf_token %}
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Código</label>
+                        <input type="text" name="codigo" value="{{ producto.codigo|default:'' }}" required placeholder="Ej: ELE-001">
+                    </div>
+                    <div class="form-group">
+                        <label>Nombre</label>
+                        <input type="text" name="nombre" value="{{ producto.nombre|default:'' }}" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Marca</label>
+                        <input type="text" name="marca" value="{{ producto.marca|default:'' }}" placeholder="Ej: LG, Samsung, Sony">
+                    </div>
+                    <div class="form-group">
+                        <label>Modelo</label>
+                        <input type="text" name="modelo" value="{{ producto.modelo|default:'' }}">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Categoría</label>
+                        <select name="categoria">
+                            <option value="">Seleccionar categoría...</option>
+                            {% for categoria in categorias %}
+                            <option value="{{ categoria.id }}" {% if producto.categoria.id == categoria.id %}selected{% endif %}>{{ categoria.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Ubicación</label>
+                        <input type="text" name="ubicacion" value="{{ producto.ubicacion|default:'' }}" placeholder="Ej: Estante A1, Bodega 2">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Stock Actual</label>
+                        <input type="number" name="stock_actual" value="{{ producto.stock_actual|default:0 }}" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Stock Mínimo</label>
+                        <input type="number" name="stock_minimo" value="{{ producto.stock_minimo|default:5 }}" min="0">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Precio Compra</label>
+                        <input type="number" name="precio_compra" value="{{ producto.precio_compra|default:'' }}" step="0.01" placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label>Precio Venta</label>
+                        <input type="number" name="precio_venta" value="{{ producto.precio_venta|default:'' }}" step="0.01" required placeholder="0.00">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Garantía (meses)</label>
+                        <input type="number" name="garantia_meses" value="{{ producto.garantia_meses|default:12 }}" min="0">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Descripción</label>
+                    <textarea name="descripcion" rows="3">{{ producto.descripcion|default:'' }}</textarea>
+                </div>
+
+                <div class="buttons">
+                    <a href="{% url 'productos:listar' %}" class="btn-secondary">Cancelar</a>
+                    <button type="submit" class="btn-primary">{% if producto %}Actualizar{% else %}Guardar{% endif %} Producto</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="fas fa-exchange-alt"></i> Nuevo Movimiento</h1>
+    <p>Registrar entrada o salida de inventario</p>
+</div>
+
+<div class="form-card">
+    <div id="infoStock" class="info-stock">
+        📊 Seleccione un producto para ver el stock actual
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <label>Producto *</label>
+            <select name="producto" id="producto" class="form-control" required>
+                <option value="">Seleccionar producto...</option>
+                {% for producto in productos %}
+                <option value="{{ producto.id }}" data-stock="{{ producto.stock_actual }}" data-nombre="{{ producto.nombre }}">
+                    {{ producto.nombre }} (Stock: {{ producto.stock_actual }})
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Tipo de Movimiento *</label>
+            <div class="radio-group">
+                <label><input type="radio" name="tipo" value="entrada" required> 📥 Entrada (Aumenta stock)</label>
+                <label><input type="radio" name="tipo" value="salida" required> 📤 Salida (Disminuye stock)</label>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Cantidad *</label>
+            <input type="number" name="cantidad" id="cantidad" min="1" class="form-control" required>
+        </div>
+
+        <div class="form-group">
+            <label>Motivo</label>
+            <select name="motivo" class="form-control">
+                <option value="">Seleccionar motivo...</option>
+                <option value="ajuste">Ajuste de inventario</option>
+                <option value="devolucion">Devolución</option>
+                <option value="merma">Merma / Daño</option>
+                <option value="traslado">Traslado entre almacenes</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Observación</label>
+            <textarea name="observacion" rows="3" class="form-control"></textarea>
+        </div>
+
+        <div class="buttons">
+            <a href="{% url 'movimientos:listar' %}" class="btn-secondary">Cancelar</a>
+            <button type="submit" class="btn-primary">Registrar Movimiento</button>
+        </div>
+    </form>
+</div>
+
+<style>
+    .form-card {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        color: #1e293b;
+    }
+    .form-control {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        font-family: inherit;
+    }
+    .radio-group {
+        display: flex;
+        gap: 2rem;
+        margin-top: 0.5rem;
+    }
+    .radio-group label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: normal;
+    }
+    .info-stock {
+        background: #f1f5f9;
+        padding: 1rem;
+        border-radius: 10px;
+        margin-bottom: 1.5rem;
+        font-size: 0.9rem;
+    }
+    .buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: flex-end;
+        margin-top: 2rem;
+    }
+    .btn-primary {
+        background: #3b82f6;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+    .btn-secondary {
+        background: #64748b;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 8px;
+        text-decoration: none;
+    }
+</style>
+
+<script>
+    const selectProducto = document.getElementById('producto');
+    const infoStock = document.getElementById('infoStock');
+    const cantidadInput = document.getElementById('cantidad');
+    const tipoSalida = document.querySelector('input[value="salida"]');
+
+    selectProducto.addEventListener('change', function() {
+        const selected = this.options[this.selectedIndex];
+        const stock = selected.getAttribute('data-stock');
+        const nombre = selected.getAttribute('data-nombre');
+        if (stock) {
+            infoStock.innerHTML = `📊 <strong>${nombre}</strong><br>Stock actual: ${stock} unidades<br>⚠️ Si registra una SALIDA, la cantidad no puede superar el stock disponible.`;
+        } else {
+            infoStock.innerHTML = '📊 Seleccione un producto para ver el stock actual';
+        }
+    });
+
+    function validarStock() {
+        const tipo = document.querySelector('input[name="tipo"]:checked');
+        const cantidad = parseInt(cantidadInput.value);
+        const selected = selectProducto.options[selectProducto.selectedIndex];
+        const stock = parseInt(selected.getAttribute('data-stock'));
+        
+        if (tipo && tipo.value === 'salida' && cantidad > stock) {
+            alert(`⚠️ No hay suficiente stock. Stock actual: ${stock}`);
+            cantidadInput.value = stock;
+            return false;
+        }
+        return true;
+    }
+
+    cantidadInput.addEventListener('change', validarStock);
+    document.querySelectorAll('input[name="tipo"]').forEach(radio => {
+        radio.addEventListener('change', validarStock);
+    });
+</script>
+{% endblock %}

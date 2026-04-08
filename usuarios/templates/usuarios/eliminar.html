@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="fas fa-user-minus"></i> Eliminar Usuario</h1>
+    <p>Confirmar eliminación de usuario</p>
+</div>
+
+<div class="form-card" style="text-align: center; max-width: 500px;">
+    <div style="font-size: 4rem; color: #ef4444; margin-bottom: 20px;">
+        <i class="fas fa-exclamation-triangle"></i>
+    </div>
+    
+    <h3>¿Estás seguro de eliminar este usuario?</h3>
+    <p><strong>{{ usuario.username }}</strong></p>
+    <p style="color: #64748b; margin-top: 1rem;">Esta acción no se puede deshacer.</p>
+    
+    <form method="post">
+        {% csrf_token %}
+        <div class="buttons" style="justify-content: center;">
+            <a href="{% url 'usuarios:listar' %}" class="btn-secondary">Cancelar</a>
+            <button type="submit" class="btn-danger">Sí, Eliminar</button>
+        </div>
+    </form>
+</div>
+
+<style>
+    .form-card {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        margin: 0 auto;
+    }
+    .buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: flex-end;
+        margin-top: 2rem;
+    }
+    .btn-danger {
+        background: #ef4444;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+    }
+    .btn-secondary {
+        background: #64748b;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 8px;
+        text-decoration: none;
+    }
+</style>
+{% endblock %}

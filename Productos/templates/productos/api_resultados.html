@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="fas fa-cloud-download-alt"></i> API - Electrodomésticos</h1>
+    <p>Productos obtenidos de API externa de electrodomésticos</p>
+</div>
+
+<div class="table-container">
+    <div class="section-header">
+        <h2><i class="fas fa-list"></i> Resultados de la API</h2>
+        <a href="{% url 'productos:listar' %}" class="btn-primary">
+            <i class="fas fa-arrow-left"></i> Volver a Productos
+        </a>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div style="overflow-x: auto;">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Producto</th>
+                    <th>Precio</th>
+                    <th>Marca / Categoría</th>
+                    <th>Stock</th>
+                    <th>Imagen</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for producto in productos_api %}
+                <tr>
+                    <td>{{ producto.id }}</td>
+                    <td>
+                        <strong>{{ producto.title|truncatechars:40 }}</strong><br>
+                        <small style="color: #64748b;">{{ producto.description|truncatechars:60|default:"Sin descripción" }}</small>
+                    </td>
+                    <td style="font-weight: bold; color: #22c55e;">${{ producto.price }}</td>
+                    <td>
+                        {% if producto.brand %}
+                            <span class="badge-stock-normal">{{ producto.brand }}</span>
+                        {% else %}
+                            <span class="badge-stock-normal">{{ producto.category|default:"Electrodoméstico" }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if producto.stock %}
+                            {% if producto.stock > 0 %}
+                                <span class="badge-stock-normal">📦 {{ producto.stock }} unidades</span>
+                            {% else %}
+                                <span class="badge-stock-bajo">❌ Agotado</span>
+                            {% endif %}
+                        {% else %}
+                            <span class="badge-stock-normal">Disponible</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if producto.thumbnail %}
+                            <img src="{{ producto.thumbnail }}" width="50" height="50" style="object-fit: cover; border-radius: 8px;">
+                        {% elif producto.image %}
+                            <img src="{{ producto.image }}" width="50" height="50" style="object-fit: cover; border-radius: 8px;">
+                        {% elif producto.images %}
+                            <img src="{{ producto.images.0 }}" width="50" height="50" style="object-fit: cover; border-radius: 8px;">
+                        {% else %}
+                            <i class="fas fa-tv" style="font-size: 30px; color: #cbd5e1;"></i>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <button class="btn-primary" style="padding: 5px 10px; font-size: 0.75rem;" onclick="alert('Producto: {{ producto.title }}\nPrecio: ${{ producto.price }}')">
+                            <i class="fas fa-info-circle"></i> Ver
+                        </button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" style="text-align: center; padding: 3rem;">
+                        <i class="fas fa-box-open" style="font-size: 3rem; color: #cbd5e1;"></i>
+                        <p style="margin-top: 1rem;">No se obtuvieron productos de la API</p>
+                        <small>Verifica tu conexión a internet o intenta más tarde</small>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if productos_api %}
+    <div style="margin-top: 1.5rem; padding: 1rem; background: #f1f5f9; border-radius: 10px; text-align: center;">
+        <small>
+            <i class="fas fa-info-circle"></i> 
+            Mostrando {{ productos_api|length }} productos de electrodomésticos obtenidos de la API externa.
+        </small>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    .badge-stock-normal {
+        background: #e6f7e6;
+        color: #22c55e;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        display: inline-block;
+    }
+    .badge-stock-bajo {
+        background: #fee2e2;
+        color: #ef4444;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        display: inline-block;
+    }
+</style>
+{% endblock %}

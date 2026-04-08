@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="fas fa-trash-alt"></i> Eliminar Categoría</h1>
+    <p>Confirmar eliminación de la categoría</p>
+</div>
+
+<div class="form-card" style="text-align: center; max-width: 500px;">
+    <div class="warning-icon">
+        <i class="fas fa-exclamation-triangle" style="font-size: 4rem; color: #ef4444;"></i>
+    </div>
+    
+    <h3>¿Estás seguro de eliminar la categoría?</h3>
+    <p><strong>"{{ categoria.nombre }}"</strong></p>
+    
+    {% if categoria.productos.count > 0 %}
+        <div class="alert alert-danger">
+            <i class="fas fa-warning"></i> No se puede eliminar porque tiene {{ categoria.productos.count }} producto(s) asociados.
+        </div>
+        <a href="{% url 'productos:categorias' %}" class="btn-primary">Volver</a>
+    {% else %}
+        <form method="post">
+            {% csrf_token %}
+            <div class="buttons" style="justify-content: center;">
+                <a href="{% url 'productos:categorias' %}" class="btn-secondary">Cancelar</a>
+                <button type="submit" class="btn-danger">Sí, Eliminar</button>
+            </div>
+        </form>
+    {% endif %}
+</div>
+{% endblock %}  

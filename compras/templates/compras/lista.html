@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIGI - Compras</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #f4f7fc; display: flex; height: 100vh; overflow: hidden; }
+        .sidebar { width: 280px; background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); color: white; padding: 2rem 1.5rem; display: flex; flex-direction: column; }
+        .logo { display: flex; align-items: center; gap: 12px; margin-bottom: 3rem; padding-bottom: 1rem; border-bottom: 1px solid #334155; }
+        .logo i { font-size: 2rem; color: #3b82f6; }
+        .logo span { font-size: 1.5rem; font-weight: 700; }
+        .nav-menu { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+        .nav-item { display: flex; align-items: center; gap: 15px; padding: 12px 16px; border-radius: 12px; color: #cbd5e1; text-decoration: none; transition: all 0.3s; }
+        .nav-item:hover { background: #334155; color: white; transform: translateX(5px); }
+        .nav-item.active { background: #3b82f6; color: white; box-shadow: 0 4px 10px rgba(59,130,246,0.3); }
+        .main-content { flex: 1; overflow-y: auto; padding: 2rem; }
+        .page-header { margin-bottom: 2rem; }
+        .page-header h1 { font-size: 2rem; color: #1e293b; display: flex; align-items: center; gap: 10px; }
+        .page-header h1 i { color: #3b82f6; }
+        .page-header p { color: #64748b; margin-top: 0.5rem; }
+        .btn-primary { background: #3b82f6; color: white; border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; font-size: 0.9rem; }
+        .btn-primary:hover { background: #2563eb; transform: translateY(-2px); }
+        .btn-warning { background: #f97316; color: white; border: none; padding: 5px 12px; border-radius: 6px; cursor: pointer; text-decoration: none; font-size: 0.75rem; display: inline-block; }
+        .btn-warning:hover { background: #ea580c; }
+        .btn-danger { background: #ef4444; color: white; border: none; padding: 5px 12px; border-radius: 6px; cursor: pointer; text-decoration: none; font-size: 0.75rem; display: inline-block; }
+        .btn-danger:hover { background: #dc2626; }
+        .btn-success { background: #22c55e; color: white; border: none; padding: 5px 12px; border-radius: 6px; cursor: pointer; text-decoration: none; font-size: 0.75rem; display: inline-block; }
+        .btn-success:hover { background: #16a34a; }
+        .table-container { background: white; border-radius: 16px; padding: 1.5rem; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; }
+        .section-header h2 { font-size: 1.3rem; color: #1e293b; display: flex; align-items: center; gap: 8px; }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 1rem 0.5rem; color: #64748b; font-weight: 600; font-size: 0.9rem; border-bottom: 2px solid #e2e8f0; }
+        td { padding: 1rem 0.5rem; border-bottom: 1px solid #e2e8f0; color: #1e293b; }
+        .btn-logout { background: #ef4444; color: white; padding: 8px 16px; border-radius: 8px; text-decoration: none; margin-left: 15px; }
+        .btn-logout:hover { background: #dc2626; }
+        .user-info { display: flex; align-items: center; justify-content: flex-end; margin-bottom: 20px; gap: 10px; }
+        .badge { padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; }
+        .badge-pendiente { background: #fff3e6; color: #f97316; }
+        .badge-recibido { background: #e6f7e6; color: #22c55e; }
+        .badge-cancelado { background: #fee2e2; color: #ef4444; }
+        .filters { display: flex; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; }
+        .filters input, .filters select { padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-family: inherit; }
+        .search-box { flex: 1; max-width: 300px; }
+        .search-box input { width: 100%; }
+        .acciones { display: flex; gap: 8px; flex-wrap: wrap; }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="logo"><i class="fas fa-cubes"></i><span>SIGI</span></div>
+        <nav class="nav-menu">
+            <a href="{% url 'inventarios:dashboard' %}" class="nav-item"><i class="fas fa-chart-pie"></i><span>Dashboard</span></a>
+            <a href="{% url 'compras:listar' %}" class="nav-item active"><i class="fas fa-shopping-cart"></i><span>Compras</span></a>
+            <a href="{% url 'movimientos:listar' %}" class="nav-item"><i class="fas fa-exchange-alt"></i><span>Movimientos</span></a>
+            {% if user.rol == 'admin' %}
+            <a href="{% url 'usuarios:listar' %}" class="nav-item"><i class="fas fa-users"></i><span>Usuarios</span></a>
+            {% endif %}
+            <a href="{% url 'productos:listar' %}" class="nav-item"><i class="fas fa-boxes"></i><span>Productos</span></a>
+        </nav>
+    </div>
+
+    <div class="main-content">
+        <div class="user-info">
+            <i class="fas fa-user-circle"></i>
+            <span>{{ user.get_full_name|default:user.username }}</span>
+            <a href="{% url 'logout' %}" class="btn-logout"><i class="fas fa-sign-out-alt"></i> Salir</a>
+        </div>
+
+        <div class="page-header">
+            <h1><i class="fas fa-shopping-cart"></i> Compras</h1>
+            <p>Gestión de órdenes de compra</p>
+        </div>
+
+        <div class="table-container">
+            <div class="section-header">
+                <h2><i class="fas fa-list"></i> Órdenes de Compra</h2>
+                <a href="{% url 'compras:crear' %}" class="btn-primary"><i class="fas fa-plus"></i> Nueva Compra</a>
+            </div>
+
+            <div class="filters">
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="Buscar proveedor...">
+                </div>
+                <select id="estadoFilter">
+                    <option value="">Todos los estados</option>
+                    <option value="pendiente">Pendiente</option>
+                    <option value="recibido">Recibido</option>
+                    <option value="cancelado">Cancelado</option>
+                </select>
+            </div>
+
+            <table>
+                <thead>
+                    <tr><th>ID</th><th>Fecha</th><th>Proveedor</th><th>Total</th><th>Estado</th><th>Acciones</th></tr>
+                </thead>
+                <tbody id="tablaBody">
+                    {% for compra in compras %}
+                    <tr class="compra-row" data-proveedor="{{ compra.proveedor|lower }}" data-estado="{{ compra.estado }}">
+                        <td>{{ compra.id }}</td>
+                        <td>{{ compra.fecha|date:"d/m/Y" }}</td>
+                        <td>{{ compra.proveedor }}</td>
+                        <td>${{ compra.total|floatformat:2 }}</td>
+                        <td>{% if compra.estado == 'pendiente' %}<span class="badge badge-pendiente">Pendiente</span>{% elif compra.estado == 'recibido' %}<span class="badge badge-recibido">Recibido</span>{% else %}<span class="badge badge-cancelado">Cancelado</span>{% endif %}</td>
+                        <td class="acciones">
+                            <a href="{% url 'compras:ver' compra.id %}" class="btn-warning"><i class="fas fa-eye"></i> Ver</a>
+                            {% if compra.estado == 'pendiente' %}
+                            <a href="{% url 'compras:recibir' compra.id %}" class="btn-success"><i class="fas fa-check"></i> Recibir</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="6" style="text-align: center;">No hay compras registradas</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('searchInput').addEventListener('keyup', function() {
+            let filter = this.value.toLowerCase();
+            let rows = document.querySelectorAll('.compra-row');
+            rows.forEach(row => {
+                let proveedor = row.getAttribute('data-proveedor');
+                row.style.display = proveedor.includes(filter) ? '' : 'none';
+            });
+        });
+
+        document.getElementById('estadoFilter').addEventListener('change', function() {
+            let filter = this.value;
+            let rows = document.querySelectorAll('.compra-row');
+            rows.forEach(row => {
+                let estado = row.getAttribute('data-estado');
+                if (!filter || estado === filter) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

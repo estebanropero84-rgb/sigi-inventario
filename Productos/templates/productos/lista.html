@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIGI - Productos</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #f4f7fc; display: flex; height: 100vh; overflow: hidden; }
+        .sidebar { width: 280px; background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); color: white; padding: 2rem 1.5rem; display: flex; flex-direction: column; }
+        .logo { display: flex; align-items: center; gap: 12px; margin-bottom: 3rem; padding-bottom: 1rem; border-bottom: 1px solid #334155; }
+        .logo i { font-size: 2rem; color: #3b82f6; }
+        .logo span { font-size: 1.5rem; font-weight: 700; }
+        .nav-menu { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+        .nav-item { display: flex; align-items: center; gap: 15px; padding: 12px 16px; border-radius: 12px; color: #cbd5e1; text-decoration: none; transition: all 0.3s; }
+        .nav-item:hover { background: #334155; color: white; transform: translateX(5px); }
+        .nav-item.active { background: #3b82f6; color: white; box-shadow: 0 4px 10px rgba(59,130,246,0.3); }
+        .main-content { flex: 1; overflow-y: auto; padding: 2rem; }
+        .page-header { margin-bottom: 2rem; }
+        .page-header h1 { font-size: 2rem; color: #1e293b; display: flex; align-items: center; gap: 10px; }
+        .page-header h1 i { color: #3b82f6; }
+        .page-header p { color: #64748b; margin-top: 0.5rem; }
+        .btn-primary { background: #3b82f6; color: white; border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; font-size: 0.9rem; }
+        .btn-primary:hover { background: #2563eb; transform: translateY(-2px); }
+        .btn-success { background: #22c55e; color: white; border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; font-size: 0.9rem; }
+        .btn-success:hover { background: #16a34a; transform: translateY(-2px); }
+        .btn-danger { background: #ef4444; color: white; border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; font-size: 0.9rem; }
+        .btn-danger:hover { background: #dc2626; transform: translateY(-2px); }
+        .btn-purple { background: #8b5cf6; color: white; border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; font-size: 0.9rem; }
+        .btn-purple:hover { background: #7c3aed; transform: translateY(-2px); }
+        .btn-warning { background: #f97316; color: white; border: none; padding: 5px 12px; border-radius: 6px; cursor: pointer; text-decoration: none; font-size: 0.75rem; display: inline-block; }
+        .btn-warning:hover { background: #ea580c; }
+        .btn-danger-sm { background: #ef4444; color: white; border: none; padding: 5px 12px; border-radius: 6px; cursor: pointer; text-decoration: none; font-size: 0.75rem; display: inline-block; }
+        .btn-danger-sm:hover { background: #dc2626; }
+        .table-container { background: white; border-radius: 16px; padding: 1.5rem; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; }
+        .section-header h2 { font-size: 1.3rem; color: #1e293b; display: flex; align-items: center; gap: 8px; }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 1rem 0.5rem; color: #64748b; font-weight: 600; font-size: 0.9rem; border-bottom: 2px solid #e2e8f0; }
+        td { padding: 1rem 0.5rem; border-bottom: 1px solid #e2e8f0; color: #1e293b; }
+        .btn-logout { background: #ef4444; color: white; padding: 8px 16px; border-radius: 8px; text-decoration: none; margin-left: 15px; }
+        .user-info { display: flex; align-items: center; justify-content: flex-end; margin-bottom: 20px; gap: 10px; }
+        .badge-stock-normal { background: #e6f7e6; color: #22c55e; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; }
+        .badge-stock-bajo { background: #fee2e2; color: #ef4444; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; }
+        .filters { display: flex; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; align-items: center; }
+        .filters input, .filters select { padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-family: inherit; }
+        .search-box { flex: 1; max-width: 300px; }
+        .search-box input { width: 100%; }
+        .acciones { display: flex; gap: 5px; flex-wrap: wrap; }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+        }
+        .modal-content h3 {
+            margin-bottom: 1rem;
+        }
+        .modal-content p {
+            margin-bottom: 1.5rem;
+        }
+        .modal-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="logo"><i class="fas fa-cubes"></i><span>SIGI</span></div>
+        <nav class="nav-menu">
+            <a href="{% url 'inventarios:dashboard' %}" class="nav-item"><i class="fas fa-chart-pie"></i><span>Dashboard</span></a>
+            <a href="{% url 'compras:listar' %}" class="nav-item"><i class="fas fa-shopping-cart"></i><span>Compras</span></a>
+            <a href="{% url 'movimientos:listar' %}" class="nav-item"><i class="fas fa-exchange-alt"></i><span>Movimientos</span></a>
+            {% if user.rol == 'admin' %}
+            <a href="{% url 'usuarios:listar' %}" class="nav-item"><i class="fas fa-users"></i><span>Usuarios</span></a>
+            {% endif %}
+            <a href="{% url 'productos:listar' %}" class="nav-item active"><i class="fas fa-boxes"></i><span>Productos</span></a>
+        </nav>
+    </div>
+
+    <div class="main-content">
+        <div class="user-info">
+            <i class="fas fa-user-circle"></i>
+            <span>{{ user.get_full_name|default:user.username }}</span>
+            <a href="{% url 'logout' %}" class="btn-logout"><i class="fas fa-sign-out-alt"></i> Salir</a>
+        </div>
+
+        <div class="page-header">
+            <h1><i class="fas fa-boxes"></i> Productos</h1>
+            <p>Gestión de productos del inventario</p>
+        </div>
+
+        <div class="table-container">
+            <div class="section-header">
+                <h2><i class="fas fa-list"></i> Lista de Productos</h2>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <a href="{% url 'productos:carga_masiva' %}" class="btn-success"><i class="fas fa-upload"></i> Carga Masiva</a>
+                    <a href="{% url 'productos:exportar_excel' %}" class="btn-success"><i class="fas fa-file-excel"></i> Exportar Excel</a>
+                    <a href="{% url 'productos:reporte_pdf' %}?solo_bajo_stock=1" class="btn-danger"><i class="fas fa-file-pdf"></i> Reporte PDF</a>
+                    <a href="{% url 'productos:consultar_api' %}" class="btn-purple"><i class="fas fa-cloud-download-alt"></i> Consultar API</a>
+                    <a href="{% url 'productos:categorias' %}" class="btn-primary" style="background: #64748b;"><i class="fas fa-tags"></i> Categorías</a>
+                    <a href="{% url 'productos:crear' %}" class="btn-primary"><i class="fas fa-plus"></i> Nuevo Producto</a>
+                </div>
+            </div>
+
+            <!-- Filtros de búsqueda avanzada -->
+            <div class="filters">
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="Buscar producto...">
+                </div>
+                <select id="campoFilter">
+                    <option value="todos">🔍 Todos los campos</option>
+                    <option value="nombre">📦 Nombre</option>
+                    <option value="codigo">🏷️ Código</option>
+                    <option value="marca">🏭 Marca</option>
+                </select>
+                <select id="categoriaFilter">
+                    <option value="">📂 Todas las categorías</option>
+                    {% for categoria in categorias %}
+                    <option value="{{ categoria.id }}">{{ categoria.nombre }}</option>
+                    {% endfor %}
+                </select>
+                <select id="stockFilter">
+                    <option value="">📊 Todos los stocks</option>
+                    <option value="bajo">⚠️ Stock Bajo</option>
+                    <option value="normal">✅ Stock Normal</option>
+                </select>
+                <button id="limpiarFiltros" class="btn-primary" style="background: #64748b; padding: 8px 16px;">Limpiar Filtros</button>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Nombre</th>
+                        <th>Marca</th>
+                        <th>Categoría</th>
+                        <th>Stock</th>
+                        <th>Precio</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tablaBody">
+                    {% for producto in productos %}
+                    <tr class="producto-row" 
+                        data-nombre="{{ producto.nombre|lower }}" 
+                        data-codigo="{{ producto.codigo|lower }}" 
+                        data-marca="{{ producto.marca|lower }}" 
+                        data-categoria="{{ producto.categoria.id }}"
+                        data-stock="{{ producto.stock_actual }}"
+                        data-stock-minimo="{{ producto.stock_minimo }}">
+                        <td>{{ producto.codigo }}</td>
+                        <td>{{ producto.nombre }}</td>
+                        <td>{{ producto.marca|default:"-" }}</td>
+                        <td>{{ producto.categoria.nombre|default:"-" }}</td>
+                        <td>
+                            {% if producto.stock_actual <= producto.stock_minimo %}
+                                <span class="badge-stock-bajo">{{ producto.stock_actual }}</span>
+                            {% else %}
+                                <span class="badge-stock-normal">{{ producto.stock_actual }}</span>
+                            {% endif %}
+                        </td>
+                        <td>${{ producto.precio_venta|floatformat:2 }}</td>
+                        <td class="acciones">
+                            {% if user.puede_editar %}
+                            <a href="{% url 'productos:editar' producto.id %}" class="btn-warning"><i class="fas fa-edit"></i> Editar</a>
+                            {% endif %}
+                            {% if user.es_admin %}
+                            <a href="#" class="btn-danger-sm" onclick="confirmarEliminar({{ producto.id }}, '{{ producto.nombre }}')"><i class="fas fa-trash"></i> Eliminar</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" style="text-align: center;">No hay productos registrados</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal de confirmación para eliminar -->
+    <div id="modalEliminar" class="modal">
+        <div class="modal-content">
+            <h3><i class="fas fa-exclamation-triangle" style="color: #ef4444;"></i> Confirmar Eliminación</h3>
+            <p id="mensajeEliminar">¿Estás seguro de eliminar este producto?</p>
+            <div class="modal-buttons">
+                <button class="btn-primary" style="background: #64748b;" onclick="cerrarModal()">Cancelar</button>
+                <a href="#" id="btnEliminarConfirmar" class="btn-danger-sm" style="padding: 10px 20px;">Sí, Eliminar</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let productoIdAEliminar = null;
+
+        function filtrarProductos() {
+            let busqueda = document.getElementById('searchInput').value.toLowerCase();
+            let campo = document.getElementById('campoFilter').value;
+            let categoria = document.getElementById('categoriaFilter').value;
+            let stockFiltro = document.getElementById('stockFilter').value;
+            let rows = document.querySelectorAll('.producto-row');
+            
+            rows.forEach(row => {
+                let nombre = row.getAttribute('data-nombre') || '';
+                let codigo = row.getAttribute('data-codigo') || '';
+                let marca = row.getAttribute('data-marca') || '';
+                let rowCategoria = row.getAttribute('data-categoria') || '';
+                let stock = parseInt(row.getAttribute('data-stock') || 0);
+                let stockMinimo = parseInt(row.getAttribute('data-stock-minimo') || 0);
+                
+                let coincideTexto = true;
+                if (busqueda) {
+                    if (campo === 'nombre') coincideTexto = nombre.includes(busqueda);
+                    else if (campo === 'codigo') coincideTexto = codigo.includes(busqueda);
+                    else if (campo === 'marca') coincideTexto = marca.includes(busqueda);
+                    else coincideTexto = nombre.includes(busqueda) || codigo.includes(busqueda) || marca.includes(busqueda);
+                }
+                
+                let coincideCategoria = !categoria || rowCategoria === categoria;
+                
+                let coincideStock = true;
+                if (stockFiltro === 'bajo') coincideStock = stock <= stockMinimo;
+                else if (stockFiltro === 'normal') coincideStock = stock > stockMinimo;
+                
+                row.style.display = (coincideTexto && coincideCategoria && coincideStock) ? '' : 'none';
+            });
+        }
+
+        function limpiarFiltros() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('campoFilter').value = 'todos';
+            document.getElementById('categoriaFilter').value = '';
+            document.getElementById('stockFilter').value = '';
+            filtrarProductos();
+        }
+
+        function confirmarEliminar(id, nombre) {
+            productoIdAEliminar = id;
+            document.getElementById('mensajeEliminar').innerHTML = `¿Estás seguro de eliminar el producto <strong>${nombre}</strong>? Esta acción no se puede deshacer.`;
+            document.getElementById('btnEliminarConfirmar').href = `/productos/eliminar/${id}/`;
+            document.getElementById('modalEliminar').style.display = 'flex';
+        }
+
+        function cerrarModal() {
+            document.getElementById('modalEliminar').style.display = 'none';
+            productoIdAEliminar = null;
+        }
+
+        document.getElementById('searchInput').addEventListener('keyup', filtrarProductos);
+        document.getElementById('campoFilter').addEventListener('change', filtrarProductos);
+        document.getElementById('categoriaFilter').addEventListener('change', filtrarProductos);
+        document.getElementById('stockFilter').addEventListener('change', filtrarProductos);
+        document.getElementById('limpiarFiltros').addEventListener('click', limpiarFiltros);
+
+        // Cerrar modal al hacer clic fuera
+        window.onclick = function(event) {
+            let modal = document.getElementById('modalEliminar');
+            if (event.target === modal) {
+                cerrarModal();
+            }
+        }
+    </script>
+</body>
+</html>
