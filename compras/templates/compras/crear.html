@@ -1,158 +1,420 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SIGI - Nueva Compra</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Inter', sans-serif; background: #f4f7fc; display: flex; height: 100vh; overflow: hidden; }
-        .sidebar { width: 280px; background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); color: white; padding: 2rem 1.5rem; display: flex; flex-direction: column; }
-        .logo { display: flex; align-items: center; gap: 12px; margin-bottom: 3rem; padding-bottom: 1rem; border-bottom: 1px solid #334155; }
-        .logo i { font-size: 2rem; color: #3b82f6; }
-        .logo span { font-size: 1.5rem; font-weight: 700; }
-        .nav-menu { flex: 1; display: flex; flex-direction: column; gap: 8px; }
-        .nav-item { display: flex; align-items: center; gap: 15px; padding: 12px 16px; border-radius: 12px; color: #cbd5e1; text-decoration: none; transition: all 0.3s; }
-        .nav-item:hover { background: #334155; color: white; transform: translateX(5px); }
-        .nav-item.active { background: #3b82f6; color: white; box-shadow: 0 4px 10px rgba(59,130,246,0.3); }
-        .main-content { flex: 1; overflow-y: auto; padding: 2rem; }
-        .page-header { margin-bottom: 2rem; }
-        .page-header h1 { font-size: 2rem; color: #1e293b; display: flex; align-items: center; gap: 10px; }
-        .page-header h1 i { color: #3b82f6; }
-        .form-card { background: white; border-radius: 16px; padding: 2rem; box-shadow: 0 4px 6px rgba(0,0,0,0.05); max-width: 800px; margin: 0 auto; }
-        .form-group { margin-bottom: 1.5rem; }
-        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; color: #1e293b; }
-        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 10px; font-family: inherit; }
-        .form-group input:focus, .form-group select:focus { outline: none; border-color: #3b82f6; }
-        .btn-primary { background: #3b82f6; color: white; border: none; padding: 12px 24px; border-radius: 10px; cursor: pointer; font-size: 1rem; }
-        .btn-primary:hover { background: #2563eb; }
-        .btn-secondary { background: #64748b; color: white; border: none; padding: 12px 24px; border-radius: 10px; cursor: pointer; text-decoration: none; display: inline-block; }
-        .btn-secondary:hover { background: #475569; }
-        .buttons { display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem; }
-        .btn-logout { background: #ef4444; color: white; padding: 8px 16px; border-radius: 8px; text-decoration: none; margin-left: 15px; }
-        .user-info { display: flex; align-items: center; justify-content: flex-end; margin-bottom: 20px; gap: 10px; }
-        .producto-item { display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 10px; margin-bottom: 10px; align-items: center; }
-        .producto-item select, .producto-item input { padding: 8px; border: 1px solid #e2e8f0; border-radius: 8px; }
-        .btn-add { background: #22c55e; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; margin-top: 10px; }
-        .btn-remove { background: #ef4444; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; }
-        .total { text-align: right; font-size: 1.2rem; font-weight: bold; margin-top: 1rem; padding-top: 1rem; border-top: 2px solid #e2e8f0; }
-    </style>
-</head>
-<body>
-    <div class="sidebar">
-        <div class="logo"><i class="fas fa-cubes"></i><span>SIGI</span></div>
-        <nav class="nav-menu">
-            <a href="{% url 'inventarios:dashboard' %}" class="nav-item"><i class="fas fa-chart-pie"></i><span>Dashboard</span></a>
-            <a href="{% url 'compras:listar' %}" class="nav-item"><i class="fas fa-shopping-cart"></i><span>Compras</span></a>
-            <a href="{% url 'movimientos:listar' %}" class="nav-item"><i class="fas fa-exchange-alt"></i><span>Movimientos</span></a>
-            {% if user.rol == 'admin' %}
-            <a href="{% url 'usuarios:listar' %}" class="nav-item"><i class="fas fa-users"></i><span>Usuarios</span></a>
-            {% endif %}
-            <a href="{% url 'productos:listar' %}" class="nav-item"><i class="fas fa-boxes"></i><span>Productos</span></a>
-        </nav>
-    </div>
+{% extends "base.html" %}
 
-    <div class="main-content">
-        <div class="user-info">
-            <i class="fas fa-user-circle"></i>
-            <span>{{ user.get_full_name|default:user.username }}</span>
-            <a href="{% url 'logout' %}" class="btn-logout"><i class="fas fa-sign-out-alt"></i> Salir</a>
+{% block title %}SIGI - Nueva compra{% endblock %}
+{% block nav_compras %}active{% endblock %}
+{% block page_title %}Nueva compra{% endblock %}
+{% block page_subtitle %}Registrar una nueva orden de compra{% endblock %}
+
+{% block extra_css %}
+<style>
+  .form-shell{ max-width: 1100px; margin: 0 auto; }
+
+  .form-card{
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(226,232,240,0.75);
+    border-radius: 22px;
+    box-shadow: var(--shadow-sm);
+    padding: 18px;
+  }
+
+  .grid-2{
+    display:grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .field{ margin-bottom: 12px; }
+
+  .field label{
+    display:block;
+    margin-bottom: 8px;
+    font-weight: 850;
+    font-size: .85rem;
+    color: #1e293b;
+  }
+
+  .control{
+    width:100%;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    background:#fff;
+    padding: 12px 12px;
+    font: inherit;
+    outline:none;
+    transition: box-shadow .15s ease, border-color .15s ease;
+  }
+  .control:focus{
+    border-color: rgba(59,130,246,0.6);
+    box-shadow: 0 0 0 4px rgba(59,130,246,0.12);
+  }
+
+  .help{
+    margin-top: 6px;
+    color: var(--muted);
+    font-size: .82rem;
+    font-weight: 650;
+  }
+
+  .section-title{
+    margin: 8px 0 10px;
+    font-size: 1rem;
+    font-weight: 950;
+    letter-spacing: -0.2px;
+    display:flex;
+    align-items:center;
+    gap: 8px;
+  }
+
+  /* Items */
+  .items{
+    display:flex;
+    flex-direction:column;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .item{
+    display:grid;
+    grid-template-columns: minmax(240px, 2fr) minmax(120px, 0.7fr) minmax(160px, 0.9fr) auto;
+    gap: 10px;
+    align-items:end;
+    padding: 12px;
+    border-radius: 18px;
+    border: 1px solid rgba(226,232,240,0.75);
+    background: #fff;
+  }
+
+  .subfield label{
+    display:block;
+    margin-bottom: 8px;
+    font-weight: 850;
+    font-size: .85rem;
+    color: #1e293b;
+  }
+
+  .icon-btn{
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+    border: 1px solid rgba(239,68,68,0.20);
+    background: rgba(239,68,68,0.10);
+    color: var(--danger);
+    cursor:pointer;
+    font-weight: 900;
+    display:grid;
+    place-items:center;
+    transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
+  }
+  .icon-btn:hover{
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+    background: rgba(239,68,68,0.14);
+  }
+
+  .btn-add{
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    color:#fff;
+  }
+
+  .total{
+    margin-top: 10px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(226,232,240,0.85);
+    display:flex;
+    justify-content:flex-end;
+    gap: 10px;
+    align-items:baseline;
+  }
+  .total .label{ color: var(--muted); font-weight: 800; }
+  .total .value{
+    font-size: 1.25rem;
+    font-weight: 950;
+    color: var(--success);
+    letter-spacing: -0.2px;
+  }
+
+  .actions{
+    display:flex;
+    justify-content:flex-end;
+    gap: 10px;
+    flex-wrap:wrap;
+    margin-top: 16px;
+  }
+
+  .btn-secondary{
+    background: linear-gradient(135deg, #64748b, #475569);
+    color:#fff;
+  }
+
+  /* Toast (nuevo) */
+  .toast-notificacion {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #22c55e;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 12px;
+    z-index: 9999;
+    animation: fadeInOut 3s ease;
+    box-shadow: 0 10px 25px rgba(2,6,23,0.25);
+    display:flex;
+    gap:10px;
+    align-items:center;
+    font-weight: 800;
+  }
+  @keyframes fadeInOut {
+    0% { opacity: 0; transform: translateY(20px); }
+    15% { opacity: 1; transform: translateY(0); }
+    85% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-20px); }
+  }
+
+  @media (max-width: 980px){
+    .grid-2{ grid-template-columns: 1fr; }
+    .item{ grid-template-columns: 1fr; align-items:stretch; }
+    .icon-btn{ width: 100%; height: 44px; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="form-shell">
+  <div class="form-card">
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+
+      <div class="grid-2">
+        <!-- Proveedor con datalist -->
+        <div class="field">
+          <label for="proveedor">Proveedor <span style="color: var(--danger);">*</span></label>
+          <input
+            id="proveedor"
+            type="text"
+            name="proveedor"
+            class="control"
+            required
+            placeholder="Nombre del proveedor"
+            autocomplete="off"
+            list="listaProveedores">
+          <datalist id="listaProveedores">
+            {% for proveedor in proveedores %}
+              <option value="{{ proveedor.nombre }}"></option>
+            {% endfor %}
+          </datalist>
+          <div class="help">Escribe o selecciona un proveedor existente.</div>
         </div>
 
-        <div class="page-header">
-            <h1><i class="fas fa-plus"></i> Nueva Compra</h1>
-            <p>Registrar una nueva orden de compra</p>
+        <div class="field">
+          <label for="fecha">Fecha <span style="color: var(--danger);">*</span></label>
+          <input id="fecha" type="date" name="fecha" class="control" required value="{% now 'Y-m-d' %}">
         </div>
+      </div>
 
-        <div class="form-card">
-            <form method="post">
-                {% csrf_token %}
-                <div class="form-group">
-                    <label>Proveedor</label>
-                    <input type="text" name="proveedor" required placeholder="Nombre del proveedor">
-                </div>
-                <div class="form-group">
-                    <label>Fecha</label>
-                    <input type="date" name="fecha" required value="{% now 'Y-m-d' %}">
-                </div>
+      <div class="section-title" style="margin-top: 6px;">
+        <i class="fas fa-list"></i> Productos
+      </div>
 
-                <h3>Productos</h3>
-                <div id="productos-container">
-                    <div class="producto-item">
-                        <select name="producto_0" required>
-                            <option value="">Seleccionar producto...</option>
-                            {% for producto in productos %}
-                            <option value="{{ producto.id }}" data-precio="{{ producto.precio_venta }}">{{ producto.nombre }} - ${{ producto.precio_venta }}</option>
-                            {% endfor %}
-                        </select>
-                        <input type="number" name="cantidad_0" placeholder="Cantidad" min="1" required>
-                        <input type="number" name="precio_0" placeholder="Precio unitario" step="0.01" required>
-                        <button type="button" class="btn-remove" onclick="eliminarProducto(this)">✖</button>
-                    </div>
-                </div>
-                <button type="button" class="btn-add" onclick="agregarProducto()">+ Agregar Producto</button>
+      <div id="productos-container" class="items">
+        <!-- Fila inicial con data-index para cargar último precio -->
+        <div class="item producto-item">
+          <div class="subfield">
+            <label>Producto <span style="color: var(--danger);">*</span></label>
+            <select name="producto_0" class="control producto-select" data-index="0" required>
+              <option value="">Seleccionar producto...</option>
+              {% for producto in productos %}
+                <option value="{{ producto.id }}" data-precio="{{ producto.precio_venta }}">
+                  {{ producto.nombre }} - Último precio: ${{ producto.ultimo_precio_compra|default:"0" }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
 
-                <div class="total">
-                    Total: $<span id="total">0.00</span>
-                </div>
+          <div class="subfield">
+            <label>Cantidad <span style="color: var(--danger);">*</span></label>
+            <input type="number" name="cantidad_0" class="control cantidad-input" placeholder="1" min="1" required>
+          </div>
 
-                <div class="form-group">
-                    <label>Observaciones</label>
-                    <textarea name="observaciones" rows="3"></textarea>
-                </div>
+          <div class="subfield">
+            <label>Precio unitario <span style="color: var(--danger);">*</span></label>
+            <input type="number" name="precio_0" class="control precio-input" placeholder="0.00" step="0.01" required>
+            <div class="help" style="margin-top:6px;">
+              Al elegir un producto se intentará cargar el <strong>último precio de compra</strong>.
+            </div>
+          </div>
 
-                <div class="buttons">
-                    <a href="{% url 'compras:listar' %}" class="btn-secondary">Cancelar</a>
-                    <button type="submit" class="btn-primary">Guardar Compra</button>
-                </div>
-            </form>
+          <div class="subfield">
+            <label>Quitar</label>
+            <button type="button" class="icon-btn" onclick="eliminarProducto(this)" title="Eliminar fila">
+              <i class="fas fa-xmark"></i>
+            </button>
+          </div>
         </div>
-    </div>
+      </div>
 
-    <script>
-        let productoIndex = 1;
+      <button type="button" class="btn btn-add" onclick="agregarProducto()">
+        <i class="fas fa-plus"></i> Agregar producto
+      </button>
 
-        function agregarProducto() {
-            const container = document.getElementById('productos-container');
-            const newItem = document.createElement('div');
-            newItem.className = 'producto-item';
-            newItem.innerHTML = `
-                <select name="producto_${productoIndex}">
-                    <option value="">Seleccionar producto...</option>
-                    {% for producto in productos %}
-                    <option value="{{ producto.id }}" data-precio="{{ producto.precio_venta }}">{{ producto.nombre }} - ${{ producto.precio_venta }}</option>
-                    {% endfor %}
-                </select>
-                <input type="number" name="cantidad_${productoIndex}" placeholder="Cantidad" min="1">
-                <input type="number" name="precio_${productoIndex}" placeholder="Precio unitario" step="0.01">
-                <button type="button" class="btn-remove" onclick="eliminarProducto(this)">✖</button>
-            `;
-            container.appendChild(newItem);
-            productoIndex++;
-        }
+      <div class="total" aria-label="Total de la compra">
+        <div class="label">Total</div>
+        <div class="value">$<span id="total">0.00</span></div>
+      </div>
 
-        function eliminarProducto(btn) {
-            btn.closest('.producto-item').remove();
+      <div class="field" style="margin-top: 12px;">
+        <label for="observaciones">Observaciones</label>
+        <textarea id="observaciones" name="observaciones" rows="4" class="control"
+                  placeholder="Notas adicionales sobre la compra..."></textarea>
+      </div>
+
+      <div class="actions">
+        <a href="{% url 'compras:listar' %}" class="btn btn-secondary">
+          <i class="fas fa-arrow-left"></i> Cancelar
+        </a>
+        <button type="submit" class="btn btn-primary">
+          <i class="fas fa-floppy-disk"></i> Guardar compra
+        </button>
+      </div>
+
+    </form>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  let productoIndex = 1;
+
+  // 🔥 Función para obtener el último precio de compra de un producto
+  function obtenerUltimoPrecio(productoId, index) {
+    fetch(`/compras/api/ultimo-precio/${productoId}/`)
+      .then(response => response.json())
+      .then(data => {
+        if (data && data.precio !== undefined && data.precio !== null) {
+          const precioInput = document.querySelector(`input[name="precio_${index}"]`);
+          if (precioInput && !precioInput.value) {
+            precioInput.value = data.precio;
             calcularTotal();
+            mostrarNotificacion(`Precio cargado: $${data.precio} (última compra)`);
+          }
         }
+      })
+      .catch(error => console.log('Error al obtener precio:', error));
+  }
 
-        function calcularTotal() {
-            let total = 0;
-            const items = document.querySelectorAll('.producto-item');
-            items.forEach(item => {
-                const cantidad = item.querySelector('input[type="number"]')?.value;
-                const precio = item.querySelectorAll('input[type="number"]')[1]?.value;
-                if (cantidad && precio) {
-                    total += parseFloat(cantidad) * parseFloat(precio);
-                }
-            });
-            document.getElementById('total').innerText = total.toFixed(2);
-        }
+  function mostrarNotificacion(mensaje) {
+    const toast = document.createElement('div');
+    toast.className = 'toast-notificacion';
+    toast.innerHTML = `<i class="fas fa-info-circle"></i> ${mensaje}`;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+  }
 
-        document.addEventListener('change', calcularTotal);
-        document.addEventListener('keyup', calcularTotal);
-    </script>
-</body>
-</html>
+  function buildProductoRow(index){
+    const div = document.createElement('div');
+    div.className = 'item producto-item';
+    div.innerHTML = `
+      <div class="subfield">
+        <label>Producto <span style="color: var(--danger);">*</span></label>
+        <select name="producto_${index}" class="control producto-select" data-index="${index}" required>
+          <option value="">Seleccionar producto...</option>
+          {% for producto in productos %}
+            <option value="{{ producto.id }}" data-precio="{{ producto.precio_venta }}">
+              {{ producto.nombre }} - Último precio: ${{ producto.ultimo_precio_compra|default:"0" }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="subfield">
+        <label>Cantidad <span style="color: var(--danger);">*</span></label>
+        <input type="number" name="cantidad_${index}" class="control cantidad-input" placeholder="1" min="1" required>
+      </div>
+
+      <div class="subfield">
+        <label>Precio unitario <span style="color: var(--danger);">*</span></label>
+        <input type="number" name="precio_${index}" class="control precio-input" placeholder="0.00" step="0.01" required>
+      </div>
+
+      <div class="subfield">
+        <label>Quitar</label>
+        <button type="button" class="icon-btn" onclick="eliminarProducto(this)" title="Eliminar fila">
+          <i class="fas fa-xmark"></i>
+        </button>
+      </div>
+    `;
+    return div;
+  }
+
+  function agregarProducto() {
+    const container = document.getElementById('productos-container');
+    const row = buildProductoRow(productoIndex);
+    container.appendChild(row);
+
+    // Agregar evento al select para cargar precio automático (último precio)
+    const select = row.querySelector('.producto-select');
+    select.addEventListener('change', function() {
+      const idx = this.getAttribute('data-index');
+      const productoId = this.value;
+      if (productoId) obtenerUltimoPrecio(productoId, idx);
+      calcularTotal();
+    });
+
+    productoIndex++;
+    calcularTotal();
+  }
+
+  function eliminarProducto(btn) {
+    const container = document.getElementById('productos-container');
+    const row = btn.closest('.producto-item');
+
+    if (container.querySelectorAll('.producto-item').length <= 1) {
+      alert('Debe existir al menos un producto en la compra.');
+      return;
+    }
+
+    row.remove();
+    calcularTotal();
+  }
+
+  function calcularTotal() {
+    let total = 0;
+
+    document.querySelectorAll('.producto-item').forEach(item => {
+      const cantidadEl = item.querySelector('.cantidad-input');
+      const precioEl = item.querySelector('.precio-input');
+
+      const cantidad = parseFloat(cantidadEl?.value || '0');
+      const precio = parseFloat(precioEl?.value || '0');
+
+      if (!isNaN(cantidad) && !isNaN(precio)) {
+        total += cantidad * precio;
+      }
+    });
+
+    document.getElementById('total').innerText = total.toFixed(2);
+  }
+
+  // Inicializar eventos para el select inicial (index 0)
+  document.querySelectorAll('.producto-select').forEach(select => {
+    select.addEventListener('change', function() {
+      const idx = this.getAttribute('data-index');
+      const productoId = this.value;
+      if (productoId) obtenerUltimoPrecio(productoId, idx);
+      calcularTotal();
+    });
+  });
+
+  // Recalcular en tiempo real
+  document.addEventListener('input', function(e){
+    if (e.target && (e.target.classList.contains('cantidad-input') || e.target.classList.contains('precio-input'))) {
+      calcularTotal();
+    }
+  });
+
+  calcularTotal();
+</script>
+{% endblock %}

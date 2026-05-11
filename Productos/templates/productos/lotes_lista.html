@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+
+{% block title %}SIGI - Lotes{% endblock %}
+{% block nav_productos %}active{% endblock %}
+{% block page_title %}Lotes de productos{% endblock %}
+{% block page_subtitle %}Gestión de lotes con seriales únicos{% endblock %}
+
+{% block extra_css %}
+<style>
+  .toolbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    flex-wrap:wrap;
+    margin-bottom: 12px;
+  }
+
+  .filters{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    align-items:center;
+  }
+
+  .filter{
+    position:relative;
+  }
+
+  .filter .icon-left{
+    position:absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color:#94a3b8;
+    font-size:.95rem;
+  }
+
+  .filter input,
+  .filter select{
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    background:#fff;
+    padding: 10px 12px 10px 38px;
+    font: inherit;
+    outline:none;
+    min-width: 260px;
+    transition: box-shadow .15s ease, border-color .15s ease;
+  }
+  .filter select{
+    padding-left: 12px;
+    min-width: 220px;
+  }
+
+  .filter input:focus,
+  .filter select:focus{
+    border-color: rgba(59,130,246,0.6);
+    box-shadow: 0 0 0 4px rgba(59,130,246,0.12);
+  }
+
+  .muted{
+    color: var(--muted);
+    font-size: .85rem;
+    font-weight: 650;
+  }
+
+  .actions{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+
+  /* Badges de estado (lotes) */
+  .badge.warn{ background: rgba(249,115,22,0.14); color: var(--warning); }
+  .badge.ok{ background: rgba(34,197,94,0.14); color: var(--success); }
+  .badge.info{ background: rgba(59,130,246,0.14); color: var(--primary); }
+
+  .w-code{ width: 150px; }
+  .w-fecha{ width: 160px; }
+  .w-count{ width: 110px; }
+  .w-estado{ width: 170px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card pad">
+
+  <div class="toolbar">
+    <div>
+      <div style="font-weight: 850; letter-spacing:-0.2px;">Lista de lotes</div>
+      <div class="muted">Busca por código y filtra por estado.</div>
+    </div>
+
+    <a href="{% url 'productos:crear_lote' %}" class="btn btn-primary">
+      <i class="fas fa-plus"></i> Nuevo lote
+    </a>
+  </div>
+
+  <div class="filters" style="margin-bottom: 12px;">
+    <div class="filter">
+      <i class="fas fa-magnifying-glass icon-left"></i>
+      <input type="text" id="searchInput" placeholder="Buscar lote por código...">
+    </div>
+
+    <div class="filter">
+      <select id="estadoFilter" aria-label="Filtrar por estado">
+        <option value="">Todos los estados</option>
+        <option value="pendiente">Pendiente</option>
+        <option value="recibido">Recibido</option>
+        <option value="parcial">Recibido parcial</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th class="w-code">Código</th>
+          <th>Proveedor</th>
+          <th class="w-fecha">Fecha pedido</th>
+          <th class="w-fecha">Fecha entrega</th>
+          <th class="w-count">Productos</th>
+          <th class="w-estado">Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+
+      <tbody id="tablaBody">
+        {% for lote in lotes %}
+        <tr class="lote-row"
+            data-codigo="{{ lote.codigo|lower }}"
+            data-estado="{{ lote.estado }}">
+
+          <td style="font-weight: 900;">{{ lote.codigo }}</td>
+          <td style="font-weight: 750;">{{ lote.proveedor.nombre }}</td>
+          <td>{{ lote.fecha_pedido|date:"d/m/Y" }}</td>
+          <td>
+            {% if lote.fecha_entrega %}
+              {{ lote.fecha_entrega|date:"d/m/Y" }}
+            {% else %}
+              <span style="color: var(--muted); font-weight:700;">-</span>
+            {% endif %}
+          </td>
+          <td style="font-weight: 850;">{{ lote.productos.count }}</td>
+
+          <td>
+            {% if lote.estado == 'pendiente' %}
+              <span class="badge warn"><i class="fas fa-clock" style="margin-right:8px;"></i>Pendiente</span>
+            {% elif lote.estado == 'recibido' %}
+              <span class="badge ok"><i class="fas fa-circle-check" style="margin-right:8px;"></i>Recibido</span>
+            {% else %}
+              <span class="badge info"><i class="fas fa-circle-half-stroke" style="margin-right:8px;"></i>Parcial</span>
+            {% endif %}
+          </td>
+
+          <td style="white-space:nowrap;">
+            <div class="actions">
+              <a href="{% url 'productos:ver_lote' lote.id %}" class="btn btn-warning btn-sm">
+                <i class="fas fa-eye"></i> Ver
+              </a>
+
+              {% if lote.estado == 'pendiente' %}
+              <a href="{% url 'productos:recibir_lote' lote.id %}" class="btn btn-primary btn-sm">
+                <i class="fas fa-check"></i> Recibir
+              </a>
+              {% endif %}
+            </div>
+          </td>
+
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" style="text-align:center; color:#64748b; padding: 18px 10px;">
+            No hay lotes registrados
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const searchInput = document.getElementById('searchInput');
+  const estadoFilter = document.getElementById('estadoFilter');
+
+  function applyFilters() {
+    const search = (searchInput.value || '').toLowerCase().trim();
+    const estado = estadoFilter.value || '';
+
+    document.querySelectorAll('.lote-row').forEach(row => {
+      const codigo = row.getAttribute('data-codigo') || '';
+      const rowEstado = row.getAttribute('data-estado') || '';
+      const matchSearch = !search || codigo.includes(search);
+      const matchEstado = !estado || rowEstado === estado;
+      row.style.display = (matchSearch && matchEstado) ? '' : 'none';
+    });
+  }
+
+  searchInput.addEventListener('keyup', applyFilters);
+  estadoFilter.addEventListener('change', applyFilters);
+</script>
+{% endblock %}

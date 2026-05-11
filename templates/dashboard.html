@@ -1,194 +1,277 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - SIGI</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Inter', sans-serif; background: #f4f7fc; display: flex; height: 100vh; overflow: hidden; }
-        .sidebar { width: 280px; background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); color: white; padding: 2rem 1.5rem; display: flex; flex-direction: column; }
-        .logo { display: flex; align-items: center; gap: 12px; margin-bottom: 3rem; padding-bottom: 1rem; border-bottom: 1px solid #334155; }
-        .logo i { font-size: 2rem; color: #3b82f6; }
-        .logo span { font-size: 1.5rem; font-weight: 700; }
-        .nav-menu { flex: 1; display: flex; flex-direction: column; gap: 8px; }
-        .nav-item { display: flex; align-items: center; gap: 15px; padding: 12px 16px; border-radius: 12px; color: #cbd5e1; text-decoration: none; transition: all 0.3s; }
-        .nav-item:hover { background: #334155; color: white; transform: translateX(5px); }
-        .nav-item.active { background: #3b82f6; color: white; box-shadow: 0 4px 10px rgba(59,130,246,0.3); }
-        .main-content { flex: 1; overflow-y: auto; padding: 2rem; }
-        .page-header { margin-bottom: 2rem; }
-        .page-header h1 { font-size: 2rem; color: #1e293b; display: flex; align-items: center; gap: 10px; }
-        .page-header h1 i { color: #3b82f6; }
-        .page-header p { color: #64748b; margin-top: 0.5rem; }
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
-        .stat-card { background: white; padding: 1.5rem; border-radius: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 1rem; }
-        .stat-icon { width: 60px; height: 60px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; }
-        .stat-icon.blue { background: #e8f0fe; color: #3b82f6; }
-        .stat-icon.green { background: #e6f7e6; color: #22c55e; }
-        .stat-icon.orange { background: #fff3e6; color: #f97316; }
-        .stat-icon.purple { background: #f3e8ff; color: #a855f7; }
-        .stat-info h3 { font-size: 1.8rem; font-weight: 700; color: #1e293b; }
-        .stat-info p { color: #64748b; font-size: 0.9rem; }
-        .recent-section { background: white; border-radius: 16px; padding: 1.5rem; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 2rem; }
-        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; }
-        .section-header h2 { font-size: 1.3rem; color: #1e293b; display: flex; align-items: center; gap: 8px; }
-        .view-all { color: #3b82f6; text-decoration: none; font-size: 0.9rem; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 1rem 0.5rem; text-align: left; border-bottom: 1px solid #e2e8f0; }
-        th { color: #64748b; font-weight: 600; }
-        .btn-logout { background: #ef4444; color: white; padding: 8px 16px; border-radius: 8px; text-decoration: none; margin-left: 15px; }
-        .user-info { display: flex; align-items: center; justify-content: flex-end; margin-bottom: 20px; gap: 10px; }
-        .badge-entrada { background: #e6f7e6; color: #22c55e; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; display: inline-block; }
-        .badge-salida { background: #fee2e2; color: #ef4444; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; display: inline-block; }
-        .badge-admin { background: #3b82f6; color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; display: inline-block; }
-        .badge-almacenista { background: #64748b; color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; display: inline-block; }
-        .badge-consultor { background: #8b5cf6; color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; display: inline-block; }
-        .btn-primary-sm { background: #22c55e; color: white; padding: 5px 12px; border-radius: 6px; text-decoration: none; font-size: 0.7rem; display: inline-block; }
-        .btn-danger-sm { background: #ef4444; color: white; padding: 5px 12px; border-radius: 6px; text-decoration: none; font-size: 0.7rem; display: inline-block; }
-        .text-muted { color: #64748b; font-size: 0.75rem; }
-        .acciones { display: flex; gap: 5px; flex-wrap: wrap; }
-    </style>
-</head>
-<body>
-    <div class="sidebar">
-        <div class="logo"><i class="fas fa-cubes"></i><span>SIGI</span></div>
-        <nav class="nav-menu">
-            <a href="{% url 'inventarios:dashboard' %}" class="nav-item active"><i class="fas fa-chart-pie"></i><span>Dashboard</span></a>
-            <a href="{% url 'compras:listar' %}" class="nav-item"><i class="fas fa-shopping-cart"></i><span>Compras</span></a>
-            <a href="{% url 'movimientos:listar' %}" class="nav-item"><i class="fas fa-exchange-alt"></i><span>Movimientos</span></a>
-            {% if user.rol == 'admin' %}
-            <a href="{% url 'usuarios:listar' %}" class="nav-item"><i class="fas fa-users"></i><span>Usuarios</span></a>
-            {% endif %}
-            <a href="{% url 'productos:listar' %}" class="nav-item"><i class="fas fa-boxes"></i><span>Productos</span></a>
-        </nav>
+{% extends "base.html" %}
+
+{% block title %}SIGI - Dashboard{% endblock %}
+{% block nav_dashboard %}active{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block page_subtitle %}Bienvenido {{ user.get_full_name|default:user.username }}{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+  // Gráfico de movimientos
+  const ctxLine = document.getElementById('movimientosChart').getContext('2d');
+  new Chart(ctxLine, {
+    type: 'line',
+    data: {
+      labels: {{ fechas_grafico|safe }},
+      datasets: [{
+        label: 'Movimientos',
+        data: {{ movimientos_grafico|safe }},
+        borderColor: '#3b82f6',
+        backgroundColor: 'rgba(59, 130, 246, 0.10)',
+        tension: 0.32,
+        fill: true,
+        pointRadius: 2,
+        pointHoverRadius: 4,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true } }
+    }
+  });
+
+  // Gráfico de categorías
+  const ctxPie = document.getElementById('categoriasChart').getContext('2d');
+  new Chart(ctxPie, {
+    type: 'pie',
+    data: {
+      labels: {{ categorias_nombres|safe }},
+      datasets: [{
+        data: {{ categorias_cantidades|safe }},
+        backgroundColor: ['#3b82f6','#22c55e','#f97316','#a855f7','#ef4444','#06b6d4','#eab308']
+      }]
+    },
+    options: { responsive: true, maintainAspectRatio: true }
+  });
+</script>
+{% endblock %}
+
+{% block content %}
+
+  {% if productos_criticos %}
+  <div class="alert" style="margin-bottom: 16px;">
+    <div class="alert__icon"><i class="fas fa-exclamation-triangle"></i></div>
+    <div>
+      <div style="font-weight: 800; margin-bottom: 6px;">Atención: Productos con stock bajo</div>
+      <div style="color:#7c2d12; font-weight:600; font-size:.9rem;">
+        Los siguientes productos están por debajo del stock mínimo:
+      </div>
+      <div style="margin-top: 6px;">
+        {% for producto in productos_criticos %}
+          <span class="pill">{{ producto.nombre }}: {{ producto.stock_actual }} / {{ producto.stock_minimo }}</span>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Stats -->
+  <div class="grid stats" style="margin-bottom: 16px;">
+    <div class="card stat">
+      <div class="icon blue"><i class="fas fa-boxes"></i></div>
+      <div>
+        <h3>{{ total_productos|default:0 }}</h3>
+        <p>Total Productos</p>
+      </div>
     </div>
 
-    <div class="main-content">
-        <div class="user-info">
-            <i class="fas fa-user-circle"></i>
-            <span>{{ user.get_full_name|default:user.username }}</span>
-            <a href="{% url 'logout' %}" class="btn-logout"><i class="fas fa-sign-out-alt"></i> Salir</a>
-        </div>
-
-        <div class="page-header">
-            <h1><i class="fas fa-chart-pie"></i> Dashboard</h1>
-            <p>Bienvenido al sistema de inventario. Aquí verás un resumen general.</p>
-        </div>
-
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-icon blue"><i class="fas fa-boxes"></i></div>
-                <div class="stat-info">
-                    <h3>{{ total_productos|default:0 }}</h3>
-                    <p>Total Productos</p>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon green"><i class="fas fa-shopping-cart"></i></div>
-                <div class="stat-info">
-                    <h3>{{ compras_mes|default:0 }}</h3>
-                    <p>Compras este mes</p>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon orange"><i class="fas fa-users"></i></div>
-                <div class="stat-info">
-                    <h3>{{ usuarios_activos|default:0 }}</h3>
-                    <p>Usuarios Activos</p>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon purple"><i class="fas fa-exchange-alt"></i></div>
-                <div class="stat-info">
-                    <h3>{{ movimientos_hoy|default:0 }}</h3>
-                    <p>Movimientos hoy</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- ÚLTIMOS MOVIMIENTOS -->
-        <div class="recent-section">
-            <div class="section-header">
-                <h2><i class="fas fa-clock"></i> Últimos Movimientos</h2>
-                <a href="{% url 'movimientos:listar' %}" class="view-all">Ver todos →</a>
-            </div>
-            <table>
-                <thead>
-                    <tr><th>Producto</th><th>Tipo</th><th>Cantidad</th><th>Fecha</th><th>Usuario</th></tr>
-                </thead>
-                <tbody>
-                    {% for movimiento in ultimos_movimientos %}
-                    <tr>
-                        <td>{{ movimiento.producto.nombre }}</td>
-                        <td>{% if movimiento.tipo == 'entrada' %}<span class="badge-entrada">Entrada</span>{% else %}<span class="badge-salida">Salida</span>{% endif %}</td>
-                        <td>{{ movimiento.cantidad }}</td>
-                        <td>{{ movimiento.created_at|date:"d/m/Y H:i" }}</td>
-                        <td>{{ movimiento.usuario.username }}</td>
-                    </tr>
-                    {% empty %}
-                    <tr><td colspan="5" style="text-align: center;">No hay movimientos registrados</td></tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-
-        <!-- SECCIÓN DE USUARIOS (SOLO PARA ADMIN) -->
-        {% if user.rol == 'admin' %}
-        <div class="recent-section">
-            <div class="section-header">
-                <h2><i class="fas fa-users"></i> Usuarios del Sistema</h2>
-                <div style="display: flex; gap: 10px;">
-                    <a href="{% url 'usuarios:crear' %}" class="btn-primary-sm"><i class="fas fa-user-plus"></i> Nuevo Usuario</a>
-                    <a href="{% url 'usuarios:listar' %}" class="view-all">Ver todos →</a>
-                </div>
-            </div>
-            <div style="overflow-x: auto;">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Usuario</th>
-                            <th>Nombre</th>
-                            <th>Email</th>
-                            <th>Rol</th>
-                            <th>Fecha Registro</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for usuario in ultimos_usuarios %}
-                        <tr>
-                            <td>{{ usuario.username }}</td>
-                            <td>{{ usuario.get_full_name|default:"-" }}</td>
-                            <td>{{ usuario.email|default:"-" }}</td>
-                            <td>
-                                {% if usuario.rol == 'admin' %}
-                                    <span class="badge-admin">Administrador</span>
-                                {% elif usuario.rol == 'almacenista' %}
-                                    <span class="badge-almacenista">Almacenista</span>
-                                {% else %}
-                                    <span class="badge-consultor">Consultor</span>
-                                {% endif %}
-                            </td>
-                            <td>{{ usuario.date_joined|date:"d/m/Y" }}</td>
-                            <td class="acciones">
-                                <a href="{% url 'usuarios:editar' usuario.id %}" class="btn-primary-sm" style="background: #f97316;">Editar</a>
-                                {% if usuario.id != user.id %}
-                                <a href="{% url 'usuarios:eliminar' usuario.id %}" class="btn-danger-sm" onclick="return confirm('¿Eliminar este usuario?')">Eliminar</a>
-                                {% else %}
-                                <span class="text-muted">Usuario actual</span>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr><td colspan="6" style="text-align: center;">No hay usuarios registrados</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        {% endif %}
+    <div class="card stat">
+      <div class="icon green"><i class="fas fa-shopping-cart"></i></div>
+      <div>
+        <h3>{{ compras_mes|default:0 }}</h3>
+        <p>Compras este mes</p>
+      </div>
     </div>
-</body>
-</html>
+
+    <div class="card stat">
+      <div class="icon orange"><i class="fas fa-users"></i></div>
+      <div>
+        <h3>{{ usuarios_activos|default:0 }}</h3>
+        <p>Usuarios Activos</p>
+      </div>
+    </div>
+
+    <div class="card stat">
+      <div class="icon purple"><i class="fas fa-exchange-alt"></i></div>
+      <div>
+        <h3>{{ movimientos_hoy|default:0 }}</h3>
+        <p>Movimientos hoy</p>
+      </div>
+    </div>
+
+    <div class="card stat">
+      <div class="icon yellow"><i class="fas fa-truck"></i></div>
+      <div>
+        <h3>{{ total_proveedores|default:0 }}</h3>
+        <p>Proveedores</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); margin-bottom: 16px;">
+    <div class="card pad">
+      <div class="section-header">
+        <h2><i class="fas fa-chart-line"></i> Movimientos últimos 7 días</h2>
+      </div>
+      <canvas id="movimientosChart" height="220"></canvas>
+    </div>
+
+    <div class="card pad">
+      <div class="section-header">
+        <h2><i class="fas fa-chart-pie"></i> Productos por categoría</h2>
+      </div>
+      <canvas id="categoriasChart" height="220"></canvas>
+    </div>
+  </div>
+
+  <!-- Últimos movimientos -->
+  <div class="card pad" style="margin-bottom: 16px;">
+    <div class="section-header">
+      <h2><i class="fas fa-clock"></i> Últimos Movimientos</h2>
+      <a class="link" href="{% url 'movimientos:listar' %}">Ver todos →</a>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Producto</th><th>Tipo</th><th>Cantidad</th><th>Fecha</th><th>Usuario</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for movimiento in ultimos_movimientos %}
+          <tr>
+            <td>{{ movimiento.producto.nombre }}</td>
+            <td>
+              {% if movimiento.tipo == 'entrada' %}
+                <span class="badge ok">Entrada</span>
+              {% else %}
+                <span class="badge bad">Salida</span>
+              {% endif %}
+            </td>
+            <td>{{ movimiento.cantidad }}</td>
+            <td>{{ movimiento.created_at|date:"d/m/Y H:i" }}</td>
+            <td>{{ movimiento.usuario.username }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="5" style="text-align:center; color:#64748b;">No hay movimientos registrados</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {% if user.rol == 'admin' %}
+  <!-- Usuarios recientes -->
+  <div class="card pad" style="margin-bottom: 16px;">
+    <div class="section-header">
+      <h2><i class="fas fa-users"></i> Usuarios Recientes</h2>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <a class="btn btn-primary btn-sm" href="{% url 'usuarios:crear' %}">
+          <i class="fas fa-user-plus"></i> Nuevo Usuario
+        </a>
+        <a class="link" href="{% url 'usuarios:listar' %}">Ver todos →</a>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Usuario</th><th>Nombre</th><th>Email</th><th>Rol</th><th>Fecha</th><th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for usuario in ultimos_usuarios %}
+          <tr>
+            <td>{{ usuario.username }}</td>
+            <td>{{ usuario.get_full_name|default:"-" }}</td>
+            <td>{{ usuario.email|default:"-" }}</td>
+            <td>
+              {% if usuario.rol == 'admin' %}
+                <span class="badge admin">Admin</span>
+              {% elif usuario.rol == 'almacenista' %}
+                <span class="badge gray">Almacenista</span>
+              {% else %}
+                <span class="badge violet">Consultor</span>
+              {% endif %}
+            </td>
+            <td>{{ usuario.date_joined|date:"d/m/Y" }}</td>
+            <td style="white-space:nowrap;">
+              <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <a class="btn btn-warning btn-sm" href="{% url 'usuarios:editar' usuario.id %}">
+                  <i class="fas fa-edit"></i> Editar
+                </a>
+
+                {% if usuario.id != user.id %}
+                <a class="btn btn-danger btn-sm" href="{% url 'usuarios:eliminar' usuario.id %}"
+                   onclick="return confirm('¿Eliminar este usuario?')">
+                  <i class="fas fa-trash"></i> Eliminar
+                </a>
+                {% else %}
+                <span style="color:#64748b; font-size:.8rem; font-weight:700;">Actual</span>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="6" style="color:#64748b;">No hay usuarios registrados</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Proveedores -->
+  <div class="card pad">
+    <div class="section-header">
+      <h2><i class="fas fa-truck"></i> Últimos Proveedores</h2>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <a class="btn btn-primary btn-sm" href="{% url 'productos:crear_proveedor' %}">
+          <i class="fas fa-plus"></i> Nuevo Proveedor
+        </a>
+        <a class="link" href="{% url 'productos:proveedores' %}">Ver todos →</a>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Nombre</th><th>NIT</th><th>Teléfono</th><th>Contacto</th><th>Lotes</th><th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for proveedor in ultimos_proveedores %}
+          <tr>
+            <td>{{ proveedor.nombre }}</td>
+            <td>{{ proveedor.nit|default:"-" }}</td>
+            <td>{{ proveedor.telefono|default:"-" }}</td>
+            <td>{{ proveedor.contacto|default:"-" }}</td>
+            <td>{{ proveedor.lotes.count }}</td>
+            <td style="white-space:nowrap;">
+              <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <a class="btn btn-warning btn-sm" href="{% url 'productos:editar_proveedor' proveedor.id %}">
+                  <i class="fas fa-edit"></i> Editar
+                </a>
+                <a class="btn btn-danger btn-sm" href="{% url 'productos:eliminar_proveedor' proveedor.id %}"
+                   onclick="return confirm('¿Eliminar este proveedor?')">
+                  <i class="fas fa-trash"></i> Eliminar
+                </a>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="6" style="color:#64748b;">No hay proveedores registrados</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+{% endblock %}

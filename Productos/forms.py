@@ -1,6 +1,7 @@
 from django import forms
-from .models import Categoria, Producto
+from .models import Producto, Categoria, Proveedor, Lote, ProductoConSerial, Bodega
 
+# ========== PRODUCTO ==========
 class ProductoForm(forms.ModelForm):
     class Meta:
         model = Producto
@@ -21,6 +22,9 @@ class ProductoForm(forms.ModelForm):
             'garantia_meses': forms.NumberInput(attrs={'class': 'form-control'}),
             'descripcion': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
+
+
+# ========== CATEGORÍA ==========
 class CategoriaForm(forms.ModelForm):
     class Meta:
         model = Categoria
@@ -28,4 +32,46 @@ class CategoriaForm(forms.ModelForm):
         widgets = {
             'nombre': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej: Electrónicos, Línea Blanca'}),
             'descripcion': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Descripción de la categoría'}),
-        }        
+        }
+
+
+# ========== PROVEEDOR ==========
+class ProveedorForm(forms.ModelForm):
+    class Meta:
+        model = Proveedor
+        fields = ['nombre', 'nit', 'telefono', 'email', 'direccion', 'contacto']
+        widgets = {
+            'nombre': forms.TextInput(attrs={'class': 'form-control'}),
+            'nit': forms.TextInput(attrs={'class': 'form-control'}),
+            'telefono': forms.TextInput(attrs={'class': 'form-control'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'direccion': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
+            'contacto': forms.TextInput(attrs={'class': 'form-control'}),
+        }
+
+
+# ========== LOTE ==========
+class LoteForm(forms.ModelForm):
+    class Meta:
+        model = Lote
+        fields = ['codigo', 'proveedor', 'fecha_pedido', 'fecha_entrega', 'observaciones']
+        widgets = {
+            'codigo': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej: LOTE-001'}),
+            'proveedor': forms.Select(attrs={'class': 'form-control'}),
+            'fecha_pedido': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'fecha_entrega': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'observaciones': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        }
+
+
+# ========== BODEGA ==========
+class BodegaForm(forms.ModelForm):
+    class Meta:
+        model = Bodega
+        fields = ['nombre', 'ubicacion', 'encargado', 'telefono']
+        widgets = {
+            'nombre': forms.TextInput(attrs={'class': 'form-control'}),
+            'ubicacion': forms.TextInput(attrs={'class': 'form-control'}),
+            'encargado': forms.TextInput(attrs={'class': 'form-control'}),
+            'telefono': forms.TextInput(attrs={'class': 'form-control'}),
+        }

@@ -1,181 +1,209 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
+
+{% block title %}SIGI - Usuarios{% endblock %}
+{% block nav_usuarios %}active{% endblock %}
+{% block page_title %}Usuarios{% endblock %}
+{% block page_subtitle %}Gestión de usuarios del sistema{% endblock %}
+
+{% block extra_css %}
+<style>
+  .toolbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    flex-wrap:wrap;
+    margin-bottom: 12px;
+  }
+
+  .filters{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    align-items:center;
+  }
+
+  .filter{
+    position:relative;
+  }
+
+  .filter .icon-left{
+    position:absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color:#94a3b8;
+    font-size:.95rem;
+  }
+
+  .filter input,
+  .filter select{
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    background:#fff;
+    padding: 10px 12px 10px 38px;
+    font: inherit;
+    outline:none;
+    min-width: 240px;
+    transition: box-shadow .15s ease, border-color .15s ease;
+  }
+  .filter select{ padding-left: 12px; min-width: 220px; }
+
+  .filter input:focus,
+  .filter select:focus{
+    border-color: rgba(59,130,246,0.6);
+    box-shadow: 0 0 0 4px rgba(59,130,246,0.12);
+  }
+
+  .muted{
+    color: var(--muted);
+    font-size: .85rem;
+    font-weight: 650;
+  }
+
+  /* Badges adicionales (estado) */
+  .badge.soft-ok{
+    background: rgba(34,197,94,0.14);
+    color: var(--success);
+  }
+  .badge.soft-bad{
+    background: rgba(239,68,68,0.14);
+    color: var(--danger);
+  }
+
+  .actions{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <h1><i class="fas fa-users"></i> Usuarios</h1>
-    <p>Gestión de usuarios del sistema</p>
+<div class="card pad">
+
+  <div class="toolbar">
+    <div>
+      <div style="font-weight: 850; letter-spacing:-0.2px;">Lista de usuarios</div>
+      <div class="muted">Busca por username y filtra por rol.</div>
+    </div>
+
+    <a href="{% url 'usuarios:crear' %}" class="btn btn-primary">
+      <i class="fas fa-user-plus"></i> Nuevo usuario
+    </a>
+  </div>
+
+  <div class="filters" style="margin-bottom: 12px;">
+    <div class="filter">
+      <i class="fas fa-magnifying-glass icon-left"></i>
+      <input type="text" id="searchInput" placeholder="Buscar usuario...">
+    </div>
+
+    <div class="filter">
+      <select id="rolFilter" aria-label="Filtrar por rol">
+        <option value="">Todos los roles</option>
+        <option value="admin">Administrador</option>
+        <option value="almacenista">Almacenista</option>
+        <option value="consultor">Consultor</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Usuario</th>
+          <th>Nombre</th>
+          <th>Email</th>
+          <th>Rol</th>
+          <th>Estado</th>
+          <th>Fecha registro</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+
+      <tbody id="tablaBody">
+        {% for usuario in usuarios %}
+        <tr class="usuario-row"
+            data-nombre="{{ usuario.username|lower }}"
+            data-rol="{{ usuario.rol }}">
+          <td style="font-weight:800;">{{ usuario.username }}</td>
+          <td>{{ usuario.get_full_name|default:"-" }}</td>
+          <td>{{ usuario.email|default:"-" }}</td>
+
+          <td>
+            {% if usuario.rol == 'admin' %}
+              <span class="badge admin">Administrador</span>
+            {% elif usuario.rol == 'almacenista' %}
+              <span class="badge gray">Almacenista</span>
+            {% else %}
+              <span class="badge violet">Consultor</span>
+            {% endif %}
+          </td>
+
+          <td>
+            {% if usuario.is_active %}
+              <span class="badge soft-ok">Activo</span>
+            {% else %}
+              <span class="badge soft-bad">Inactivo</span>
+            {% endif %}
+          </td>
+
+          <td>{{ usuario.date_joined|date:"d/m/Y" }}</td>
+
+          <td style="white-space:nowrap;">
+            <div class="actions">
+              <a href="{% url 'usuarios:editar' usuario.id %}" class="btn btn-warning btn-sm">
+                <i class="fas fa-edit"></i> Editar
+              </a>
+
+              {% if usuario.id != user.id %}
+              <a href="{% url 'usuarios:eliminar' usuario.id %}"
+                 class="btn btn-danger btn-sm"
+                 onclick="return confirm('¿Eliminar este usuario?')">
+                <i class="fas fa-trash"></i> Eliminar
+              </a>
+              {% else %}
+              <span style="color:#64748b; font-size:.8rem; font-weight:800;">Usuario actual</span>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+
+        {% empty %}
+        <tr>
+          <td colspan="7" style="text-align:center; color:#64748b; padding: 18px 10px;">
+            No hay usuarios registrados
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
 </div>
+{% endblock %}
 
-<div class="table-container">
-    <div class="section-header">
-        <h2><i class="fas fa-list"></i> Lista de Usuarios</h2>
-        <a href="{% url 'usuarios:crear' %}" class="btn-primary">
-            <i class="fas fa-user-plus"></i> Nuevo Usuario
-        </a>
-    </div>
-
-    <div class="filters">
-        <div class="search-box">
-            <input type="text" id="searchInput" placeholder="Buscar usuario...">
-        </div>
-        <select id="rolFilter">
-            <option value="">Todos los roles</option>
-            <option value="admin">Administrador</option>
-            <option value="almacenista">Almacenista</option>
-            <option value="consultor">Consultor</option>
-        </select>
-    </div>
-
-    <div style="overflow-x: auto;">
-        <table>
-            <thead>
-                <tr>
-                    <th>Usuario</th>
-                    <th>Nombre</th>
-                    <th>Email</th>
-                    <th>Rol</th>
-                    <th>Estado</th>
-                    <th>Fecha Registro</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody id="tablaBody">
-                {% for usuario in usuarios %}
-                <tr class="usuario-row" data-nombre="{{ usuario.username|lower }}" data-rol="{{ usuario.rol }}">
-                    <td>{{ usuario.username }}</td>
-                    <td>{{ usuario.get_full_name|default:"-" }}</td>
-                    <td>{{ usuario.email|default:"-" }}</td>
-                    <td>
-                        {% if usuario.rol == 'admin' %}
-                            <span class="badge-admin">Administrador</span>
-                        {% elif usuario.rol == 'almacenista' %}
-                            <span class="badge-almacenista">Almacenista</span>
-                        {% else %}
-                            <span class="badge-consultor">Consultor</span>
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if usuario.is_active %}
-                            <span class="badge-active">Activo</span>
-                        {% else %}
-                            <span class="badge-inactive">Inactivo</span>
-                        {% endif %}
-                    </td>
-                    <td>{{ usuario.date_joined|date:"d/m/Y" }}</td>
-                    <td class="acciones">
-                        <a href="{% url 'usuarios:editar' usuario.id %}" class="btn-warning">
-                            <i class="fas fa-edit"></i> Editar
-                        </a>
-                        {% if usuario.id != user.id %}
-                        <a href="{% url 'usuarios:eliminar' usuario.id %}" class="btn-danger" onclick="return confirm('¿Eliminar este usuario?')">
-                            <i class="fas fa-trash"></i> Eliminar
-                        </a>
-                        {% else %}
-                        <span class="text-muted">Usuario actual</span>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="7" style="text-align: center;">No hay usuarios registrados</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-</div>
-
-<style>
-    .badge-admin {
-        background: #3b82f6;
-        color: white;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 0.75rem;
-        display: inline-block;
-    }
-    .badge-almacenista {
-        background: #64748b;
-        color: white;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 0.75rem;
-        display: inline-block;
-    }
-    .badge-consultor {
-        background: #8b5cf6;
-        color: white;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 0.75rem;
-        display: inline-block;
-    }
-    .badge-active {
-        background: #22c55e;
-        color: white;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 0.75rem;
-        display: inline-block;
-    }
-    .badge-inactive {
-        background: #ef4444;
-        color: white;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 0.75rem;
-        display: inline-block;
-    }
-    .text-muted {
-        color: #64748b;
-        font-size: 0.75rem;
-    }
-    .btn-warning {
-        background: #f97316;
-        color: white;
-        padding: 5px 12px;
-        border-radius: 6px;
-        text-decoration: none;
-        font-size: 0.7rem;
-        display: inline-block;
-    }
-    .btn-danger {
-        background: #ef4444;
-        color: white;
-        padding: 5px 12px;
-        border-radius: 6px;
-        text-decoration: none;
-        font-size: 0.7rem;
-        display: inline-block;
-    }
-    .acciones {
-        display: flex;
-        gap: 5px;
-        flex-wrap: wrap;
-    }
-</style>
-
+{% block extra_js %}
 <script>
-    document.getElementById('searchInput').addEventListener('keyup', function() {
-        let filter = this.value.toLowerCase();
-        let rows = document.querySelectorAll('.usuario-row');
-        rows.forEach(row => {
-            let nombre = row.getAttribute('data-nombre');
-            row.style.display = nombre.includes(filter) ? '' : 'none';
-        });
-    });
+  const searchInput = document.getElementById('searchInput');
+  const rolFilter = document.getElementById('rolFilter');
 
-    document.getElementById('rolFilter').addEventListener('change', function() {
-        let filter = this.value;
-        let rows = document.querySelectorAll('.usuario-row');
-        rows.forEach(row => {
-            let rol = row.getAttribute('data-rol');
-            if (!filter || rol === filter) {
-                row.style.display = '';
-            } else {
-                row.style.display = 'none';
-            }
-        });
+  function applyFilters() {
+    const search = (searchInput.value || '').toLowerCase().trim();
+    const rol = rolFilter.value || '';
+
+    document.querySelectorAll('.usuario-row').forEach(row => {
+      const nombre = row.getAttribute('data-nombre') || '';
+      const rowRol = row.getAttribute('data-rol') || '';
+      const matchSearch = !search || nombre.includes(search);
+      const matchRol = !rol || rowRol === rol;
+      row.style.display = (matchSearch && matchRol) ? '' : 'none';
     });
+  }
+
+  searchInput.addEventListener('keyup', applyFilters);
+  rolFilter.addEventListener('change', applyFilters);
 </script>
 {% endblock %}

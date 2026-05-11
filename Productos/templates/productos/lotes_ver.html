@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+
+{% block title %}SIGI - Detalle del lote{% endblock %}
+{% block nav_productos %}active{% endblock %}
+{% block page_title %}Detalle del lote{% endblock %}
+{% block page_subtitle %}Información completa del lote {{ lote.codigo }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .detail-shell{
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .cardx{
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(226,232,240,0.75);
+    border-radius: 22px;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .pad{ padding: 18px; }
+
+  .meta{
+    display:grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+
+  .meta-grid{
+    display:grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .kv{
+    border: 1px solid rgba(226,232,240,0.75);
+    background: #fff;
+    border-radius: 18px;
+    padding: 12px 14px;
+  }
+
+  .k{
+    color: var(--muted);
+    font-size: .78rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+  }
+  .v{
+    margin-top: 6px;
+    font-weight: 850;
+    color: #0f172a;
+    word-break: break-word;
+  }
+  .v.muted{
+    font-weight: 700;
+    color: var(--muted);
+  }
+
+  .badge{
+    display:inline-flex;
+    align-items:center;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: .72rem;
+    font-weight: 800;
+  }
+  .badge.warn{ background: rgba(249,115,22,0.14); color: var(--warning); }
+  .badge.ok{ background: rgba(34,197,94,0.14); color: var(--success); }
+  .badge.violet{ background: rgba(139,92,246,0.14); color: #7c3aed; }
+
+  .section-title{
+    margin: 6px 0 10px;
+    font-size: 1rem;
+    font-weight: 900;
+    letter-spacing: -0.2px;
+    display:flex;
+    align-items:center;
+    gap: 8px;
+  }
+
+  .actions{
+    display:flex;
+    justify-content:flex-end;
+    gap: 10px;
+    flex-wrap:wrap;
+    margin-top: 14px;
+  }
+  .btn-secondary{
+    background: linear-gradient(135deg, #64748b, #475569);
+    color:#fff;
+  }
+  .btn-success{
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    color:#fff;
+  }
+
+  @media (max-width: 820px){
+    .meta-grid{ grid-template-columns: 1fr; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="detail-shell">
+
+  <div class="cardx pad">
+
+    <!-- Datos del lote -->
+    <div class="meta">
+      <div class="meta-grid">
+        <div class="kv">
+          <div class="k">Código</div>
+          <div class="v">{{ lote.codigo }}</div>
+        </div>
+
+        <div class="kv">
+          <div class="k">Proveedor</div>
+          <div class="v">{{ lote.proveedor.nombre }}</div>
+        </div>
+
+        <div class="kv">
+          <div class="k">Fecha de pedido</div>
+          <div class="v">{% if lote.fecha_pedido %}{{ lote.fecha_pedido|date:"d/m/Y" }}{% else %}<span class="v muted">-</span>{% endif %}</div>
+        </div>
+
+        <div class="kv">
+          <div class="k">Fecha de entrega</div>
+          <div class="v">
+            {% if lote.fecha_entrega %}
+              {{ lote.fecha_entrega|date:"d/m/Y" }}
+            {% else %}
+              <span class="v muted">Pendiente</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="kv">
+          <div class="k">Estado</div>
+          <div class="v">
+            {% if lote.estado == 'pendiente' %}
+              <span class="badge warn"><i class="fas fa-clock" style="margin-right:8px;"></i>Pendiente</span>
+            {% elif lote.estado == 'recibido' %}
+              <span class="badge ok"><i class="fas fa-circle-check" style="margin-right:8px;"></i>Recibido</span>
+            {% else %}
+              <span class="badge violet"><i class="fas fa-circle-half-stroke" style="margin-right:8px;"></i>Recibido parcial</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="kv">
+          <div class="k">Creado por</div>
+          <div class="v">{{ lote.created_by.username }}</div>
+        </div>
+
+        <div class="kv">
+          <div class="k">Fecha de creación</div>
+          <div class="v">{{ lote.created_at|date:"d/m/Y H:i" }}</div>
+        </div>
+
+        {% if lote.observaciones %}
+        <div class="kv" style="grid-column: 1 / -1;">
+          <div class="k">Observaciones</div>
+          <div class="v muted">{{ lote.observaciones }}</div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Productos -->
+    <div class="section-title">
+      <i class="fas fa-boxes"></i> Productos del lote
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Producto base</th>
+            <th>Serial</th>
+            <th>Estado</th>
+            <th>Fecha registro</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {% for producto in productos %}
+          <tr>
+            <td style="font-weight: 800;">
+              {{ producto.producto_base.nombre }}
+              <span style="color: var(--muted); font-weight:700;">
+                ({{ producto.producto_base.codigo }})
+              </span>
+            </td>
+
+            <td><span style="font-weight: 900;">{{ producto.serial }}</span></td>
+
+            <td>
+              {% if producto.estado == 'disponible' %}
+                <span class="badge ok">Disponible</span>
+              {% elif producto.estado == 'vendido' %}
+                <span class="badge warn">Vendido</span>
+              {% else %}
+                <span class="badge" style="background: rgba(239,68,68,0.14); color: var(--danger);">Dañado</span>
+              {% endif %}
+            </td>
+
+            <td>{{ producto.fecha_registro|date:"d/m/Y H:i" }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="4" style="text-align:center; color:#64748b; padding: 18px 10px;">
+              No hay productos en este lote
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Acciones -->
+    <div class="actions">
+      <a href="{% url 'productos:lotes' %}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Volver
+      </a>
+
+      {% if lote.estado == 'pendiente' %}
+      <a href="{% url 'productos:recibir_lote' lote.id %}" class="btn btn-success">
+        <i class="fas fa-box-open"></i> Recibir lote
+      </a>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+{% endblock %}

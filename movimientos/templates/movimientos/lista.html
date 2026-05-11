@@ -1,132 +1,169 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SIGI - Movimientos</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Inter', sans-serif; background: #f4f7fc; display: flex; height: 100vh; overflow: hidden; }
-        .sidebar { width: 280px; background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); color: white; padding: 2rem 1.5rem; display: flex; flex-direction: column; }
-        .logo { display: flex; align-items: center; gap: 12px; margin-bottom: 3rem; padding-bottom: 1rem; border-bottom: 1px solid #334155; }
-        .logo i { font-size: 2rem; color: #3b82f6; }
-        .logo span { font-size: 1.5rem; font-weight: 700; }
-        .nav-menu { flex: 1; display: flex; flex-direction: column; gap: 8px; }
-        .nav-item { display: flex; align-items: center; gap: 15px; padding: 12px 16px; border-radius: 12px; color: #cbd5e1; text-decoration: none; transition: all 0.3s; }
-        .nav-item:hover { background: #334155; color: white; transform: translateX(5px); }
-        .nav-item.active { background: #3b82f6; color: white; box-shadow: 0 4px 10px rgba(59,130,246,0.3); }
-        .main-content { flex: 1; overflow-y: auto; padding: 2rem; }
-        .page-header { margin-bottom: 2rem; }
-        .page-header h1 { font-size: 2rem; color: #1e293b; display: flex; align-items: center; gap: 10px; }
-        .page-header h1 i { color: #3b82f6; }
-        .page-header p { color: #64748b; margin-top: 0.5rem; }
-        .btn-primary { background: #3b82f6; color: white; border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; }
-        .btn-primary:hover { background: #2563eb; transform: translateY(-2px); }
-        .table-container { background: white; border-radius: 16px; padding: 1.5rem; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; }
-        .section-header h2 { font-size: 1.3rem; color: #1e293b; display: flex; align-items: center; gap: 8px; }
-        table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; padding: 1rem 0.5rem; color: #64748b; font-weight: 600; font-size: 0.9rem; border-bottom: 2px solid #e2e8f0; }
-        td { padding: 1rem 0.5rem; border-bottom: 1px solid #e2e8f0; color: #1e293b; }
-        .btn-logout { background: #ef4444; color: white; padding: 8px 16px; border-radius: 8px; text-decoration: none; margin-left: 15px; }
-        .user-info { display: flex; align-items: center; justify-content: flex-end; margin-bottom: 20px; gap: 10px; }
-        .badge-entrada { background: #e6f7e6; color: #22c55e; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; }
-        .badge-salida { background: #fee2e2; color: #ef4444; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; }
-        .filters { display: flex; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; }
-        .filters input, .filters select { padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-family: inherit; }
-        .search-box { flex: 1; max-width: 300px; }
-        .search-box input { width: 100%; }
-    </style>
-</head>
-<body>
-    <div class="sidebar">
-        <div class="logo"><i class="fas fa-cubes"></i><span>SIGI</span></div>
-        <nav class="nav-menu">
-            <a href="{% url 'inventarios:dashboard' %}" class="nav-item"><i class="fas fa-chart-pie"></i><span>Dashboard</span></a>
-            <a href="{% url 'compras:listar' %}" class="nav-item"><i class="fas fa-shopping-cart"></i><span>Compras</span></a>
-            <a href="{% url 'movimientos:listar' %}" class="nav-item active"><i class="fas fa-exchange-alt"></i><span>Movimientos</span></a>
-            {% if user.rol == 'admin' %}
-            <a href="{% url 'usuarios:listar' %}" class="nav-item"><i class="fas fa-users"></i><span>Usuarios</span></a>
+{% extends "base.html" %}
+
+{% block title %}SIGI - Movimientos{% endblock %}
+{% block nav_movimientos %}active{% endblock %}
+{% block page_title %}Movimientos{% endblock %}
+{% block page_subtitle %}Historial de entradas y salidas de inventario{% endblock %}
+
+{% block extra_css %}
+<style>
+  .toolbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    flex-wrap:wrap;
+    margin-bottom: 12px;
+  }
+
+  .filters{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    align-items:center;
+  }
+
+  .filter{
+    position:relative;
+  }
+
+  .filter .icon-left{
+    position:absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color:#94a3b8;
+    font-size:.95rem;
+  }
+
+  .filter input,
+  .filter select{
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    background:#fff;
+    padding: 10px 12px 10px 38px;
+    font: inherit;
+    outline:none;
+    min-width: 220px;
+    transition: box-shadow .15s ease, border-color .15s ease;
+  }
+  .filter select{ padding-left: 12px; min-width: 180px; }
+  .filter input:focus,
+  .filter select:focus{
+    border-color: rgba(59,130,246,0.6);
+    box-shadow: 0 0 0 4px rgba(59,130,246,0.12);
+  }
+
+  .muted{
+    color: var(--muted);
+    font-size: .85rem;
+    font-weight: 650;
+  }
+
+  /* Tabla: columnas más “estables” */
+  .w-type{ width: 120px; }
+  .w-qty{ width: 110px; }
+  .w-motivo{ width: 180px; }
+  .w-fecha{ width: 170px; }
+  .w-user{ width: 150px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card pad">
+
+  <div class="toolbar">
+    <div>
+      <div style="font-weight: 850; letter-spacing:-0.2px;">Lista de movimientos</div>
+      <div class="muted">Filtra por producto o por tipo de movimiento.</div>
+    </div>
+
+    <a href="{% url 'movimientos:registrar' %}" class="btn btn-primary">
+      <i class="fas fa-plus"></i> Nuevo movimiento
+    </a>
+  </div>
+
+  <div class="filters" style="margin-bottom: 12px;">
+    <div class="filter">
+      <i class="fas fa-magnifying-glass icon-left"></i>
+      <input type="text" id="searchInput" placeholder="Buscar producto...">
+    </div>
+
+    <div class="filter">
+      <select id="tipoFilter" aria-label="Filtrar por tipo">
+        <option value="">Todos los tipos</option>
+        <option value="entrada">Entrada</option>
+        <option value="salida">Salida</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Producto</th>
+          <th class="w-type">Tipo</th>
+          <th class="w-qty">Cantidad</th>
+          <th class="w-motivo">Motivo</th>
+          <th class="w-fecha">Fecha</th>
+          <th class="w-user">Usuario</th>
+        </tr>
+      </thead>
+
+      <tbody id="tablaBody">
+        {% for movimiento in movimientos %}
+        <tr class="movimiento-row"
+            data-producto="{{ movimiento.producto.nombre|lower }}"
+            data-tipo="{{ movimiento.tipo }}">
+          <td style="font-weight:700;">{{ movimiento.producto.nombre }}</td>
+
+          <td>
+            {% if movimiento.tipo == 'entrada' %}
+              <span class="badge ok">Entrada</span>
+            {% else %}
+              <span class="badge bad">Salida</span>
             {% endif %}
-            <a href="{% url 'productos:listar' %}" class="nav-item"><i class="fas fa-boxes"></i><span>Productos</span></a>
-        </nav>
-    </div>
+          </td>
 
-    <div class="main-content">
-        <div class="user-info">
-            <i class="fas fa-user-circle"></i>
-            <span>{{ user.get_full_name|default:user.username }}</span>
-            <a href="{% url 'logout' %}" class="btn-logout"><i class="fas fa-sign-out-alt"></i> Salir</a>
-        </div>
+          <td>{{ movimiento.cantidad }}</td>
+          <td>{{ movimiento.motivo|default:"-" }}</td>
+          <td>{{ movimiento.created_at|date:"d/m/Y H:i" }}</td>
+          <td>{{ movimiento.usuario.username }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" style="text-align:center; color:#64748b; padding: 18px 10px;">
+            No hay movimientos registrados
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 
-        <div class="page-header">
-            <h1><i class="fas fa-exchange-alt"></i> Movimientos</h1>
-            <p>Historial de entradas y salidas de inventario</p>
-        </div>
+</div>
+{% endblock %}
 
-        <div class="table-container">
-            <div class="section-header">
-                <h2><i class="fas fa-list"></i> Lista de Movimientos</h2>
-                <a href="{% url 'movimientos:registrar' %}" class="btn-primary"><i class="fas fa-plus"></i> Nuevo Movimiento</a>
-            </div>
+{% block extra_js %}
+<script>
+  const searchInput = document.getElementById('searchInput');
+  const tipoFilter = document.getElementById('tipoFilter');
 
-            <div class="filters">
-                <div class="search-box">
-                    <input type="text" id="searchInput" placeholder="Buscar producto...">
-                </div>
-                <select id="tipoFilter">
-                    <option value="">Todos los tipos</option>
-                    <option value="entrada">Entrada</option>
-                    <option value="salida">Salida</option>
-                </select>
-            </div>
+  function applyFilters() {
+    const search = (searchInput.value || '').toLowerCase().trim();
+    const tipo = tipoFilter.value || '';
 
-            <table>
-                <thead>
-                    <tr><th>Producto</th><th>Tipo</th><th>Cantidad</th><th>Motivo</th><th>Fecha</th><th>Usuario</th></tr>
-                </thead>
-                <tbody id="tablaBody">
-                    {% for movimiento in movimientos %}
-                    <tr class="movimiento-row" data-producto="{{ movimiento.producto.nombre|lower }}" data-tipo="{{ movimiento.tipo }}">
-                        <td>{{ movimiento.producto.nombre }}</td>
-                        <td>{% if movimiento.tipo == 'entrada' %}<span class="badge-entrada">Entrada</span>{% else %}<span class="badge-salida">Salida</span>{% endif %}</td>
-                        <td>{{ movimiento.cantidad }}</td>
-                        <td>{{ movimiento.motivo|default:"-" }}</td>
-                        <td>{{ movimiento.created_at|date:"d/m/Y H:i" }}</td>
-                        <td>{{ movimiento.usuario.username }}</td>
-                    </tr>
-                    {% empty %}
-                    <tr><td colspan="6" style="text-align: center;">No hay movimientos registrados</td></tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
+    document.querySelectorAll('.movimiento-row').forEach(row => {
+      const producto = row.getAttribute('data-producto') || '';
+      const rowTipo = row.getAttribute('data-tipo') || '';
+      const matchSearch = !search || producto.includes(search);
+      const matchTipo = !tipo || rowTipo === tipo;
+      row.style.display = (matchSearch && matchTipo) ? '' : 'none';
+    });
+  }
 
-    <script>
-        document.getElementById('searchInput').addEventListener('keyup', function() {
-            let filter = this.value.toLowerCase();
-            let rows = document.querySelectorAll('.movimiento-row');
-            rows.forEach(row => {
-                let producto = row.getAttribute('data-producto');
-                row.style.display = producto.includes(filter) ? '' : 'none';
-            });
-        });
-
-        document.getElementById('tipoFilter').addEventListener('change', function() {
-            let filter = this.value;
-            let rows = document.querySelectorAll('.movimiento-row');
-            rows.forEach(row => {
-                let tipo = row.getAttribute('data-tipo');
-                if (!filter || tipo === filter) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-        });
-    </script>
-</body>
-</html>
+  searchInput.addEventListener('keyup', applyFilters);
+  tipoFilter.addEventListener('change', applyFilters);
+</script>
+{% endblock %}

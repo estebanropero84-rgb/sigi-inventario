@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}SIGI - Proveedores{% endblock %}
+{% block nav_productos %}active{% endblock %}
+{% block page_title %}Proveedores{% endblock %}
+{% block page_subtitle %}Gestión de proveedores del sistema{% endblock %}
+
+{% block extra_css %}
+<style>
+  .toolbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    flex-wrap:wrap;
+    margin-bottom: 12px;
+  }
+
+  .filters{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    align-items:center;
+  }
+
+  .filter{
+    position:relative;
+  }
+
+  .filter .icon-left{
+    position:absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color:#94a3b8;
+    font-size:.95rem;
+  }
+
+  .filter input{
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    background:#fff;
+    padding: 10px 12px 10px 38px;
+    font: inherit;
+    outline:none;
+    min-width: 280px;
+    transition: box-shadow .15s ease, border-color .15s ease;
+  }
+  .filter input:focus{
+    border-color: rgba(59,130,246,0.6);
+    box-shadow: 0 0 0 4px rgba(59,130,246,0.12);
+  }
+
+  .muted{
+    color: var(--muted);
+    font-size: .85rem;
+    font-weight: 650;
+  }
+
+  .actions{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+
+  .w-id{ width: 70px; }
+  .w-nit{ width: 140px; }
+  .w-tel{ width: 160px; }
+  .w-email{ width: 220px; }
+  .w-contacto{ width: 200px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card pad">
+
+  <div class="toolbar">
+    <div>
+      <div style="font-weight: 850; letter-spacing:-0.2px;">Lista de proveedores</div>
+      <div class="muted">Busca por nombre y administra tus proveedores.</div>
+    </div>
+
+    <a href="{% url 'productos:crear_proveedor' %}" class="btn btn-primary">
+      <i class="fas fa-plus"></i> Nuevo proveedor
+    </a>
+  </div>
+
+  <div class="filters" style="margin-bottom: 12px;">
+    <div class="filter">
+      <i class="fas fa-magnifying-glass icon-left"></i>
+      <input type="text" id="searchInput" placeholder="Buscar proveedor...">
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th class="w-id">ID</th>
+          <th>Nombre</th>
+          <th class="w-nit">NIT</th>
+          <th class="w-tel">Teléfono</th>
+          <th class="w-email">Email</th>
+          <th class="w-contacto">Contacto</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+
+      <tbody id="tablaBody">
+        {% for proveedor in proveedores %}
+        <tr class="proveedor-row" data-nombre="{{ proveedor.nombre|lower }}">
+          <td class="w-id" style="color:#64748b; font-weight:800;">#{{ proveedor.id }}</td>
+          <td style="font-weight:800;">{{ proveedor.nombre }}</td>
+          <td>{{ proveedor.nit|default:"-" }}</td>
+          <td>{{ proveedor.telefono|default:"-" }}</td>
+          <td>{{ proveedor.email|default:"-" }}</td>
+          <td>{{ proveedor.contacto|default:"-" }}</td>
+          <td style="white-space:nowrap;">
+            <div class="actions">
+              <a href="{% url 'productos:editar_proveedor' proveedor.id %}" class="btn btn-warning btn-sm">
+                <i class="fas fa-edit"></i> Editar
+              </a>
+              <a href="{% url 'productos:eliminar_proveedor' proveedor.id %}"
+                 class="btn btn-danger btn-sm"
+                 onclick="return confirm('¿Eliminar este proveedor?')">
+                <i class="fas fa-trash"></i> Eliminar
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" style="text-align:center; color:#64748b; padding: 18px 10px;">
+            No hay proveedores registrados
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const searchInput = document.getElementById('searchInput');
+
+  function applyFilter() {
+    const filter = (searchInput.value || '').toLowerCase().trim();
+    document.querySelectorAll('.proveedor-row').forEach(row => {
+      const nombre = row.getAttribute('data-nombre') || '';
+      row.style.display = !filter || nombre.includes(filter) ? '' : 'none';
+    });
+  }
+
+  searchInput.addEventListener('keyup', applyFilter);
+</script>
+{% endblock %}

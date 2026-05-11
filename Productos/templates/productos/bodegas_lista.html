@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+
+{% block title %}SIGI - Bodegas{% endblock %}
+{% block nav_productos %}active{% endblock %}
+{% block page_title %}Bodegas{% endblock %}
+{% block page_subtitle %}Gestión de bodegas y almacenes{% endblock %}
+
+{% block extra_css %}
+<style>
+  .toolbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    flex-wrap:wrap;
+    margin-bottom: 12px;
+  }
+
+  .filters{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    align-items:center;
+    margin-bottom: 12px;
+  }
+
+  .filter{
+    position:relative;
+  }
+  .filter .icon-left{
+    position:absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color:#94a3b8;
+    font-size:.95rem;
+  }
+
+  .filter input{
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    background:#fff;
+    padding: 10px 12px 10px 38px;
+    font: inherit;
+    outline:none;
+    min-width: 280px;
+    transition: box-shadow .15s ease, border-color .15s ease;
+  }
+  .filter input:focus{
+    border-color: rgba(59,130,246,0.6);
+    box-shadow: 0 0 0 4px rgba(59,130,246,0.12);
+  }
+
+  .muted{
+    color: var(--muted);
+    font-size: .85rem;
+    font-weight: 650;
+  }
+
+  .badge-soft{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: rgba(34,197,94,0.14);
+    color: var(--success);
+    font-weight: 900;
+    font-size: .78rem;
+  }
+
+  .actions{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+
+  .w-id{ width: 80px; }
+  .w-count{ width: 140px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card pad">
+
+  <div class="toolbar">
+    <div>
+      <div style="font-weight: 850; letter-spacing:-0.2px;">Lista de bodegas</div>
+      <div class="muted">Busca por nombre y administra almacenes.</div>
+    </div>
+
+    <a href="{% url 'productos:crear_bodega' %}" class="btn btn-primary">
+      <i class="fas fa-plus"></i> Nueva bodega
+    </a>
+  </div>
+
+  <div class="filters">
+    <div class="filter">
+      <i class="fas fa-magnifying-glass icon-left"></i>
+      <input type="text" id="searchInput" placeholder="Buscar bodega...">
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th class="w-id">ID</th>
+          <th>Nombre</th>
+          <th>Ubicación</th>
+          <th>Encargado</th>
+          <th>Teléfono</th>
+          <th class="w-count">Productos</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+
+      <tbody id="tablaBody">
+        {% for bodega in bodegas %}
+        <tr class="bodega-row" data-nombre="{{ bodega.nombre|lower }}">
+          <td class="w-id" style="color:#64748b; font-weight:800;">#{{ bodega.id }}</td>
+          <td style="font-weight:900;">{{ bodega.nombre }}</td>
+          <td>{{ bodega.ubicacion|default:"-" }}</td>
+          <td>{{ bodega.encargado|default:"-" }}</td>
+          <td>{{ bodega.telefono|default:"-" }}</td>
+          <td>
+            <span class="badge-soft">
+              <i class="fas fa-boxes"></i> {{ bodega.productos.count }} productos
+            </span>
+          </td>
+          <td style="white-space:nowrap;">
+            <div class="actions">
+              <a href="{% url 'productos:editar_bodega' bodega.id %}" class="btn btn-warning btn-sm">
+                <i class="fas fa-edit"></i> Editar
+              </a>
+              <a href="{% url 'productos:eliminar_bodega' bodega.id %}"
+                 class="btn btn-danger btn-sm"
+                 onclick="return confirm('¿Eliminar esta bodega?')">
+                <i class="fas fa-trash"></i> Eliminar
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" style="text-align:center; color:#64748b; padding: 18px 10px;">
+            No hay bodegas registradas
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const searchInput = document.getElementById('searchInput');
+
+  function applyFilter() {
+    const filter = (searchInput.value || '').toLowerCase().trim();
+    document.querySelectorAll('.bodega-row').forEach(row => {
+      const nombre = row.getAttribute('data-nombre') || '';
+      row.style.display = !filter || nombre.includes(filter) ? '' : 'none';
+    });
+  }
+
+  searchInput.addEventListener('keyup', applyFilter);
+</script>
+{% endblock %}

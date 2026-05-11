@@ -14,6 +14,26 @@ def listar_movimientos(request):
 @login_required
 def registrar_movimiento(request):
     """Registrar entrada o salida de inventario"""
+@login_required
+def registrar_movimiento(request):
+    productos = Producto.objects.all().order_by('nombre')
+    
+    # 🔥 PASO 8: Prellenar producto si viene del escáner
+    producto_id = request.GET.get('producto')
+    tipo_predefinido = request.GET.get('tipo')
+    
+    producto_seleccionado = None
+    if producto_id:
+        producto_seleccionado = get_object_or_404(Producto, pk=producto_id)
+    
+    # ... resto del código existente ...
+    
+    return render(request, 'movimientos/registrar.html', {
+        'productos': productos,
+        'producto_seleccionado': producto_seleccionado,  # 🔥 Agregar esto
+        'tipo_predefinido': tipo_predefinido,  # 🔥 Agregar esto
+        'form': MovimientoForm()
+    })    
     
     # 🔥 Obtener todos los productos
     productos = Producto.objects.all().order_by('nombre')

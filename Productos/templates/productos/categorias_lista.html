@@ -1,68 +1,160 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
+
+{% block title %}SIGI - Categorías{% endblock %}
+{% block nav_productos %}active{% endblock %}
+{% block page_title %}Categorías{% endblock %}
+{% block page_subtitle %}Gestión de categorías de productos{% endblock %}
+
+{% block extra_css %}
+<style>
+  .toolbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    flex-wrap:wrap;
+    margin-bottom: 12px;
+  }
+
+  .filters{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    align-items:center;
+    margin-bottom: 12px;
+  }
+
+  .filter{
+    position:relative;
+  }
+  .filter .icon-left{
+    position:absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color:#94a3b8;
+    font-size:.95rem;
+  }
+
+  .filter input{
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    background:#fff;
+    padding: 10px 12px 10px 38px;
+    font: inherit;
+    outline:none;
+    min-width: 280px;
+    transition: box-shadow .15s ease, border-color .15s ease;
+  }
+  .filter input:focus{
+    border-color: rgba(59,130,246,0.6);
+    box-shadow: 0 0 0 4px rgba(59,130,246,0.12);
+  }
+
+  .muted{
+    color: var(--muted);
+    font-size: .85rem;
+    font-weight: 650;
+  }
+
+  .actions{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+
+  .w-id{ width: 80px; }
+  .w-prod{ width: 120px; }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <h1><i class="fas fa-tags"></i> Categorías</h1>
-    <p>Gestión de categorías de productos</p>
-</div>
+<div class="card pad">
 
-<div class="table-container">
-    <div class="section-header">
-        <h2><i class="fas fa-list"></i> Lista de Categorías</h2>
-        <a href="{% url 'productos:crear_categoria' %}" class="btn-primary">
-            <i class="fas fa-plus"></i> Nueva Categoría
-        </a>
+  <div class="toolbar">
+    <div>
+      <div style="font-weight: 850; letter-spacing:-0.2px;">Lista de categorías</div>
+      <div class="muted">Busca por nombre y administra la clasificación de productos.</div>
     </div>
 
-    <div class="filters">
-        <div class="search-box">
-            <input type="text" id="searchInput" placeholder="Buscar categoría...">
-        </div>
-    </div>
+    <a href="{% url 'productos:crear_categoria' %}" class="btn btn-primary">
+      <i class="fas fa-plus"></i> Nueva categoría
+    </a>
+  </div>
 
+  <div class="filters">
+    <div class="filter">
+      <i class="fas fa-magnifying-glass icon-left"></i>
+      <input type="text" id="searchInput" placeholder="Buscar categoría...">
+    </div>
+  </div>
+
+  <div class="table-wrap">
     <table>
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Nombre</th>
-                <th>Descripción</th>
-                <th>Productos</th>
-                <th>Acciones</th>
-            </tr>
-        </thead>
-        <tbody id="tablaBody">
-            {% for categoria in categorias %}
-            <tr class="categoria-row" data-nombre="{{ categoria.nombre|lower }}">
-                <td>{{ categoria.id }}</td>
-                <td>{{ categoria.nombre }}</td>
-                <td>{{ categoria.descripcion|default:"-" }}</td>
-                <td>{{ categoria.productos.count }}</td>
-                <td class="acciones">
-                    <a href="{% url 'productos:editar_categoria' categoria.id %}" class="btn-warning">
-                        <i class="fas fa-edit"></i> Editar
-                    </a>
-                    <a href="{% url 'productos:eliminar_categoria' categoria.id %}" class="btn-danger">
-                        <i class="fas fa-trash"></i> Eliminar
-                    </a>
-                </td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="5" style="text-align: center;">No hay categorías registradas</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
+      <thead>
+        <tr>
+          <th class="w-id">ID</th>
+          <th>Nombre</th>
+          <th>Descripción</th>
+          <th class="w-prod">Productos</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
 
+      <tbody id="tablaBody">
+        {% for categoria in categorias %}
+        <tr class="categoria-row" data-nombre="{{ categoria.nombre|lower }}">
+          <td class="w-id" style="color:#64748b; font-weight:800;">#{{ categoria.id }}</td>
+          <td style="font-weight:900;">{{ categoria.nombre }}</td>
+          <td style="color: var(--muted); font-weight:650;">
+            {{ categoria.descripcion|default:"-" }}
+          </td>
+          <td style="font-weight:900;">{{ categoria.productos.count }}</td>
+          <td style="white-space:nowrap;">
+            <div class="actions">
+              <a href="{% url 'productos:editar_categoria' categoria.id %}" class="btn btn-warning btn-sm">
+                <i class="fas fa-edit"></i> Editar
+              </a>
+              <a href="{% url 'productos:eliminar_categoria' categoria.id %}" class="btn btn-danger btn-sm"
+                 onclick="return confirm('¿Eliminar esta categoría?')">
+                <i class="fas fa-trash"></i> Eliminar
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5" style="text-align:center; color:#64748b; padding: 18px 10px;">
+            No hay categorías registradas
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
 <script>
-    document.getElementById('searchInput').addEventListener('keyup', function() {
-        let filter = this.value.toLowerCase();
-        let rows = document.querySelectorAll('.categoria-row');
-        rows.forEach(row => {
-            let nombre = row.getAttribute('data-nombre');
-            row.style.display = nombre.includes(filter) ? '' : 'none';
-        });
+  const searchInput = document.getElementById('searchInput');
+  const tablaBody = document.getElementById('tablaBody');
+
+  if (searchInput) {
+    searchInput.addEventListener('keyup', function() {
+      const filtro = this.value.toLowerCase();
+      const rows = tablaBody.querySelectorAll('.categoria-row');
+
+      rows.forEach(row => {
+        const nombre = row.getAttribute('data-nombre');
+        if (nombre && nombre.includes(filtro)) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      });
     });
+  }
 </script>
 {% endblock %}

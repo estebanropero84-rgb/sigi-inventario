@@ -32,8 +32,53 @@ class Usuario(AbstractUser):
     def es_consultor(self):
         return self.rol == 'consultor'
     
+    @property
+    def puede_editar_productos(self):
+        """Permite editar productos a admin y almacenista"""
+        return self.rol in ['admin', 'almacenista']
+    
+    @property
+    def puede_ver_usuarios(self):
+        """Solo admin puede ver usuarios"""
+        return self.rol == 'admin'
+    
+    @property
+    def puede_editar_usuarios(self):
+        """Solo admin puede editar usuarios"""
+        return self.rol == 'admin'
+    
+    @property
+    def puede_editar_compras(self):
+        """Solo admin puede editar compras"""
+        return self.rol == 'admin'
+    
     def save(self, *args, **kwargs):
         # Si es superusuario, asignar rol admin automáticamente
         if self.is_superuser and self.rol != 'admin':
             self.rol = 'admin'
         super().save(*args, **kwargs)
+class SeguridadLog(models.Model):
+    """Registro de actividad sospechosa y eventos de seguridad"""
+    ACCIONES = (
+        ('login_fallo', 'Intento de login fallido'),
+        ('login_exito', 'Login exitoso'),
+        ('logout', 'Logout'),
+        ('intento_bruteforce', 'Ataque de fuerza bruta detectado'),
+        ('cambio_password', 'Cambio de contraseña'),
+        ('acceso_denegado', 'Acceso denegado'),
+    )
+    
+    usuario = models.CharField(max_length=150, null=True, blank=True)
+    ip = models.GenericIPAddressField()
+    accion = models.CharField(max_length=30, choices=ACCIONES)
+    detalles = models.TextField(blank=True, null=True)
+    fecha = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = "Log de Seguridad"
+        verbose_name_plural = "Logs de Seguridad"
+        ordering = ['-fecha']
+    
+    def __str__(self):
+        return f"{self.fecha} - {self.accion} - {self.ip}"
+            

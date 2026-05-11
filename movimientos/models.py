@@ -13,8 +13,8 @@ class Movimiento(models.Model):
     cantidad = models.IntegerField()
     stock_anterior = models.IntegerField(default=0)
     stock_nuevo = models.IntegerField(default=0)
-    motivo = models.CharField(max_length=100, blank=True)
-    observacion = models.TextField(blank=True)
+    motivo = models.CharField(max_length=100, blank=True, null=True)
+    observacion = models.TextField(blank=True, null=True)
     usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     

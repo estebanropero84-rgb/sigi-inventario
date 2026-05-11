@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block title %}SIGI - {{ titulo }}{% endblock %}
+{% block nav_productos %}active{% endblock %}
+{% block page_title %}{{ titulo }}{% endblock %}
+{% block page_subtitle %}
+  {% if proveedor %}Modificar los datos del proveedor{% else %}Registrar un nuevo proveedor{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  .form-shell{
+    max-width: 920px;
+    margin: 0 auto;
+  }
+
+  .form-card{
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(226,232,240,0.75);
+    border-radius: 22px;
+    box-shadow: var(--shadow-sm);
+    padding: 18px;
+  }
+
+  .grid-2{
+    display:grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .field{
+    margin-bottom: 12px;
+  }
+
+  .field label{
+    display:block;
+    margin-bottom: 8px;
+    font-weight: 850;
+    font-size: .85rem;
+    color: #1e293b;
+  }
+
+  /* Asegura que los widgets de Django se vean como tu sistema (si tienen class=form-control) */
+  .form-control,
+  .form-card input,
+  .form-card select,
+  .form-card textarea{
+    width:100%;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    background:#fff;
+    padding: 12px 12px;
+    font: inherit;
+    outline:none;
+    transition: box-shadow .15s ease, border-color .15s ease;
+  }
+
+  .form-control:focus,
+  .form-card input:focus,
+  .form-card select:focus,
+  .form-card textarea:focus{
+    border-color: rgba(59,130,246,0.6);
+    box-shadow: 0 0 0 4px rgba(59,130,246,0.12);
+  }
+
+  .help{
+    margin-top: 6px;
+    color: var(--muted);
+    font-size: .82rem;
+    font-weight: 650;
+  }
+
+  .actions{
+    display:flex;
+    justify-content:flex-end;
+    gap: 10px;
+    flex-wrap:wrap;
+    margin-top: 16px;
+  }
+
+  .btn-secondary{
+    background: linear-gradient(135deg, #64748b, #475569);
+    color:#fff;
+  }
+
+  .notice{
+    border-radius: 18px;
+    padding: 12px 14px;
+    border: 1px solid rgba(239,68,68,0.25);
+    background: linear-gradient(135deg, rgba(254,226,226,0.92), rgba(255,241,242,0.92));
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 12px;
+  }
+  .notice strong{ display:block; margin-bottom: 4px; }
+
+  @media (max-width: 760px){
+    .grid-2{ grid-template-columns: 1fr; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="form-shell">
+  <div class="form-card">
+
+    {# Errores del form (si existen) #}
+    {% if form.errors %}
+      <div class="notice">
+        <strong>Revisa los campos:</strong>
+        <div style="color:#7f1d1d; font-weight:650; font-size:.9rem;">
+          Hay errores en el formulario. Por favor corrige e intenta de nuevo.
+        </div>
+      </div>
+    {% endif %}
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+
+      <div class="grid-2">
+        <div class="field">
+          <label for="{{ form.nombre.id_for_label }}">Nombre del proveedor <span style="color: var(--danger);">*</span></label>
+          {{ form.nombre }}
+          <div class="help">Ej: Distribuidora Central S.A.S.</div>
+        </div>
+
+        <div class="field">
+          <label for="{{ form.nit.id_for_label }}">NIT</label>
+          {{ form.nit }}
+          <div class="help">Opcional. Útil para facturación.</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="field">
+          <label for="{{ form.telefono.id_for_label }}">Teléfono</label>
+          {{ form.telefono }}
+        </div>
+
+        <div class="field">
+          <label for="{{ form.email.id_for_label }}">Email</label>
+          {{ form.email }}
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="{{ form.direccion.id_for_label }}">Dirección</label>
+        {{ form.direccion }}
+      </div>
+
+      <div class="field">
+        <label for="{{ form.contacto.id_for_label }}">Persona de contacto</label>
+        {{ form.contacto }}
+        <div class="help">Nombre de la persona encargada o responsable.</div>
+      </div>
+
+      <div class="actions">
+        <a href="{% url 'productos:proveedores' %}" class="btn btn-secondary">
+          <i class="fas fa-xmark"></i> Cancelar
+        </a>
+
+        <button type="submit" class="btn btn-primary">
+          <i class="fas fa-floppy-disk"></i>
+          {% if proveedor %}Actualizar{% else %}Guardar{% endif %} proveedor
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>
+{% endblock %}
