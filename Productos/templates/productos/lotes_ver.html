@@ -8,7 +8,7 @@
 {% block extra_css %}
 <style>
   .detail-shell{
-    max-width: 1100px;
+    max-width: 1200px;
     margin: 0 auto;
   }
 
@@ -24,14 +24,13 @@
 
   .meta{
     display:grid;
-    grid-template-columns: 1fr;
     gap: 12px;
     margin-bottom: 14px;
   }
 
   .meta-grid{
     display:grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 12px;
   }
 
@@ -43,8 +42,8 @@
   }
 
   .k{
-    color: var(--muted);
-    font-size: .78rem;
+    color: #64748b;
+    font-size: .75rem;
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: .06em;
@@ -57,20 +56,53 @@
   }
   .v.muted{
     font-weight: 700;
-    color: var(--muted);
+    color: #64748b;
+  }
+
+  .progress-bar{
+    background: #e2e8f0;
+    border-radius: 20px;
+    height: 30px;
+    position: relative;
+    overflow: hidden;
+    margin: 10px 0;
+  }
+  .progress-fill{
+    background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+    height: 100%;
+    border-radius: 20px;
+    transition: width 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.75rem;
+    font-weight: bold;
   }
 
   .badge{
     display:inline-flex;
     align-items:center;
-    padding: 4px 10px;
-    border-radius: 999px;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 20px;
     font-size: .72rem;
-    font-weight: 800;
+    font-weight: 700;
   }
-  .badge.warn{ background: rgba(249,115,22,0.14); color: var(--warning); }
-  .badge.ok{ background: rgba(34,197,94,0.14); color: var(--success); }
-  .badge.violet{ background: rgba(139,92,246,0.14); color: #7c3aed; }
+  .badge.pendiente{ background: rgba(249,115,22,0.14); color: #f97316; }
+  .badge.completado{ background: rgba(34,197,94,0.14); color: #22c55e; }
+  .badge.parcial{ background: rgba(59,130,246,0.14); color: #3b82f6; }
+  .badge.disponible{ background: rgba(34,197,94,0.14); color: #22c55e; }
+  .badge.vendido{ background: rgba(249,115,22,0.14); color: #f97316; }
+  .badge.danado{ background: rgba(239,68,68,0.14); color: #ef4444; }
+  .badge.devuelto{ background: rgba(139,92,246,0.14); color: #7c3aed; }
+
+  .resumen-seriales{
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 15px;
+  }
 
   .section-title{
     margin: 6px 0 10px;
@@ -109,6 +141,13 @@
 
   <div class="cardx pad">
 
+    <!-- Barra de progreso -->
+    <div class="progress-bar">
+      <div class="progress-fill" style="width: {{ porcentaje }}%;">
+        {% if porcentaje > 0 %}{{ porcentaje }}%{% endif %}
+      </div>
+    </div>
+
     <!-- Datos del lote -->
     <div class="meta">
       <div class="meta-grid">
@@ -118,17 +157,37 @@
         </div>
 
         <div class="kv">
+          <div class="k">Producto</div>
+          <div class="v">{{ lote.producto.nombre }}</div>
+        </div>
+
+        <div class="kv">
           <div class="k">Proveedor</div>
           <div class="v">{{ lote.proveedor.nombre }}</div>
         </div>
 
         <div class="kv">
-          <div class="k">Fecha de pedido</div>
-          <div class="v">{% if lote.fecha_pedido %}{{ lote.fecha_pedido|date:"d/m/Y" }}{% else %}<span class="v muted">-</span>{% endif %}</div>
+          <div class="k">Cantidad Total</div>
+          <div class="v">{{ lote.cantidad_total }} unidades</div>
         </div>
 
         <div class="kv">
-          <div class="k">Fecha de entrega</div>
+          <div class="k">Cantidad Recibida</div>
+          <div class="v">{{ lote.cantidad_recibida }} / {{ lote.cantidad_total }}</div>
+        </div>
+
+        <div class="kv">
+          <div class="k">Costo Unitario</div>
+          <div class="v">${{ lote.costo_unitario|floatformat:2 }}</div>
+        </div>
+
+        <div class="kv">
+          <div class="k">Fecha pedido</div>
+          <div class="v">{{ lote.fecha_pedido|date:"d/m/Y" }}</div>
+        </div>
+
+        <div class="kv">
+          <div class="k">Fecha entrega</div>
           <div class="v">
             {% if lote.fecha_entrega %}
               {{ lote.fecha_entrega|date:"d/m/Y" }}
@@ -142,11 +201,11 @@
           <div class="k">Estado</div>
           <div class="v">
             {% if lote.estado == 'pendiente' %}
-              <span class="badge warn"><i class="fas fa-clock" style="margin-right:8px;"></i>Pendiente</span>
-            {% elif lote.estado == 'recibido' %}
-              <span class="badge ok"><i class="fas fa-circle-check" style="margin-right:8px;"></i>Recibido</span>
+              <span class="badge pendiente"><i class="fas fa-clock"></i> Pendiente</span>
+            {% elif lote.estado == 'completado' %}
+              <span class="badge completado"><i class="fas fa-check-circle"></i> Completado</span>
             {% else %}
-              <span class="badge violet"><i class="fas fa-circle-half-stroke" style="margin-right:8px;"></i>Recibido parcial</span>
+              <span class="badge parcial"><i class="fas fa-circle-half-stroke"></i> Recibido Parcial</span>
             {% endif %}
           </div>
         </div>
@@ -157,7 +216,7 @@
         </div>
 
         <div class="kv">
-          <div class="k">Fecha de creación</div>
+          <div class="k">Fecha creación</div>
           <div class="v">{{ lote.created_at|date:"d/m/Y H:i" }}</div>
         </div>
 
@@ -170,50 +229,70 @@
       </div>
     </div>
 
-    <!-- Productos -->
+    <!-- Resumen de seriales -->
+    <div class="resumen-seriales">
+      <span class="badge disponible">✅ Disponible: {{ resumen.disponible }}</span>
+      <span class="badge vendido">💰 Vendido: {{ resumen.vendido }}</span>
+      <span class="badge danado">⚠️ Dañado: {{ resumen.danado }}</span>
+      <span class="badge devuelto">🔄 Devuelto: {{ resumen.devuelto }}</span>
+    </div>
+
+    <!-- Tabla de seriales -->
     <div class="section-title">
-      <i class="fas fa-boxes"></i> Productos del lote
+      <i class="fas fa-barcode"></i> Seriales del lote
     </div>
 
     <div class="table-wrap">
       <table>
         <thead>
           <tr>
-            <th>Producto base</th>
             <th>Serial</th>
+            <th>Producto</th>
             <th>Estado</th>
             <th>Fecha registro</th>
+            <th>Notas</th>
+            <th>Acciones</th>
           </tr>
         </thead>
 
         <tbody>
-          {% for producto in productos %}
+          {% for serial in seriales %}
           <tr>
-            <td style="font-weight: 800;">
-              {{ producto.producto_base.nombre }}
-              <span style="color: var(--muted); font-weight:700;">
-                ({{ producto.producto_base.codigo }})
-              </span>
-            </td>
-
-            <td><span style="font-weight: 900;">{{ producto.serial }}</span></td>
-
+            <td style="font-weight: 900; font-family: monospace;">{{ serial.serial }}</td>
+            <td>{{ serial.producto_base.nombre }}</td>
             <td>
-              {% if producto.estado == 'disponible' %}
-                <span class="badge ok">Disponible</span>
-              {% elif producto.estado == 'vendido' %}
-                <span class="badge warn">Vendido</span>
+              {% if serial.estado == 'disponible' %}
+                <span class="badge disponible">✅ Disponible</span>
+              {% elif serial.estado == 'vendido' %}
+                <span class="badge vendido">💰 Vendido</span>
+              {% elif serial.estado == 'danado' %}
+                <span class="badge danado">⚠️ Dañado</span>
+              {% elif serial.estado == 'devuelto' %}
+                <span class="badge devuelto">🔄 Devuelto</span>
               {% else %}
-                <span class="badge" style="background: rgba(239,68,68,0.14); color: var(--danger);">Dañado</span>
+                <span class="badge" style="background: #64748b; color: white;">{{ serial.estado }}</span>
               {% endif %}
             </td>
-
-            <td>{{ producto.fecha_registro|date:"d/m/Y H:i" }}</td>
+            <td>{{ serial.fecha_registro|date:"d/m/Y H:i" }}</td>
+            <td>{{ serial.notas|default:"-" }}</td>
+            <td>
+              <a href="{% url 'productos:editar_serial' serial.id %}" class="btn-warning btn-sm" style="padding: 4px 8px; font-size: 0.7rem;">
+                <i class="fas fa-edit"></i> Editar
+              </a>
+            </td>
           </tr>
           {% empty %}
           <tr>
-            <td colspan="4" style="text-align:center; color:#64748b; padding: 18px 10px;">
-              No hay productos en este lote
+            <td colspan="6" style="text-align:center; color:#64748b; padding: 30px;">
+              <i class="fas fa-box-open" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>
+              No hay seriales registrados en este lote
+              {% if lote.estado != 'completado' %}
+                <div style="margin-top: 10px;">
+                  <a href="{% url 'productos:recibir_lote' lote.id %}" class="btn-success" style="padding: 6px 12px; font-size: 0.8rem;">
+                    <i class="fas fa-arrow-down"></i> Recibir productos
+                  </a>
+                </div>
+              {% endif %}
             </td>
           </tr>
           {% endfor %}
@@ -223,11 +302,11 @@
 
     <!-- Acciones -->
     <div class="actions">
-      <a href="{% url 'productos:lotes' %}" class="btn btn-secondary">
+      <a href="{% url 'productos:listar_lotes' %}" class="btn btn-secondary">
         <i class="fas fa-arrow-left"></i> Volver
       </a>
 
-      {% if lote.estado == 'pendiente' %}
+      {% if lote.estado != 'completado' %}
       <a href="{% url 'productos:recibir_lote' lote.id %}" class="btn btn-success">
         <i class="fas fa-box-open"></i> Recibir lote
       </a>

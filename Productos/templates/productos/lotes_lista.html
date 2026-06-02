@@ -1,7 +1,8 @@
 {% extends "base.html" %}
 
+{% block nav_lotes %}active{% endblock %}  <!-- 🔥 CAMBIADO: antes era nav_productos -->
+
 {% block title %}SIGI - Lotes{% endblock %}
-{% block nav_productos %}active{% endblock %}
 {% block page_title %}Lotes de productos{% endblock %}
 {% block page_subtitle %}Gestión de lotes con seriales únicos{% endblock %}
 
@@ -70,10 +71,9 @@
     flex-wrap:wrap;
   }
 
-  /* Badges de estado (lotes) */
-  .badge.warn{ background: rgba(249,115,22,0.14); color: var(--warning); }
-  .badge.ok{ background: rgba(34,197,94,0.14); color: var(--success); }
-  .badge.info{ background: rgba(59,130,246,0.14); color: var(--primary); }
+  .badge.warn{ background: rgba(249,115,22,0.14); color: #f97316; }
+  .badge.ok{ background: rgba(34,197,94,0.14); color: #22c55e; }
+  .badge.info{ background: rgba(59,130,246,0.14); color: #3b82f6; }
 
   .w-code{ width: 150px; }
   .w-fecha{ width: 160px; }
@@ -105,9 +105,9 @@
     <div class="filter">
       <select id="estadoFilter" aria-label="Filtrar por estado">
         <option value="">Todos los estados</option>
-        <option value="pendiente">Pendiente</option>
-        <option value="recibido">Recibido</option>
-        <option value="parcial">Recibido parcial</option>
+        <option value="pendiente">⏳ Pendiente</option>
+        <option value="completado">✅ Completado</option>
+        <option value="parcial">📦 Recibido parcial</option>
       </select>
     </div>
   </div>
@@ -117,10 +117,11 @@
       <thead>
         <tr>
           <th class="w-code">Código</th>
+          <th>Producto</th>
           <th>Proveedor</th>
           <th class="w-fecha">Fecha pedido</th>
           <th class="w-fecha">Fecha entrega</th>
-          <th class="w-count">Productos</th>
+          <th class="w-count">Recibido/Total</th>
           <th class="w-estado">Estado</th>
           <th>Acciones</th>
         </tr>
@@ -133,45 +134,48 @@
             data-estado="{{ lote.estado }}">
 
           <td style="font-weight: 900;">{{ lote.codigo }}</td>
-          <td style="font-weight: 750;">{{ lote.proveedor.nombre }}</td>
+          <td style="font-weight: 750;">{{ lote.producto.nombre }}</td>
+          <td>{{ lote.proveedor.nombre }}</td>
           <td>{{ lote.fecha_pedido|date:"d/m/Y" }}</td>
           <td>
             {% if lote.fecha_entrega %}
               {{ lote.fecha_entrega|date:"d/m/Y" }}
             {% else %}
-              <span style="color: var(--muted); font-weight:700;">-</span>
+              <span style="color: var(--muted);">-</span>
             {% endif %}
           </td>
-          <td style="font-weight: 850;">{{ lote.productos.count }}</td>
-
+          <td style="font-weight: 850;">
+            {{ lote.cantidad_recibida }} / {{ lote.cantidad_total }}
+            <span class="progress-small" style="display: inline-block; width: 50px; background: #e2e8f0; border-radius: 10px; overflow: hidden; margin-left: 5px;">
+              <span style="display: block; width: {{ lote.porcentaje_recibido }}%; height: 6px; background: #3b82f6;"></span>
+            </span>
+          </td>
           <td>
             {% if lote.estado == 'pendiente' %}
-              <span class="badge warn"><i class="fas fa-clock" style="margin-right:8px;"></i>Pendiente</span>
-            {% elif lote.estado == 'recibido' %}
-              <span class="badge ok"><i class="fas fa-circle-check" style="margin-right:8px;"></i>Recibido</span>
+              <span class="badge warn"><i class="fas fa-clock"></i> Pendiente</span>
+            {% elif lote.estado == 'completado' %}
+              <span class="badge ok"><i class="fas fa-check-circle"></i> Completado</span>
             {% else %}
-              <span class="badge info"><i class="fas fa-circle-half-stroke" style="margin-right:8px;"></i>Parcial</span>
+              <span class="badge info"><i class="fas fa-circle-half-stroke"></i> Parcial</span>
             {% endif %}
           </td>
-
           <td style="white-space:nowrap;">
             <div class="actions">
-              <a href="{% url 'productos:ver_lote' lote.id %}" class="btn btn-warning btn-sm">
+              <a href="{% url 'productos:detalle_lote' lote.id %}" class="btn btn-warning btn-sm">
                 <i class="fas fa-eye"></i> Ver
               </a>
 
-              {% if lote.estado == 'pendiente' %}
+              {% if lote.estado != 'completado' %}
               <a href="{% url 'productos:recibir_lote' lote.id %}" class="btn btn-primary btn-sm">
-                <i class="fas fa-check"></i> Recibir
+                <i class="fas fa-arrow-down"></i> Recibir
               </a>
               {% endif %}
             </div>
           </td>
-
         </tr>
         {% empty %}
         <tr>
-          <td colspan="7" style="text-align:center; color:#64748b; padding: 18px 10px;">
+          <td colspan="8" style="text-align:center; color:#64748b; padding: 18px 10px;">
             No hay lotes registrados
           </td>
         </tr>

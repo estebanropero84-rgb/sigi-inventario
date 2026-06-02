@@ -3,8 +3,9 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db.models import Q
-from django.http import HttpResponse, FileResponse
+from django.http import HttpResponse, FileResponse, JsonResponse
 from django.db import models
+from django.utils import timezone
 from datetime import datetime
 import io
 import requests
@@ -16,9 +17,8 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, 
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER
-from django.http import JsonResponse
-from .models import Producto, Categoria, Proveedor, Lote, ProductoConSerial, Bodega, LogActividad
-from .forms import ProductoForm, CategoriaForm, ProveedorForm, LoteForm, BodegaForm
+from .models import Producto, Categoria, Proveedor, Lote, ProductoConSerial, Bodega, LogActividad, RecepcionLote
+from .forms import ProductoForm, CategoriaForm, ProveedorForm, LoteCompletoForm, RecepcionLoteForm, SerialForm, BodegaForm
 from usuarios.decorators import admin_required, puede_editar_required
 
 
@@ -357,62 +357,209 @@ def eliminar_proveedor(request, pk):
     return render(request, 'productos/proveedores_eliminar.html', {'proveedor': proveedor})
 
 
-# ========== VISTAS DE LOTES ==========
+# ========== VISTAS DE LOTES (CORREGIDAS) ==========
 
 @login_required
 def listar_lotes(request):
+    """Lista de lotes"""
     lotes = Lote.objects.all().order_by('-created_at')
-    return render(request, 'productos/lotes_lista.html', {'lotes': lotes})
+    
+    estado = request.GET.get('estado')
+    if estado:
+        lotes = lotes.filter(estado=estado)
+    
+    paginator = Paginator(lotes, 20)
+    page = request.GET.get('page')
+    lotes = paginator.get_page(page)
+    
+    return render(request, 'productos/lotes_lista.html', {
+        'lotes': lotes,
+        'estado_actual': estado,
+    })
+
 
 @login_required
 def crear_lote(request):
+    """Crear nuevo lote"""
     if request.method == 'POST':
-        form = LoteForm(request.POST)
+        form = LoteCompletoForm(request.POST)
         if form.is_valid():
             lote = form.save(commit=False)
             lote.created_by = request.user
+            lote.cantidad_recibida = 0
             lote.save()
-            
-            productos_base = request.POST.getlist('producto_base')
-            seriales = request.POST.getlist('serial')
-            
-            for i in range(len(productos_base)):
-                if productos_base[i] and seriales[i]:
-                    producto_base = get_object_or_404(Producto, pk=productos_base[i])
-                    ProductoConSerial.objects.create(
-                        lote=lote,
-                        producto_base=producto_base,
-                        serial=seriales[i].upper()
-                    )
-            messages.success(request, f'Lote {lote.codigo} creado')
-            return redirect('productos:lotes')
+            registrar_log(request.user, 'crear', 'Lote', lote.id, lote.codigo)
+            messages.success(request, f'✅ Lote {lote.codigo} creado exitosamente')
+            return redirect('productos:detalle_lote', pk=lote.id)
     else:
-        form = LoteForm()
+        form = LoteCompletoForm()
     
-    productos = Producto.objects.all().order_by('nombre')
-    return render(request, 'productos/lotes_form.html', {'form': form, 'productos': productos, 'titulo': 'Nuevo Lote'})
+    return render(request, 'productos/lote_form.html', {
+        'form': form,
+        'titulo': 'Crear Lote'
+    })
+
 
 @login_required
-def ver_lote(request, pk):
+def detalle_lote(request, pk):
+    """Detalle del lote"""
     lote = get_object_or_404(Lote, pk=pk)
-    productos = lote.productos.all()
-    return render(request, 'productos/lotes_ver.html', {'lote': lote, 'productos': productos})
+    seriales = lote.productos.all()
+    
+    resumen = {
+        'total': seriales.count(),
+        'disponible': seriales.filter(estado='disponible').count(),
+        'vendido': seriales.filter(estado='vendido').count(),
+        'danado': seriales.filter(estado='danado').count(),
+        'devuelto': seriales.filter(estado='devuelto').count(),
+        'reservado': seriales.filter(estado='reservado').count(),
+    }
+    
+    return render(request, 'productos/lote_detalle.html', {
+        'lote': lote,
+        'seriales': seriales,
+        'resumen': resumen,
+        'porcentaje': lote.porcentaje_recibido,
+    })
+
 
 @login_required
 def recibir_lote(request, pk):
+    """Recibir productos del lote con seriales"""
     lote = get_object_or_404(Lote, pk=pk)
+    
+    if lote.estado == 'completado':
+        messages.warning(request, 'Este lote ya está completado')
+        return redirect('productos:detalle_lote', pk=lote.id)
+    
     if request.method == 'POST':
-        for producto_serial in lote.productos.all():
-            producto_serial.estado = 'disponible'
-            producto_serial.save()
-            producto_serial.producto_base.stock_actual += 1
-            producto_serial.producto_base.save()
-        lote.estado = 'recibido'
-        lote.fecha_entrega = datetime.now().date()
-        lote.save()
-        messages.success(request, f'Lote {lote.codigo} recibido')
-        return redirect('productos:lotes')
-    return render(request, 'productos/lotes_recibir.html', {'lote': lote})
+        form = RecepcionLoteForm(request.POST)
+        if form.is_valid():
+            cantidad = form.cleaned_data['cantidad']
+            seriales_text = form.cleaned_data['seriales']
+            notas = form.cleaned_data['notas']
+            
+            seriales_lista = [s.strip() for s in seriales_text.strip().split('\n') if s.strip()]
+            
+            # Validaciones
+            if len(seriales_lista) != cantidad:
+                messages.error(request, f'La cantidad de seriales ({len(seriales_lista)}) no coincide con la cantidad indicada ({cantidad})')
+                return render(request, 'productos/lote_recibir.html', {'form': form, 'lote': lote})
+            
+            if lote.cantidad_recibida + cantidad > lote.cantidad_total:
+                messages.error(request, f'No puedes recibir más de {lote.restante} unidades. Restante: {lote.restante}')
+                return render(request, 'productos/lote_recibir.html', {'form': form, 'lote': lote})
+            
+            # Verificar seriales duplicados
+            if len(seriales_lista) != len(set(seriales_lista)):
+                messages.error(request, 'Hay seriales duplicados en la lista')
+                return render(request, 'productos/lote_recibir.html', {'form': form, 'lote': lote})
+            
+            # Verificar seriales ya existentes
+            existentes = ProductoConSerial.objects.filter(serial__in=seriales_lista)
+            if existentes.exists():
+                existentes_str = ', '.join(existentes.values_list('serial', flat=True)[:5])
+                messages.error(request, f'Los siguientes seriales ya existen: {existentes_str}')
+                return render(request, 'productos/lote_recibir.html', {'form': form, 'lote': lote})
+            
+            # Crear seriales
+            creados = 0
+            for serial in seriales_lista:
+                ProductoConSerial.objects.create(
+                    serial=serial,
+                    producto_base=lote.producto,
+                    lote=lote,
+                    estado='disponible',
+                    notas=notas
+                )
+                creados += 1
+            
+            # Actualizar lote
+            lote.cantidad_recibida += cantidad
+            if lote.cantidad_recibida >= lote.cantidad_total:
+                lote.estado = 'completado'
+                lote.fecha_entrega = timezone.now().date()
+            else:
+                lote.estado = 'parcial'
+            lote.save()
+            
+            # Registrar recepción
+            RecepcionLote.objects.create(
+                lote=lote,
+                cantidad=cantidad,
+                seriales=seriales_text,
+                recibido_por=request.user,
+                notas=notas
+            )
+            
+            # Actualizar stock del producto
+            producto = lote.producto
+            producto.stock_actual += cantidad
+            producto.save()
+            
+            registrar_log(request.user, 'recibir', 'Lote', lote.id, f'{cantidad} unidades - {lote.codigo}')
+            messages.success(request, f'✅ Lote recibido: {cantidad} productos con seriales')
+            return redirect('productos:detalle_lote', pk=lote.id)
+    else:
+        form = RecepcionLoteForm()
+    
+    return render(request, 'productos/lote_recibir.html', {
+        'form': form,
+        'lote': lote
+    })
+
+
+# ========== VISTAS DE SERIALES ==========
+
+@login_required
+def listar_seriales(request):
+    """Lista de seriales"""
+    seriales = ProductoConSerial.objects.all().order_by('serial')
+    
+    estado = request.GET.get('estado')
+    if estado:
+        seriales = seriales.filter(estado=estado)
+    
+    producto_id = request.GET.get('producto')
+    if producto_id:
+        seriales = seriales.filter(producto_base_id=producto_id)
+    
+    busqueda = request.GET.get('q')
+    if busqueda:
+        seriales = seriales.filter(serial__icontains=busqueda)
+    
+    paginator = Paginator(seriales, 50)
+    page = request.GET.get('page')
+    seriales = paginator.get_page(page)
+    
+    productos = Producto.objects.all().order_by('nombre')
+    
+    return render(request, 'productos/seriales_lista.html', {
+        'seriales': seriales,
+        'productos': productos,
+        'estado_actual': estado,
+    })
+
+
+@login_required
+def editar_serial(request, pk):
+    """Editar estado de un serial"""
+    serial = get_object_or_404(ProductoConSerial, pk=pk)
+    
+    if request.method == 'POST':
+        form = SerialForm(request.POST, instance=serial)
+        if form.is_valid():
+            form.save()
+            registrar_log(request.user, 'editar', 'Serial', serial.id, serial.serial)
+            messages.success(request, f'✅ Serial {serial.serial} actualizado a {serial.get_estado_display()}')
+            return redirect('productos:listar_seriales')
+    else:
+        form = SerialForm(instance=serial)
+    
+    return render(request, 'productos/serial_form.html', {
+        'form': form,
+        'serial': serial
+    })
 
 
 # ========== VISTAS DE BODEGAS ==========
@@ -460,6 +607,9 @@ def eliminar_bodega(request, pk):
         return redirect('productos:bodegas')
     return render(request, 'productos/bodegas_eliminar.html', {'bodega': bodega})
 
+
+# ========== ESCÁNER CÓDIGO DE BARRAS ==========
+
 @login_required
 def buscar_por_codigo_barras(request):
     """Busca un producto por su código de barras (API para escáner)"""
@@ -469,7 +619,6 @@ def buscar_por_codigo_barras(request):
         return JsonResponse({'error': 'No se proporcionó código'}, status=400)
     
     try:
-        # Buscar por código de barras o código normal
         producto = Producto.objects.filter(
             Q(codigo_barras=codigo) | Q(codigo=codigo)
         ).first()
@@ -488,4 +637,3 @@ def buscar_por_codigo_barras(request):
             return JsonResponse({'success': False, 'error': 'Producto no encontrado'}, status=404)
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
-    

@@ -2,7 +2,7 @@ from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.db.models import F, Sum
 from datetime import datetime, timedelta
-from Productos.models import Producto, Proveedor, Categoria
+from Productos.models import Producto, Proveedor, Categoria, Lote, ProductoConSerial
 from movimientos.models import Movimiento
 from compras.models import Compra
 from usuarios.models import Usuario
@@ -53,6 +53,18 @@ def dashboard(request):
     ultimos_usuarios = Usuario.objects.all().order_by('-date_joined')[:5]
     ultimos_proveedores = Proveedor.objects.all().order_by('-created_at')[:5]
     
+    # ========== ESTADÍSTICAS DE LOTES Y SERIALES ==========
+    lotes_pendientes = Lote.objects.filter(estado='pendiente').count()
+    lotes_parciales = Lote.objects.filter(estado='parcial').count()
+    lotes_completados = Lote.objects.filter(estado='completado').count()
+    total_lotes = lotes_pendientes + lotes_parciales + lotes_completados
+    
+    seriales_disponibles = ProductoConSerial.objects.filter(estado='disponible').count()
+    seriales_vendidos = ProductoConSerial.objects.filter(estado='vendido').count()
+    total_seriales = seriales_disponibles + seriales_vendidos
+    
+    ultimos_lotes = Lote.objects.all().order_by('-created_at')[:5]
+    
     # ========== DATOS PARA GRÁFICOS ==========
     # Movimientos últimos 7 días
     fechas = []
@@ -92,6 +104,16 @@ def dashboard(request):
         'ultimos_proveedores': ultimos_proveedores,
         'productos_criticos': productos_criticos,
         
+        # Lotes y seriales
+        'lotes_pendientes': lotes_pendientes,
+        'lotes_parciales': lotes_parciales,
+        'lotes_completados': lotes_completados,
+        'total_lotes': total_lotes,
+        'seriales_disponibles': seriales_disponibles,
+        'seriales_vendidos': seriales_vendidos,
+        'total_seriales': total_seriales,
+        'ultimos_lotes': ultimos_lotes,
+        
         # Gráficos
         'fechas_grafico': fechas,
         'movimientos_grafico': movimientos_por_dia,
@@ -99,4 +121,4 @@ def dashboard(request):
         'categorias_cantidades': categorias_cantidades,
     }
     
-    return render(request, 'dashboard.html', context)
+    return render(request, 'dashboard.html', context)   

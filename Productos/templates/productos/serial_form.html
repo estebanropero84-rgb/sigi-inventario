@@ -1,0 +1,253 @@
+{% extends "base.html" %}
+
+{% block title %}SIGI - Editar Serial{% endblock %}
+{% block nav_productos %}active{% endblock %}
+{% block page_title %}Editar serial{% endblock %}
+{% block page_subtitle %}Modificar el estado del serial {{ serial.serial }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .form-shell{
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .form-card{
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(226,232,240,0.75);
+    border-radius: 22px;
+    box-shadow: var(--shadow-sm);
+    padding: 20px;
+  }
+
+  .info-box{
+    background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+    border-radius: 18px;
+    padding: 16px;
+    margin-bottom: 20px;
+    border: 1px solid #e2e8f0;
+  }
+
+  .info-row{
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  .info-row:last-child{
+    border-bottom: none;
+  }
+  .info-label{
+    font-weight: 600;
+    color: #64748b;
+  }
+  .info-value{
+    font-weight: 700;
+    color: #1e293b;
+  }
+
+  .form-group{
+    margin-bottom: 20px;
+  }
+  .form-group label{
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: #1e293b;
+  }
+  .form-group label .required{
+    color: #ef4444;
+  }
+
+  .form-control{
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    font-family: monospace;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+  }
+  .form-control:focus{
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+  }
+
+  select.form-control{
+    font-family: inherit;
+    cursor: pointer;
+  }
+
+  textarea.form-control{
+    font-family: inherit;
+    resize: vertical;
+  }
+
+  .badge-info{
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+  .badge-disponible{ background: #e6f7e6; color: #22c55e; }
+  .badge-vendido{ background: #fef3c7; color: #d97706; }
+  .badge-danado{ background: #fee2e2; color: #ef4444; }
+  .badge-devuelto{ background: #e0e7ff; color: #4f46e5; }
+
+  .actions{
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 24px;
+  }
+  .btn-secondary{
+    background: linear-gradient(135deg, #64748b, #475569);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 12px;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+  }
+  .btn-primary{
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+  }
+  .btn-secondary:hover, .btn-primary:hover{
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+
+  .help-text{
+    margin-top: 6px;
+    font-size: 0.7rem;
+    color: #64748b;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="form-shell">
+  <div class="form-card">
+
+    <!-- Información del serial -->
+    <div class="info-box">
+      <div class="info-row">
+        <span class="info-label"><i class="fas fa-barcode"></i> Serial:</span>
+        <span class="info-value">{{ serial.serial }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label"><i class="fas fa-box"></i> Producto:</span>
+        <span class="info-value">{{ serial.producto_base.nombre }} ({{ serial.producto_base.codigo }})</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label"><i class="fas fa-tags"></i> Lote:</span>
+        <span class="info-value">{{ serial.lote.codigo }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label"><i class="fas fa-calendar"></i> Fecha registro:</span>
+        <span class="info-value">{{ serial.fecha_registro|date:"d/m/Y H:i" }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label"><i class="fas fa-circle"></i> Estado actual:</span>
+        <span class="info-value">
+          {% if serial.estado == 'disponible' %}
+            <span class="badge-info badge-disponible"><i class="fas fa-check-circle"></i> Disponible</span>
+          {% elif serial.estado == 'vendido' %}
+            <span class="badge-info badge-vendido"><i class="fas fa-dollar-sign"></i> Vendido</span>
+          {% elif serial.estado == 'danado' %}
+            <span class="badge-info badge-danado"><i class="fas fa-exclamation-triangle"></i> Dañado</span>
+          {% elif serial.estado == 'devuelto' %}
+            <span class="badge-info badge-devuelto"><i class="fas fa-undo-alt"></i> Devuelto</span>
+          {% endif %}
+        </span>
+      </div>
+    </div>
+
+    <form method="post">
+      {% csrf_token %}
+
+      <div class="form-group">
+        <label for="estado">Nuevo estado <span class="required">*</span></label>
+        <select name="estado" id="estado" class="form-control" required>
+          <option value="disponible" {% if serial.estado == 'disponible' %}selected{% endif %}>
+            ✅ Disponible
+          </option>
+          <option value="vendido" {% if serial.estado == 'vendido' %}selected{% endif %}>
+            💰 Vendido
+          </option>
+          <option value="danado" {% if serial.estado == 'danado' %}selected{% endif %}>
+            ⚠️ Dañado
+          </option>
+          <option value="devuelto" {% if serial.estado == 'devuelto' %}selected{% endif %}>
+            🔄 Devuelto
+          </option>
+        </select>
+        <div class="help-text">
+          {% if serial.estado == 'disponible' %}
+            Cambiar a "Vendido" cuando se venda el producto.
+          {% elif serial.estado == 'vendido' %}
+            Cambiar a "Devuelto" si el cliente devuelve el producto.
+          {% elif serial.estado == 'danado' %}
+            Cambiar a "Disponible" si el producto puede volver a venderse.
+          {% else %}
+            Selecciona el estado actual del producto.
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="notas">Notas</label>
+        <textarea name="notas" id="notas" class="form-control" rows="4" 
+                  placeholder="Información adicional sobre este serial...">{% if serial.notas %}{{ serial.notas }}{% endif %}</textarea>
+        <div class="help-text">
+          Ej: "Vendido a Juan Pérez el 15/05/2026", "Producto dañado durante el transporte", etc.
+        </div>
+      </div>
+
+      <div class="actions">
+        <a href="{% url 'productos:listar_seriales' %}" class="btn-secondary">
+          <i class="fas fa-arrow-left"></i> Cancelar
+        </a>
+        <button type="submit" class="btn-primary">
+          <i class="fas fa-save"></i> Guardar cambios
+        </button>
+      </div>
+    </form>
+
+  </div>
+</div>
+
+<script>
+  // Confirmación para cambios de estado importantes
+  const selectEstado = document.getElementById('estado');
+  const estadoOriginal = '{{ serial.estado }}';
+  
+  selectEstado.addEventListener('change', function() {
+    const nuevoEstado = this.value;
+    let mensaje = '';
+    
+    if (estadoOriginal === 'disponible' && nuevoEstado === 'vendido') {
+      mensaje = '⚠️ ¿Confirmas que este producto ha sido VENDIDO? Esta acción registrará la salida del inventario.';
+    } else if (estadoOriginal === 'vendido' && nuevoEstado === 'devuelto') {
+      mensaje = '🔄 ¿Confirmas que este producto ha sido DEVUELTO? El stock se ajustará automáticamente.';
+    } else if (estadoOriginal === 'disponible' && nuevoEstado === 'danado') {
+      mensaje = '⚠️ ¿Confirmas que este producto está DAÑADO? Esto lo excluirá del inventario disponible.';
+    }
+    
+    if (mensaje) {
+      if (!confirm(mensaje)) {
+        this.value = estadoOriginal;
+      }
+    }
+  });
+</script>
+{% endblock %}  

@@ -109,6 +109,30 @@
         <p>Proveedores</p>
       </div>
     </div>
+
+    <!-- 🔥 Tarjeta de Lotes -->
+    <div class="card stat">
+      <div class="icon" style="background: #e0e7ff; color: #4f46e5;">
+        <i class="fas fa-boxes"></i>
+      </div>
+      <div>
+        <h3>{{ total_lotes|default:0 }}</h3>
+        <p>Lotes Registrados</p>
+        <small>Pendientes: {{ lotes_pendientes|default:0 }} | Completados: {{ lotes_completados|default:0 }}</small>
+      </div>
+    </div>
+
+    <!-- 🔥 Tarjeta de Seriales -->
+    <div class="card stat">
+      <div class="icon" style="background: #fef3c7; color: #d97706;">
+        <i class="fas fa-barcode"></i>
+      </div>
+      <div>
+        <h3>{{ total_seriales|default:0 }}</h3>
+        <p>Seriales Registrados</p>
+        <small>Disponibles: {{ seriales_disponibles|default:0 }} | Vendidos: {{ seriales_vendidos|default:0 }}</small>
+      </div>
+    </div>
   </div>
 
   <!-- Charts -->
@@ -179,7 +203,7 @@
     </div>
 
     <div class="table-wrap">
-      <table>
+      <tr>
         <thead>
           <tr>
             <th>Usuario</th><th>Nombre</th><th>Email</th><th>Rol</th><th>Fecha</th><th>Acciones</th>
@@ -227,7 +251,7 @@
   </div>
 
   <!-- Proveedores -->
-  <div class="card pad">
+  <div class="card pad" style="margin-bottom: 16px;">
     <div class="section-header">
       <h2><i class="fas fa-truck"></i> Últimos Proveedores</h2>
       <div style="display:flex; gap:10px; flex-wrap:wrap;">
@@ -267,6 +291,60 @@
           </tr>
           {% empty %}
           <tr><td colspan="6" style="color:#64748b;">No hay proveedores registrados</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 🔥 SECCIÓN DE LOTES RECIENTES -->
+  <div class="card pad">
+    <div class="section-header">
+      <h2><i class="fas fa-boxes"></i> Últimos Lotes</h2>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <a class="btn btn-primary btn-sm" href="{% url 'productos:crear_lote' %}" style="background: #22c55e;">
+          <i class="fas fa-plus"></i> Nuevo Lote
+        </a>
+        <a class="link" href="{% url 'productos:listar_lotes' %}">Ver todos →</a>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Producto</th>
+            <th>Proveedor</th>
+            <th>Recibido/Total</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for lote in ultimos_lotes %}
+          <tr>
+            <td><strong>{{ lote.codigo }}</strong></td>
+            <td>{{ lote.producto.nombre }}</td>
+            <td>{{ lote.proveedor.nombre }}</td>
+            <td>{{ lote.cantidad_recibida }}/{{ lote.cantidad_total }} ({{ lote.porcentaje_recibido }}%)</td>
+            <td>
+              {% if lote.estado == 'pendiente' %}
+                <span class="badge" style="background: #fff3e6; color: #f97316;">⏳ Pendiente</span>
+              {% elif lote.estado == 'parcial' %}
+                <span class="badge" style="background: #e0e7ff; color: #4f46e5;">📦 Parcial</span>
+              {% else %}
+                <span class="badge" style="background: #e6f7e6; color: #22c55e;">✅ Completado</span>
+              {% endif %}
+            </td>
+            <td style="white-space:nowrap;">
+              <a class="btn btn-warning btn-sm" href="{% url 'productos:detalle_lote' lote.id %}">
+                <i class="fas fa-eye"></i> Ver
+              </a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="6" style="text-align:center; color:#64748b;">No hay lotes registrados</td></tr>
           {% endfor %}
         </tbody>
       </table>

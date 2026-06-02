@@ -47,6 +47,24 @@
         <a href="{% url 'productos:listar' %}" class="nav-item {% block nav_productos %}{% endblock %}">
           <i class="fas fa-boxes"></i><span>Productos</span>
         </a>
+
+        <!-- 🔥 LOTES -->
+        <a href="{% url 'productos:listar_lotes' %}" class="nav-item {% block nav_lotes %}{% endblock %}">
+          <i class="fas fa-boxes"></i><span>Lotes</span>
+        </a>
+
+        <!-- 🔥 SERIALES -->
+        <a href="{% url 'productos:listar_seriales' %}" class="nav-item {% block nav_seriales %}{% endblock %}">
+          <i class="fas fa-barcode"></i><span>Seriales</span>
+        </a>
+
+        <!-- 🔥 SEGURIDAD (solo admin) -->
+        {% if user.is_authenticated and user.rol == 'admin' %}
+        <a href="{% url 'usuarios:logs' %}" class="nav-item {% block nav_seguridad %}{% endblock %}">
+          <i class="fas fa-shield-alt"></i>
+          <span>Seguridad</span>
+        </a>
+        {% endif %}
       </nav>
 
       <div class="sidebar-footer">
@@ -80,7 +98,6 @@
             <span class="user-pill__text">{{ user.get_full_name|default:user.username }}</span>
           </div>
 
-          {# Ajusta esta URL si tu logout se llama distinto #}
           <a class="btn btn-danger" href="/login/logout/">
             <i class="fas fa-sign-out-alt"></i> Salir
           </a>
@@ -93,12 +110,6 @@
       </section>
     </main>
   </div>
-  {% if user.rol == 'admin' %}
- <a href="{% url 'usuarios:logs' %}" class="nav-item">
-     <i class="fas fa-shield-alt"></i>
-     <span>Seguridad</span>
- </a>
-  {% endif %}
 
   {% block extra_js %}{% endblock %}
 </body>

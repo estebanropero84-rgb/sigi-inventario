@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}SIGI - {{ titulo }}{% endblock %}
+{% block nav_productos %}active{% endblock %}
+{% block page_title %}{{ titulo }}{% endblock %}
+{% block page_subtitle %}Registrar un nuevo lote de productos{% endblock %}
+
+{% block content %}
+<div class="form-shell" style="max-width: 700px; margin: 0 auto;">
+  <div class="form-card" style="background: white; border-radius: 22px; padding: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+    <form method="post">
+      {% csrf_token %}
+
+      <div class="form-group" style="margin-bottom: 16px;">
+        <label for="id_codigo" style="display: block; margin-bottom: 6px; font-weight: 600;">Código del lote *</label>
+        <input type="text" name="codigo" id="id_codigo" class="form-control" required style="width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 12px;">
+      </div>
+
+      <div class="form-group" style="margin-bottom: 16px;">
+        <label for="id_producto" style="display: block; margin-bottom: 6px; font-weight: 600;">Producto *</label>
+        <select name="producto" id="id_producto" class="form-control" required style="width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 12px;">
+          <option value="">Seleccionar producto...</option>
+          {% for producto in form.producto.field.queryset %}
+          <option value="{{ producto.id }}">{{ producto.nombre }} ({{ producto.codigo }})</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 16px;">
+        <label for="id_proveedor" style="display: block; margin-bottom: 6px; font-weight: 600;">Proveedor *</label>
+        <select name="proveedor" id="id_proveedor" class="form-control" required style="width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 12px;">
+          <option value="">Seleccionar proveedor...</option>
+          {% for proveedor in form.proveedor.field.queryset %}
+          <option value="{{ proveedor.id }}">{{ proveedor.nombre }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+        <div class="form-group">
+          <label for="id_cantidad_total">Cantidad total *</label>
+          <input type="number" name="cantidad_total" id="id_cantidad_total" class="form-control" required min="1" style="width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 12px;">
+        </div>
+        <div class="form-group">
+          <label for="id_costo_unitario">Costo unitario *</label>
+          <input type="number" name="costo_unitario" id="id_costo_unitario" class="form-control" required step="0.01" min="0" style="width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 12px;">
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 16px;">
+        <label for="id_fecha_estimada">Fecha estimada de entrega</label>
+        <input type="date" name="fecha_estimada" id="id_fecha_estimada" class="form-control" style="width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 12px;">
+      </div>
+
+      <div class="form-group" style="margin-bottom: 16px;">
+        <label for="id_observaciones">Observaciones</label>
+        <textarea name="observaciones" id="id_observaciones" class="form-control" rows="3" style="width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 12px;"></textarea>
+      </div>
+
+      <div class="actions" style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
+        <a href="{% url 'productos:listar_lotes' %}" class="btn btn-secondary" style="background: #64748b; color: white; padding: 10px 20px; border-radius: 12px; text-decoration: none;">
+          <i class="fas fa-xmark"></i> Cancelar
+        </a>
+        <button type="submit" class="btn btn-primary" style="background: #3b82f6; color: white; padding: 10px 20px; border-radius: 12px; border: none; cursor: pointer;">
+          <i class="fas fa-save"></i> Guardar lote
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>
+{% endblock %}

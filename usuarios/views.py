@@ -17,7 +17,7 @@ def logs_seguridad(request):
     
     # Estadísticas
     intentos_fallidos = SeguridadLog.objects.filter(accion='login_fallo').count()
-    accesos_sospechosos = SeguridadLog.objects.filter(es_sospechoso=True).count()
+    accesos_sospechosos = SeguridadLog.objects.filter(accion='intento_bruteforce').count()
     
     return render(request, 'usuarios/logs_seguridad.html', {
         'logs': logs,

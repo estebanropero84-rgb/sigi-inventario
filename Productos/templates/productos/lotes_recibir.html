@@ -19,7 +19,6 @@
     border-radius: 22px;
     box-shadow: var(--shadow-sm);
     padding: 18px;
-    text-align:center;
   }
 
   .hero-icon{
@@ -29,10 +28,10 @@
     margin: 4px auto 12px;
     display:grid;
     place-items:center;
-    background: rgba(249,115,22,0.14);
-    color: var(--warning);
+    background: rgba(34,197,94,0.14);
+    color: #22c55e;
     font-size: 1.8rem;
-    border: 1px solid rgba(249,115,22,0.18);
+    border: 1px solid rgba(34,197,94,0.18);
   }
 
   .confirm-title{
@@ -40,13 +39,14 @@
     font-size: 1.15rem;
     letter-spacing: -0.2px;
     font-weight: 950;
+    text-align: center;
   }
 
   .summary{
     margin: 14px 0 12px;
     text-align:left;
     background: #fff;
-    border: 1px solid var(--border);
+    border: 1px solid #e2e8f0;
     border-radius: 18px;
     padding: 12px 14px;
   }
@@ -61,7 +61,7 @@
   .kv:last-child{ border-bottom: 0; }
 
   .k{
-    color: var(--muted);
+    color: #64748b;
     font-weight: 800;
     font-size: .85rem;
   }
@@ -77,9 +77,8 @@
     align-items:flex-start;
     padding: 12px 14px;
     border-radius: 18px;
-    border: 1px solid rgba(249,115,22,0.25);
-    background: linear-gradient(135deg, rgba(254,243,199,0.95), rgba(255,251,235,0.95));
-    box-shadow: var(--shadow-sm);
+    border: 1px solid rgba(34,197,94,0.25);
+    background: linear-gradient(135deg, rgba(220,252,231,0.95), rgba(240,253,244,0.95));
     margin: 0 auto 12px;
     text-align:left;
   }
@@ -88,16 +87,55 @@
     border-radius: 16px;
     display:grid;
     place-items:center;
-    background: rgba(249,115,22,0.14);
-    color: var(--warning);
+    background: rgba(34,197,94,0.14);
+    color: #22c55e;
     font-size: 1.1rem;
     flex: 0 0 auto;
   }
   .notice .text{
     font-weight: 650;
-    color: #7c2d12;
+    color: #14532d;
     font-size: .92rem;
     line-height: 1.25rem;
+  }
+
+  .form-section{
+    margin-top: 15px;
+    border-top: 1px solid #e2e8f0;
+    padding-top: 15px;
+  }
+
+  .form-group{
+    margin-bottom: 15px;
+  }
+
+  .form-group label{
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 800;
+    font-size: .85rem;
+    color: #1e293b;
+  }
+
+  .form-control{
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    font-family: monospace;
+    font-size: 0.9rem;
+  }
+
+  .form-control:focus{
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+  }
+
+  .help-text{
+    margin-top: 5px;
+    color: #64748b;
+    font-size: 0.75rem;
   }
 
   .actions{
@@ -105,16 +143,27 @@
     justify-content:center;
     gap: 10px;
     flex-wrap:wrap;
-    margin-top: 14px;
+    margin-top: 20px;
   }
 
   .btn-secondary{
     background: linear-gradient(135deg, #64748b, #475569);
     color:#fff;
+    padding: 10px 20px;
+    border-radius: 12px;
+    text-decoration: none;
   }
   .btn-success{
     background: linear-gradient(135deg, #22c55e, #16a34a);
     color:#fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 12px;
+    cursor: pointer;
+  }
+  .btn-success:hover{
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(34,197,94,0.3);
   }
 </style>
 {% endblock %}
@@ -127,46 +176,115 @@
       <i class="fas fa-box-open"></i>
     </div>
 
-    <div class="confirm-title">¿Confirmar recepción de este lote?</div>
+    <div class="confirm-title">📦 Recibir productos del lote</div>
 
     <div class="summary" aria-label="Resumen del lote">
       <div class="kv">
-        <div class="k">Código</div>
+        <div class="k">📌 Código</div>
         <div class="v">{{ lote.codigo }}</div>
       </div>
       <div class="kv">
-        <div class="k">Proveedor</div>
+        <div class="k">🏷️ Producto</div>
+        <div class="v">{{ lote.producto.nombre }}</div>
+      </div>
+      <div class="kv">
+        <div class="k">🏭 Proveedor</div>
         <div class="v">{{ lote.proveedor.nombre }}</div>
       </div>
       <div class="kv">
-        <div class="k">Fecha pedido</div>
-        <div class="v">{{ lote.fecha_pedido|date:"d/m/Y" }}</div>
+        <div class="k">📊 Cantidad total</div>
+        <div class="v">{{ lote.cantidad_total }} unidades</div>
       </div>
       <div class="kv">
-        <div class="k">Productos</div>
-        <div class="v">{{ lote.productos.count }} u.</div>
+        <div class="k">✅ Ya recibido</div>
+        <div class="v">{{ lote.cantidad_recibida }} unidades</div>
+      </div>
+      <div class="kv">
+        <div class="k">⏳ Pendiente por recibir</div>
+        <div class="v" style="color: #f97316;">{{ lote.restante }} unidades</div>
       </div>
     </div>
 
     <div class="notice" role="note">
-      <div class="icon"><i class="fas fa-circle-info"></i></div>
+      <div class="icon"><i class="fas fa-info-circle"></i></div>
       <div class="text">
-        Al recibir este lote, el stock de los productos se actualizará automáticamente.
+        ⚠️ Al recibir este lote, el stock del producto se actualizará automáticamente.
+        Los seriales se registrarán en este momento.
       </div>
     </div>
 
     <form method="post">
       {% csrf_token %}
+      
+      <div class="form-section">
+        <div class="form-group">
+          <label for="cantidad">📦 Cantidad a recibir *</label>
+          <input type="number" name="cantidad" id="cantidad" class="form-control" 
+                 min="1" max="{{ lote.restante }}" value="{{ lote.restante }}" required>
+          <div class="help-text">Máximo: {{ lote.restante }} unidades</div>
+        </div>
+
+        <div class="form-group">
+          <label for="seriales">🔢 Seriales (uno por línea) *</label>
+          <textarea name="seriales" id="seriales" class="form-control" rows="6" 
+                    placeholder="SN-001&#10;SN-002&#10;SN-003" required></textarea>
+          <div class="help-text">Ingresa un serial por línea. Deben coincidir con la cantidad.</div>
+        </div>
+
+        <div class="form-group">
+          <label for="notas">📝 Notas</label>
+          <textarea name="notas" id="notas" class="form-control" rows="3" 
+                    placeholder="Notas adicionales sobre esta recepción (opcional)"></textarea>
+        </div>
+      </div>
+
       <div class="actions">
-        <a href="{% url 'productos:ver_lote' lote.id %}" class="btn btn-secondary">
-          <i class="fas fa-xmark"></i> Cancelar
+        <a href="{% url 'productos:detalle_lote' lote.id %}" class="btn btn-secondary">
+          <i class="fas fa-arrow-left"></i> Cancelar
         </a>
         <button type="submit" class="btn btn-success">
-          <i class="fas fa-check"></i> Confirmar recepción
+          <i class="fas fa-check-circle"></i> Confirmar recepción
         </button>
       </div>
     </form>
 
   </div>
 </div>
+
+<script>
+  const cantidadInput = document.getElementById('cantidad');
+  const serialesTextarea = document.getElementById('seriales');
+  const maxCantidad = {{ lote.restante }};
+
+  function validarCantidad() {
+    let cantidad = parseInt(cantidadInput.value);
+    if (isNaN(cantidad)) cantidad = 0;
+    if (cantidad > maxCantidad) {
+      alert(`⚠️ La cantidad no puede superar ${maxCantidad} unidades pendientes`);
+      cantidadInput.value = maxCantidad;
+    }
+    if (cantidad < 1) {
+      cantidadInput.value = 1;
+    }
+  }
+
+  function validarSeriales() {
+    const seriales = serialesTextarea.value.trim();
+    if (!seriales) return;
+    
+    const lineas = seriales.split('\n').filter(l => l.trim());
+    const cantidad = parseInt(cantidadInput.value);
+    
+    if (lineas.length !== cantidad) {
+      serialesTextarea.style.borderColor = '#ef4444';
+    } else {
+      serialesTextarea.style.borderColor = '#22c55e';
+    }
+  }
+
+  cantidadInput.addEventListener('change', validarCantidad);
+  cantidadInput.addEventListener('input', validarCantidad);
+  serialesTextarea.addEventListener('input', validarSeriales);
+  serialesTextarea.addEventListener('blur', validarSeriales);
+</script>
 {% endblock %}

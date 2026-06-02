@@ -1,7 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.db import models
 from .models import Movimiento
 from Productos.models import Producto
 from .forms import MovimientoForm
@@ -14,29 +13,17 @@ def listar_movimientos(request):
 @login_required
 def registrar_movimiento(request):
     """Registrar entrada o salida de inventario"""
-@login_required
-def registrar_movimiento(request):
+    
+    # Obtener todos los productos
     productos = Producto.objects.all().order_by('nombre')
     
-    # 🔥 PASO 8: Prellenar producto si viene del escáner
+    # 🔥 Prellenar producto si viene del escáner
     producto_id = request.GET.get('producto')
     tipo_predefinido = request.GET.get('tipo')
     
     producto_seleccionado = None
     if producto_id:
         producto_seleccionado = get_object_or_404(Producto, pk=producto_id)
-    
-    # ... resto del código existente ...
-    
-    return render(request, 'movimientos/registrar.html', {
-        'productos': productos,
-        'producto_seleccionado': producto_seleccionado,  # 🔥 Agregar esto
-        'tipo_predefinido': tipo_predefinido,  # 🔥 Agregar esto
-        'form': MovimientoForm()
-    })    
-    
-    # 🔥 Obtener todos los productos
-    productos = Producto.objects.all().order_by('nombre')
     
     # Debug: imprimir en consola
     print(f"Productos encontrados: {productos.count()}")
@@ -66,6 +53,8 @@ def registrar_movimiento(request):
                 messages.error(request, f'No hay suficiente stock. Stock actual: {stock_anterior}')
                 return render(request, 'movimientos/registrar.html', {
                     'productos': productos,
+                    'producto_seleccionado': producto_seleccionado,
+                    'tipo_predefinido': tipo_predefinido,
                     'form': MovimientoForm()
                 })
             stock_nuevo = stock_anterior - cantidad
@@ -91,5 +80,7 @@ def registrar_movimiento(request):
     
     return render(request, 'movimientos/registrar.html', {
         'productos': productos,
+        'producto_seleccionado': producto_seleccionado,
+        'tipo_predefinido': tipo_predefinido,
         'form': MovimientoForm()
     })

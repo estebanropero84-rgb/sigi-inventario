@@ -1,0 +1,348 @@
+{% extends "base.html" %}
+
+{% block nav_seriales %}active{% endblock %}  <!-- 🔥 CAMBIADO: antes era nav_productos -->
+
+{% block title %}SIGI - Seriales{% endblock %}
+{% block page_title %}Seriales de productos{% endblock %}
+{% block page_subtitle %}Gestión de seriales únicos por producto{% endblock %}
+
+{% block extra_css %}
+<style>
+  .toolbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    flex-wrap:wrap;
+    margin-bottom: 12px;
+  }
+
+  .filters{
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+    align-items:center;
+    margin-bottom: 16px;
+    background: #f8fafc;
+    padding: 12px;
+    border-radius: 20px;
+  }
+
+  .filter{
+    position:relative;
+    flex: 1;
+    min-width: 180px;
+  }
+
+  .filter .icon-left{
+    position:absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color:#94a3b8;
+    font-size:.95rem;
+  }
+
+  .filter input,
+  .filter select{
+    width: 100%;
+    border-radius: 14px;
+    border: 1px solid #e2e8f0;
+    background:#fff;
+    padding: 10px 12px 10px 38px;
+    font: inherit;
+    outline:none;
+    transition: all 0.2s;
+  }
+  .filter select{
+    padding-left: 12px;
+  }
+
+  .filter input:focus,
+  .filter select:focus{
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+  }
+
+  .stats-summary{
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+
+  .stat-card{
+    background: white;
+    border-radius: 16px;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid #e2e8f0;
+    flex: 1;
+    min-width: 100px;
+  }
+
+  .stat-icon{
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .stat-icon.disponible{ background: #e6f7e6; color: #22c55e; }
+  .stat-icon.vendido{ background: #fef3c7; color: #d97706; }
+  .stat-icon.danado{ background: #fee2e2; color: #ef4444; }
+  .stat-icon.devuelto{ background: #e0e7ff; color: #4f46e5; }
+
+  .stat-info h4{ font-size: 1.5rem; font-weight: 800; margin: 0; }
+  .stat-info p{ font-size: 0.7rem; color: #64748b; margin: 0; }
+
+  .badge{
+    display:inline-flex;
+    align-items:center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: .7rem;
+    font-weight: 600;
+  }
+  .badge.disponible{ background: #e6f7e6; color: #22c55e; }
+  .badge.vendido{ background: #fef3c7; color: #d97706; }
+  .badge.danado{ background: #fee2e2; color: #ef4444; }
+  .badge.devuelto{ background: #e0e7ff; color: #4f46e5; }
+
+  .w-serial{ min-width: 180px; }
+  .w-producto{ min-width: 200px; }
+  .w-fecha{ min-width: 140px; }
+
+  .paginacion{
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+  }
+  .paginacion a, .paginacion span{
+    padding: 6px 12px;
+    border-radius: 8px;
+    background: white;
+    border: 1px solid #e2e8f0;
+    text-decoration: none;
+    color: #1e293b;
+  }
+  .paginacion .active{
+    background: #3b82f6;
+    color: white;
+    border-color: #3b82f6;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card pad">
+
+  <div class="toolbar">
+    <div>
+      <div style="font-weight: 850; letter-spacing:-0.2px;">Lista de seriales</div>
+      <div class="muted">Busca, filtra y gestiona los seriales de tus productos.</div>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="filters">
+    <div class="filter" style="flex: 2;">
+      <i class="fas fa-search icon-left"></i>
+      <input type="text" id="searchInput" placeholder="Buscar por serial...">
+    </div>
+
+    <div class="filter">
+      <select id="estadoFilter">
+        <option value="">📌 Todos los estados</option>
+        <option value="disponible">✅ Disponible</option>
+        <option value="vendido">💰 Vendido</option>
+        <option value="danado">⚠️ Dañado</option>
+        <option value="devuelto">🔄 Devuelto</option>
+      </select>
+    </div>
+
+    <div class="filter">
+      <select id="productoFilter">
+        <option value="">📦 Todos los productos</option>
+        {% for producto in productos %}
+        <option value="{{ producto.id }}">{{ producto.nombre }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+
+  <!-- Estadísticas resumen -->
+  <div class="stats-summary">
+    <div class="stat-card">
+      <div class="stat-icon disponible"><i class="fas fa-check-circle"></i></div>
+      <div class="stat-info">
+        <h4 id="countDisponible">0</h4>
+        <p>Disponibles</p>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon vendido"><i class="fas fa-dollar-sign"></i></div>
+      <div class="stat-info">
+        <h4 id="countVendido">0</h4>
+        <p>Vendidos</p>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon danado"><i class="fas fa-exclamation-triangle"></i></div>
+      <div class="stat-info">
+        <h4 id="countDanado">0</h4>
+        <p>Dañados</p>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon devuelto"><i class="fas fa-undo-alt"></i></div>
+      <div class="stat-info">
+        <h4 id="countDevuelto">0</h4>
+        <p>Devueltos</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabla de seriales -->
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th class="w-serial">Serial</th>
+          <th class="w-producto">Producto</th>
+          <th>Lote</th>
+          <th class="w-fecha">Fecha registro</th>
+          <th>Estado</th>
+          <th>Notas</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+
+      <tbody id="tablaBody">
+        {% for serial in seriales %}
+        <tr class="serial-row" 
+            data-serial="{{ serial.serial|lower }}"
+            data-estado="{{ serial.estado }}"
+            data-producto-id="{{ serial.producto_base.id }}">
+          <td style="font-weight: 900; font-family: monospace;">{{ serial.serial }}</td>
+          <td>{{ serial.producto_base.nombre }}</td>
+          <td>{{ serial.lote.codigo }}</td>
+          <td>{{ serial.fecha_registro|date:"d/m/Y H:i" }}</td>
+          <td>
+            {% if serial.estado == 'disponible' %}
+              <span class="badge disponible"><i class="fas fa-check-circle"></i> Disponible</span>
+            {% elif serial.estado == 'vendido' %}
+              <span class="badge vendido"><i class="fas fa-dollar-sign"></i> Vendido</span>
+            {% elif serial.estado == 'danado' %}
+              <span class="badge danado"><i class="fas fa-exclamation-triangle"></i> Dañado</span>
+            {% elif serial.estado == 'devuelto' %}
+              <span class="badge devuelto"><i class="fas fa-undo-alt"></i> Devuelto</span>
+            {% else %}
+              <span class="badge" style="background: #64748b; color: white;">{{ serial.estado }}</span>
+            {% endif %}
+          </td>
+          <td>{{ serial.notas|default:"-"|truncatechars:30 }}</td>
+          <td>
+            <a href="{% url 'productos:editar_serial' serial.id %}" class="btn-warning btn-sm" style="padding: 5px 10px; font-size: 0.7rem; border-radius: 8px; text-decoration: none; background: #f97316; color: white;">
+              <i class="fas fa-edit"></i> Editar
+            </a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" style="text-align:center; color:#64748b; padding: 40px;">
+            <i class="fas fa-barcode" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>
+            No hay seriales registrados
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Paginación -->
+  {% if seriales.has_other_pages %}
+  <div class="paginacion">
+    {% if seriales.has_previous %}
+      <a href="?page={{ seriales.previous_page_number }}{% if estado_actual %}&estado={{ estado_actual }}{% endif %}{% if busqueda %}&q={{ busqueda }}{% endif %}">
+        <i class="fas fa-chevron-left"></i> Anterior
+      </a>
+    {% endif %}
+
+    {% for num in seriales.paginator.page_range %}
+      {% if seriales.number == num %}
+        <span class="active">{{ num }}</span>
+      {% else %}
+        <a href="?page={{ num }}{% if estado_actual %}&estado={{ estado_actual }}{% endif %}{% if busqueda %}&q={{ busqueda }}{% endif %}">{{ num }}</a>
+      {% endif %}
+    {% endfor %}
+
+    {% if seriales.has_next %}
+      <a href="?page={{ seriales.next_page_number }}{% if estado_actual %}&estado={{ estado_actual }}{% endif %}{% if busqueda %}&q={{ busqueda }}{% endif %}">
+        Siguiente <i class="fas fa-chevron-right"></i>
+      </a>
+    {% endif %}
+  </div>
+  {% endif %}
+
+</div>
+
+<script>
+  // Contar seriales por estado para estadísticas
+  function actualizarEstadisticas() {
+    const rows = document.querySelectorAll('.serial-row');
+    let disponibles = 0, vendidos = 0, danados = 0, devueltos = 0;
+    
+    rows.forEach(row => {
+      if (row.style.display === 'none') return;
+      const estado = row.getAttribute('data-estado');
+      if (estado === 'disponible') disponibles++;
+      else if (estado === 'vendido') vendidos++;
+      else if (estado === 'danado') danados++;
+      else if (estado === 'devuelto') devueltos++;
+    });
+    
+    document.getElementById('countDisponible').textContent = disponibles;
+    document.getElementById('countVendido').textContent = vendidos;
+    document.getElementById('countDanado').textContent = danados;
+    document.getElementById('countDevuelto').textContent = devueltos;
+  }
+
+  // Filtrar seriales
+  function aplicarFiltros() {
+    const search = (document.getElementById('searchInput').value || '').toLowerCase().trim();
+    const estado = document.getElementById('estadoFilter').value;
+    const productoId = document.getElementById('productoFilter').value;
+    
+    const rows = document.querySelectorAll('.serial-row');
+    
+    rows.forEach(row => {
+      const serial = row.getAttribute('data-serial') || '';
+      const rowEstado = row.getAttribute('data-estado') || '';
+      const rowProducto = row.getAttribute('data-producto-id') || '';
+      
+      const matchSearch = !search || serial.includes(search);
+      const matchEstado = !estado || rowEstado === estado;
+      const matchProducto = !productoId || rowProducto === productoId;
+      
+      row.style.display = (matchSearch && matchEstado && matchProducto) ? '' : 'none';
+    });
+    
+    actualizarEstadisticas();
+  }
+
+  // Event listeners
+  document.getElementById('searchInput').addEventListener('keyup', aplicarFiltros);
+  document.getElementById('estadoFilter').addEventListener('change', aplicarFiltros);
+  document.getElementById('productoFilter').addEventListener('change', aplicarFiltros);
+
+  // Inicializar estadísticas
+  document.addEventListener('DOMContentLoaded', aplicarFiltros);
+</script>
+{% endblock %}

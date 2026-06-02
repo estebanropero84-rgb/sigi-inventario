@@ -50,20 +50,6 @@ class ProveedorForm(forms.ModelForm):
         }
 
 
-# ========== LOTE ==========
-class LoteForm(forms.ModelForm):
-    class Meta:
-        model = Lote
-        fields = ['codigo', 'proveedor', 'fecha_pedido', 'fecha_entrega', 'observaciones']
-        widgets = {
-            'codigo': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej: LOTE-001'}),
-            'proveedor': forms.Select(attrs={'class': 'form-control'}),
-            'fecha_pedido': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'fecha_entrega': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'observaciones': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-        }
-
-
 # ========== BODEGA ==========
 class BodegaForm(forms.ModelForm):
     class Meta:
@@ -75,3 +61,71 @@ class BodegaForm(forms.ModelForm):
             'encargado': forms.TextInput(attrs={'class': 'form-control'}),
             'telefono': forms.TextInput(attrs={'class': 'form-control'}),
         }
+
+
+# ========== LOTE COMPLETO (CREAR LOTE) ==========
+class LoteCompletoForm(forms.ModelForm):
+    class Meta:
+        model = Lote
+        fields = ['codigo', 'producto', 'proveedor', 'cantidad_total', 
+                  'costo_unitario', 'fecha_estimada', 'observaciones']
+        widgets = {
+            'codigo': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej: LOTE-001'}),
+            'producto': forms.Select(attrs={'class': 'form-control'}),
+            'proveedor': forms.Select(attrs={'class': 'form-control'}),
+            'cantidad_total': forms.NumberInput(attrs={'class': 'form-control', 'min': 1, 'placeholder': 'Cantidad total del lote'}),
+            'costo_unitario': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'placeholder': 'Costo por unidad'}),
+            'fecha_estimada': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'observaciones': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Observaciones del lote'}),
+        }
+
+
+# ========== RECEPCIÓN DE LOTE (RECIBIR CON SERIALES) ==========
+class RecepcionLoteForm(forms.Form):
+    """Formulario para recibir productos de un lote con seriales"""
+    cantidad = forms.IntegerField(
+        min_value=1, 
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Cantidad a recibir'})
+    )
+    seriales = forms.CharField(
+        widget=forms.Textarea(attrs={
+            'class': 'form-control', 
+            'rows': 6,
+            'placeholder': 'SN-001\nSN-002\nSN-003\nSN-004\n(Un serial por línea)'
+        }),
+        help_text="Ingresa los seriales, uno por línea. La cantidad debe coincidir con el número de seriales."
+    )
+    notas = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Notas adicionales (opcional)'})
+    )
+
+
+# ========== SERIAL (EDITAR ESTADO) ==========
+class SerialForm(forms.ModelForm):
+    class Meta:
+        model = ProductoConSerial
+        fields = ['estado', 'notas']
+        widgets = {
+            'estado': forms.Select(attrs={'class': 'form-control'}),
+            'notas': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Notas sobre este serial...'}),
+        }
+
+
+# ========== BUSCAR SERIAL ==========
+class BuscarSerialForm(forms.Form):
+    """Formulario para buscar seriales"""
+    q = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Buscar por serial...'})
+    )
+    estado = forms.ChoiceField(
+        required=False,
+        choices=[('', 'Todos los estados')] + list(ProductoConSerial.ESTADOS_SERIAL),
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+    producto = forms.ModelChoiceField(
+        required=False,
+        queryset=Producto.objects.all(),
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )

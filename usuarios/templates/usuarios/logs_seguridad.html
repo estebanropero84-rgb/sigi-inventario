@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+{% block nav_seguridad %}active{% endblock %}  <!-- 🔥 CAMBIADO: antes era nav_usuarios -->
+
+{% block title %}SIGI - Logs de Seguridad{% endblock %}
+{% block page_title %}Logs de Seguridad{% endblock %}
+{% block page_subtitle %}Registro de actividades y eventos del sistema{% endblock %}
+
+{% block content %}
+<div class="card pad">
+
+  <!-- Resumen de estadísticas -->
+  <div class="stats-summary" style="display: flex; gap: 16px; margin-bottom: 24px; flex-wrap: wrap;">
+    <div class="stat-card" style="background: #fee2e2; padding: 16px 24px; border-radius: 16px; flex: 1; min-width: 150px;">
+      <h3 style="color: #dc2626; font-size: 2rem; margin: 0;">{{ intentos_fallidos }}</h3>
+      <p style="margin: 5px 0 0; color: #64748b;">Intentos fallidos</p>
+    </div>
+    <div class="stat-card" style="background: #fef3c7; padding: 16px 24px; border-radius: 16px; flex: 1; min-width: 150px;">
+      <h3 style="color: #d97706; font-size: 2rem; margin: 0;">{{ accesos_sospechosos }}</h3>
+      <p style="margin: 5px 0 0; color: #64748b;">Accesos sospechosos</p>
+    </div>
+    <div class="stat-card" style="background: #e0e7ff; padding: 16px 24px; border-radius: 16px; flex: 1; min-width: 150px;">
+      <h3 style="color: #4f46e5; font-size: 2rem; margin: 0;">{{ logs|length }}</h3>
+      <p style="margin: 5px 0 0; color: #64748b;">Total registros</p>
+    </div>
+  </div>
+
+  <!-- Tabla de logs -->
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Usuario</th>
+          <th>Acción</th>
+          <th>IP</th>
+          <th>Detalles</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for log in logs %}
+        <tr>
+          <td>{{ log.fecha|date:"d/m/Y H:i:s" }}</td>
+          <td>{{ log.usuario|default:"-" }}</td>
+          <td>
+            {% if log.accion == 'login_exito' %}
+              <span class="badge ok" style="background: #e6f7e6; color: #22c55e; padding: 4px 12px; border-radius: 20px;">✅ Login exitoso</span>
+            {% elif log.accion == 'login_fallo' %}
+              <span class="badge bad" style="background: #fee2e2; color: #dc2626; padding: 4px 12px; border-radius: 20px;">❌ Login fallido</span>
+            {% elif log.accion == 'logout' %}
+              <span class="badge info" style="background: #e0e7ff; color: #4f46e5; padding: 4px 12px; border-radius: 20px;">🚪 Logout</span>
+            {% elif log.accion == 'intento_bruteforce' %}
+              <span class="badge warn" style="background: #fef3c7; color: #d97706; padding: 4px 12px; border-radius: 20px;">⚠️ Fuerza bruta</span>
+            {% elif log.accion == 'cambio_password' %}
+              <span class="badge" style="background: #e0e7ff; color: #4f46e5; padding: 4px 12px; border-radius: 20px;">🔑 Cambio contraseña</span>
+            {% else %}
+              <span class="badge" style="background: #f1f5f9; color: #64748b; padding: 4px 12px; border-radius: 20px;">{{ log.accion }}</span>
+            {% endif %}
+          </td>
+          <td>{{ log.ip|default:"-" }}</td>
+          <td>{{ log.detalles|default:"-"|truncatechars:50 }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5" style="text-align: center; padding: 40px;">
+            <i class="fas fa-shield-alt" style="font-size: 3rem; color: #cbd5e1; margin-bottom: 10px; display: block;"></i>
+            No hay registros de seguridad
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="actions" style="margin-top: 20px; display: flex; justify-content: flex-end;">
+    <a href="{% url 'usuarios:listar' %}" class="btn btn-secondary" style="background: #64748b; color: white; padding: 8px 16px; border-radius: 10px; text-decoration: none;">
+      <i class="fas fa-arrow-left"></i> Volver
+    </a>
+  </div>
+
+</div>
+{% endblock %}
