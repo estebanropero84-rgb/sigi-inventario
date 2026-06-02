@@ -1,20 +1,19 @@
 import os
 from pathlib import Path
+import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # =========================
 # Seguridad / Config básica
 # =========================
-# IMPORTANTE:
-# - En producción NO hardcodees la clave. Usa variable de entorno DJANGO_SECRET_KEY.
-# - Para desarrollo local puedes dejar el fallback (pero no lo subas a un repo público).
 SECRET_KEY = os.environ.get(
     "DJANGO_SECRET_KEY",
     "django-insecure-cambia-esto-por-una-clave-larga-y-aleatoria"
 )
 
-DEBUG = True
+DEBUG = os.environ.get("DJANGO_DEBUG", "True") == "True"
+
 ALLOWED_HOSTS = ["*"]
 
 # =========================
@@ -41,12 +40,15 @@ AUTH_USER_MODEL = 'usuarios.Usuario'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'Sigi_admin.middleware.SecurityHeadersMiddleware',
+    'Sigi_admin.middleware.IpLoggerMiddleware',
 ]
 
 ROOT_URLCONF = 'Sigi_admin.urls'
@@ -72,16 +74,23 @@ WSGI_APPLICATION = 'Sigi_admin.wsgi.application'
 # =========================
 # Base de datos PostgreSQL
 # =========================
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'sigi_db',
-        'USER': 'postgres',
-        'PASSWORD': '1234',
-        'HOST': 'localhost',
-        'PORT': '5432',
+if 'DATABASE_URL' in os.environ:
+    # Producción (Render)
+    DATABASES = {
+        'default': dj_database_url.config(conn_max_age=600, ssl_require=True)
     }
-}
+else:
+    # Desarrollo local
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'sigi_db',
+            'USER': 'postgres',
+            'PASSWORD': '1234',
+            'HOST': 'localhost',
+            'PORT': '5432',
+        }
+    }
 
 # =========================
 # Password validators
@@ -102,10 +111,16 @@ USE_I18N = True
 USE_TZ = True
 
 # =========================
-# Static
+# Static / Media
 # =========================
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -116,20 +131,20 @@ LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/dashboard/'
 LOGOUT_REDIRECT_URL = '/login/'
 
-# Configuración de correo electrónico (Gmail)
+# =========================
+# Configuración de correo electrónico
+# =========================
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'tu_correo@gmail.com'  # 🔥 Cambia por tu correo
-EMAIL_HOST_PASSWORD = 'tu_contraseña_de_aplicacion'  # 🔥 Usa contraseña de aplicación
-DEFAULT_FROM_EMAIL = 'SIGI <tu_correo@gmail.com>'
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "tu_correo@gmail.com")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "tu_contraseña")
+DEFAULT_FROM_EMAIL = f"SIGI <{EMAIL_HOST_USER}>"
 
-# URLs
-LOGIN_URL = '/login/'
-LOGIN_REDIRECT_URL = '/dashboard/'
-LOGOUT_REDIRECT_URL = '/login/'
-# ========== SEGURIDAD - CONFIGURACIÓN COMPLETA ==========
+# =========================
+# Seguridad - Configuración completa
+# =========================
 
 # 1. HASHING DE CONTRASEÑAS (bcrypt - el más seguro)
 PASSWORD_HASHERS = [
@@ -146,47 +161,32 @@ SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
 
 # 3. COOKIES SEGURAS
 SESSION_COOKIE_HTTPONLY = True
-SESSION_COOKIE_AGE = 1800  # 30 minutos de inactividad
+SESSION_COOKIE_AGE = 1800
 SESSION_SAVE_EVERY_REQUEST = True
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SAMESITE = 'Strict'
 SESSION_COOKIE_SAMESITE = 'Strict'
 
-# 4. HTTPS (solo en producción, para desarrollo usa False)
+# 4. HTTPS (solo en producción)
 if not DEBUG:
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
-    SECURE_HSTS_SECONDS = 31536000  # 1 año
+    SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
 
 # 5. LÍMITES DE CARGA
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 1000
 DATA_UPLOAD_MAX_NUMBER_FILES = 10
-DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5MB
+DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880
 
-# 6. SEGURIDAD DE SESIÓN
-LOGIN_URL = '/login/'
-LOGIN_REDIRECT_URL = '/dashboard/'
-LOGOUT_REDIRECT_URL = '/login/'
-
-# 7. RATE LIMITING
+# 6. RATE LIMITING
 RATELIMIT_ENABLE = True
 RATELIMIT_USE_CACHE = 'default'
-MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'Sigi_admin.middleware.SecurityHeadersMiddleware',  # 🔥 Agregar
-    'Sigi_admin.middleware.IpLoggerMiddleware',        # 🔥 Agregar
-    
-]
+
+# 7. CACHE
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
