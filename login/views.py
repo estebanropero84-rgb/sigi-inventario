@@ -4,14 +4,13 @@ from django.contrib import messages
 from django.views.decorators.cache import cache_control
 from django_ratelimit.decorators import ratelimit
 from django.core.cache import cache
-from usuarios.models import SeguridadLog
 from datetime import datetime
 import traceback
 import sys
 
 # === LOG DE INICIO ===
 print("=" * 70)
-print("📂 CARGANDO login/views.py")
+print("📂 CARGANDO login/views.py (SIN LOGS)")
 print(f"🐍 Python version: {sys.version}")
 print("=" * 70)
 
@@ -28,31 +27,18 @@ def get_client_ip(request):
         print(f"⚠️ Error obteniendo IP: {e}")
         return '0.0.0.0'
 
+# ⚠️ FUNCIÓN DE LOG DESACTIVADA - NO USA BASE DE DATOS
 def registrar_log(usuario, accion, ip, detalles=''):
-    """Registra eventos de seguridad con manejo de errores"""
-    try:
-        print(f"📝 Registrando log: {accion} - Usuario: {usuario} - IP: {ip}")
-        log = SeguridadLog.objects.create(
-            usuario=usuario[:150] if usuario else None,
-            ip=ip,
-            accion=accion,
-            detalles=detalles
-        )
-        print(f"✅ Log registrado exitosamente (ID: {log.id})")
-        return True
-    except Exception as e:
-        print(f"❌ Error registrando log: {str(e)}")
-        print(f"   Stack: {traceback.format_exc()}")
-        return False
+    """Registro de seguridad DESACTIVADO para evitar errores en Render"""
+    print(f"⚠️ LOG DESACTIVADO: {accion} - Usuario: {usuario} - IP: {ip}")
+    return True  # Siempre retorna éxito sin guardar en BD
 
 @cache_control(no_cache=True, must_revalidate=True, no_store=True)
-@ratelimit(key='ip', rate='10/h', method='POST', block=True)
-@ratelimit(key='ip', rate='3/m', method='POST')
 def login_view(request):
-    """Vista de login con rate limiting y seguridad mejorada"""
+    """Vista de login simplificada (sin rate limiting para pruebas)"""
     
     print("=" * 70)
-    print("🔐 INICIO DE LOGIN VIEW")
+    print("🔐 INICIO DE LOGIN VIEW (SIN LOGS)")
     print("=" * 70)
     
     try:
@@ -62,16 +48,6 @@ def login_view(request):
         
         ip = get_client_ip(request)
         print(f"📍 IP del cliente: {ip}")
-        
-        # Verificar si está bloqueado temporalmente
-        try:
-            bloqueado = cache.get(f'bloqueado_{ip}')
-            if bloqueado:
-                print(f"⛔ IP bloqueada por {bloqueado} minutos")
-                messages.error(request, f'Demasiados intentos. Intenta de nuevo en {bloqueado} minutos.')
-                return render(request, 'login.html')
-        except Exception as e:
-            print(f"⚠️ Error verificando bloqueo en caché: {e}")
         
         if request.user.is_authenticated:
             print("✅ Usuario ya autenticado, redirigiendo a dashboard")
@@ -91,68 +67,52 @@ def login_view(request):
                 messages.error(request, 'Usuario y contraseña son requeridos')
                 return render(request, 'login.html')
             
-            # Contar intentos fallidos
-            try:
-                intentos_key = f'intentos_{ip}'
-                intentos = cache.get(intentos_key, 0)
-                print(f"📊 Intentos fallidos previos: {intentos}")
-            except Exception as e:
-                print(f"⚠️ Error accediendo a caché: {e}")
-                intentos = 0
-            
-            # Autenticar
             print("🔍 Autenticando usuario...")
+            
             try:
                 user = authenticate(request, username=username, password=password)
                 print(f"👤 Resultado autenticación: {'✅ Éxito' if user else '❌ Falló'}")
+                
                 if user:
                     print(f"   - ID: {user.id}")
                     print(f"   - is_active: {user.is_active}")
+                    print(f"   - is_superuser: {user.is_superuser}")
             except Exception as e:
                 print(f"❌ Error en authenticate(): {str(e)}")
                 traceback.print_exc()
-                messages.error(request, 'Error en autenticación.')
+                messages.error(request, 'Error en autenticación. Contacte al administrador.')
                 return render(request, 'login.html')
             
             if user is not None:
                 if user.is_active:
-                    print("✅ Usuario activo")
-                    registrar_log(username, 'login_exito', ip, 'Login exitoso')
+                    print("✅ Usuario activo - Iniciando sesión...")
                     
                     try:
-                        cache.delete(intentos_key)
+                        # Registrar log (desactivado)
+                        registrar_log(username, 'login_exito', ip, 'Login exitoso')
                     except:
                         pass
                     
-                    login(request, user)
-                    print(f"🔐 Usuario {user.username} logueado exitosamente")
-                    messages.success(request, f'Bienvenido {user.username}')
-                    return redirect('inventarios:dashboard')
+                    try:
+                        login(request, user)
+                        print(f"🔐 Usuario {user.username} logueado exitosamente")
+                        messages.success(request, f'Bienvenido {user.username}')
+                        return redirect('inventarios:dashboard')
+                    except Exception as e:
+                        print(f"❌ Error en login(): {str(e)}")
+                        traceback.print_exc()
+                        messages.error(request, f'Error iniciando sesión')
+                        return render(request, 'login.html')
                 else:
                     print("⚠️ Usuario inactivo")
-                    registrar_log(username, 'login_fallo', ip, 'Usuario inactivo')
-                    messages.error(request, 'Usuario desactivado.')
+                    messages.error(request, 'Usuario desactivado. Contacte al administrador.')
             else:
                 print("❌ Credenciales inválidas")
-                intentos += 1
-                try:
-                    cache.set(intentos_key, intentos, 300)
-                except:
-                    pass
-                
-                registrar_log(username, 'login_fallo', ip, f'Intento {intentos}')
-                
-                if intentos >= 5:
-                    try:
-                        cache.set(f'bloqueado_{ip}', 15, 900)
-                    except:
-                        pass
-                    messages.error(request, 'Demasiados intentos. Espere 15 minutos.')
-                else:
-                    messages.error(request, f'Usuario o contraseña incorrectos. Intentos: {5 - intentos}')
+                messages.error(request, 'Usuario o contraseña incorrectos')
             
             return render(request, 'login.html')
         
+        # GET - Mostrar formulario
         print("📄 Mostrando formulario de login (GET)")
         return render(request, 'login.html')
         
@@ -166,7 +126,7 @@ def login_view(request):
         traceback.print_exc()
         print("=" * 70)
         
-        messages.error(request, 'Error interno del servidor.')
+        messages.error(request, 'Error interno del servidor. Contacte al administrador.')
         return render(request, 'login.html')
 
 
