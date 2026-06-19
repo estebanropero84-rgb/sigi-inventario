@@ -2,115 +2,128 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>{% block title %}SIGI{% endblock %}</title>
-
-  <!-- Tipografía + Iconos -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-  <!-- CSS propio -->
-  <link rel="stylesheet" href="{% static 'css/app.css' %}">
-  {% block extra_css %}{% endblock %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}SIGI{% endblock %}</title>
+    
+    <!-- Tipografía + Iconos -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- CSS propio -->
+    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+    <link rel="stylesheet" href="{% static 'css/auth.css' %}">
+    
+    {% block extra_css %}{% endblock %}
 </head>
 
 <body class="{% block body_class %}{% endblock %}">
-  <div class="app-shell">
-    <aside class="sidebar">
-      <div class="logo">
-        <i class="fas fa-cubes"></i>
-        <span>SIGI</span>
-      </div>
-
-      <nav class="nav-menu">
-        <a href="{% url 'inventarios:dashboard' %}" class="nav-item {% block nav_dashboard %}{% endblock %}">
-          <i class="fas fa-chart-pie"></i><span>Dashboard</span>
-        </a>
-
-        <a href="{% url 'compras:listar' %}" class="nav-item {% block nav_compras %}{% endblock %}">
-          <i class="fas fa-shopping-cart"></i><span>Compras</span>
-        </a>
-
-        <a href="{% url 'movimientos:listar' %}" class="nav-item {% block nav_movimientos %}{% endblock %}">
-          <i class="fas fa-exchange-alt"></i><span>Movimientos</span>
-        </a>
-
-        {% if user.is_authenticated and user.rol == 'admin' %}
-        <a href="{% url 'usuarios:listar' %}" class="nav-item {% block nav_usuarios %}{% endblock %}">
-          <i class="fas fa-users"></i><span>Usuarios</span>
-        </a>
-        {% endif %}
-
-        <a href="{% url 'productos:listar' %}" class="nav-item {% block nav_productos %}{% endblock %}">
-          <i class="fas fa-boxes"></i><span>Productos</span>
-        </a>
-
-        <!-- 🔥 LOTES -->
-        <a href="{% url 'productos:listar_lotes' %}" class="nav-item {% block nav_lotes %}{% endblock %}">
-          <i class="fas fa-boxes"></i><span>Lotes</span>
-        </a>
-
-        <!-- 🔥 SERIALES -->
-        <a href="{% url 'productos:listar_seriales' %}" class="nav-item {% block nav_seriales %}{% endblock %}">
-          <i class="fas fa-barcode"></i><span>Seriales</span>
-        </a>
-
-        <!-- 🔥 SEGURIDAD (solo admin) -->
-        {% if user.is_authenticated and user.rol == 'admin' %}
-        <a href="{% url 'usuarios:logs' %}" class="nav-item {% block nav_seguridad %}{% endblock %}">
-          <i class="fas fa-shield-alt"></i>
-          <span>Seguridad</span>
-        </a>
-        {% endif %}
-      </nav>
-
-      <div class="sidebar-footer">
-        <div class="mini-profile">
-          <div class="avatar"><i class="fas fa-user"></i></div>
-          <div class="mini-profile__info">
-            <div class="mini-profile__name">
-              {{ user.get_full_name|default:user.username|default:"Invitado" }}
+    <div class="app-shell">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <i class="fas fa-cubes"></i>
+                <span>SIGI</span>
             </div>
-            <div class="mini-profile__role">
-              {% if user.is_authenticated %}{{ user.rol|default:"usuario" }}{% else %}sin sesión{% endif %}
+            
+            <nav class="nav-menu">
+                <a href="{% url 'inventarios:dashboard' %}" class="nav-item {% block nav_dashboard %}{% endblock %}">
+                    <i class="fas fa-chart-pie"></i><span>Dashboard</span>
+                </a>
+                
+                <a href="{% url 'compras:listar' %}" class="nav-item {% block nav_compras %}{% endblock %}">
+                    <i class="fas fa-shopping-cart"></i><span>Compras</span>
+                </a>
+                
+                <a href="{% url 'movimientos:listar' %}" class="nav-item {% block nav_movimientos %}{% endblock %}">
+                    <i class="fas fa-exchange-alt"></i><span>Movimientos</span>
+                </a>
+                
+                {% if user.is_authenticated and user.rol == 'admin' %}
+                <a href="{% url 'usuarios:listar' %}" class="nav-item {% block nav_usuarios %}{% endblock %}">
+                    <i class="fas fa-users"></i><span>Usuarios</span>
+                </a>
+                {% endif %}
+                
+                <a href="{% url 'productos:listar' %}" class="nav-item {% block nav_productos %}{% endblock %}">
+                    <i class="fas fa-boxes"></i><span>Productos</span>
+                </a>
+                
+                <a href="{% url 'productos:listar_lotes' %}" class="nav-item {% block nav_lotes %}{% endblock %}">
+                    <i class="fas fa-boxes"></i><span>Lotes</span>
+                </a>
+                
+                <a href="{% url 'productos:listar_seriales' %}" class="nav-item {% block nav_seriales %}{% endblock %}">
+                    <i class="fas fa-barcode"></i><span>Seriales</span>
+                </a>
+                
+                {% if user.is_authenticated and user.rol == 'admin' %}
+                <a href="{% url 'usuarios:logs_seguridad' %}" class="nav-item {% block nav_seguridad %}{% endblock %}">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Seguridad</span>
+                </a>
+                {% endif %}
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="mini-profile">
+                    <div class="avatar"><i class="fas fa-user"></i></div>
+                    <div class="mini-profile__info">
+                        <div class="mini-profile__name">
+                            {{ user.get_full_name|default:user.username|default:"Invitado" }}
+                        </div>
+                        <div class="mini-profile__role">
+                            {% if user.is_authenticated %}{{ user.rol|default:"usuario" }}{% else %}sin sesión{% endif %}
+                        </div>
+                    </div>
+                </div>
             </div>
-          </div>
-        </div>
-      </div>
-    </aside>
-
-    <main class="main">
-      <header class="topbar">
-        <div class="topbar__left">
-          <div class="page-title">
-            <h1>{% block page_title %}Panel{% endblock %}</h1>
-            <p>{% block page_subtitle %}Bienvenido{% endblock %}</p>
-          </div>
-        </div>
-
-        <div class="topbar__right">
-          {% if user.is_authenticated %}
-          <div class="user-pill">
-            <i class="fas fa-user-circle"></i>
-            <span class="user-pill__text">{{ user.get_full_name|default:user.username }}</span>
-          </div>
-
-          <a class="btn btn-danger" href="/login/logout/">
-            <i class="fas fa-sign-out-alt"></i> Salir
-          </a>
-          {% endif %}
-        </div>
-      </header>
-
-      <section class="content">
-        {% block content %}{% endblock %}
-      </section>
-    </main>
-  </div>
-
-  {% block extra_js %}{% endblock %}
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="main">
+            <header class="topbar">
+                <div class="topbar__left">
+                    <div class="page-title">
+                        <h1>{% block page_title %}Panel{% endblock %}</h1>
+                        <p>{% block page_subtitle %}Bienvenido{% endblock %}</p>
+                    </div>
+                </div>
+                
+                <div class="topbar__right">
+                    {% if user.is_authenticated %}
+                    <div class="user-pill">
+                        <i class="fas fa-user-circle"></i>
+                        <span class="user-pill__text">{{ user.get_full_name|default:user.username }}</span>
+                    </div>
+                    
+                    <a class="btn btn-danger" href="{% url 'logout' %}">
+                        <i class="fas fa-sign-out-alt"></i> Salir
+                    </a>
+                    {% endif %}
+                </div>
+            </header>
+            
+            <section class="content">
+                <!-- Mensajes -->
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+                
+                <!-- Contenido principal -->
+                {% block content %}{% endblock %}
+            </section>
+        </main>
+    </div>
+    
+    <!-- JavaScript -->
+    <script src="{% static 'js/main.js' %}"></script>
+    {% block extra_js %}{% endblock %}
 </body>
 </html>

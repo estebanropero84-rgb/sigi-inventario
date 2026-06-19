@@ -175,5 +175,32 @@ def eliminar_usuario(request, pk):
 
 @login_required
 def perfil(request):
-    """Perfil del usuario actual"""
-    return render(request, 'usuarios/perfil.html', {'usuario': request.user})
+    """Perfil del usuario actual con estadísticas y actividad reciente"""
+    usuario = request.user
+    
+    # Obtener logs del usuario actual (últimos 10)
+    logs_usuario = SeguridadLog.objects.filter(usuario=usuario).order_by('-fecha')[:10]
+    
+    # Estadísticas del usuario
+    intentos_fallidos = SeguridadLog.objects.filter(
+        usuario=usuario, 
+        accion='login_fallo'
+    ).count()
+    
+    accesos_sospechosos = SeguridadLog.objects.filter(
+        usuario=usuario,
+        accion='intento_bruteforce'
+    ).count()
+    
+    # Total de logs del usuario
+    total_logs = SeguridadLog.objects.filter(usuario=usuario).count()
+    
+    context = {
+        'usuario': usuario,
+        'logs_usuario': logs_usuario,
+        'intentos_fallidos': intentos_fallidos,
+        'accesos_sospechosos': accesos_sospechosos,
+        'total_logs': total_logs,
+    }
+    
+    return render(request, 'usuarios/perfil.html', context)

@@ -1,0 +1,177 @@
+{% extends 'base.html' %}
+
+{% block nav_usuarios %}active{% endblock %}
+
+{% block title %}SIGI - Mi Perfil{% endblock %}
+{% block page_title %}Mi Perfil{% endblock %}
+{% block page_subtitle %}Información personal y configuración de cuenta{% endblock %}
+
+{% block content %}
+<div class="card pad">
+
+  <!-- Resumen de estadísticas del usuario -->
+  <div class="stats-summary" style="display: flex; gap: 16px; margin-bottom: 24px; flex-wrap: wrap;">
+    <div class="stat-card" style="background: #e0e7ff; padding: 16px 24px; border-radius: 16px; flex: 1; min-width: 150px;">
+      <h3 style="color: #4f46e5; font-size: 2rem; margin: 0;">{{ usuario.username }}</h3>
+      <p style="margin: 5px 0 0; color: #64748b;">Nombre de usuario</p>
+    </div>
+    <div class="stat-card" style="background: #e6f7e6; padding: 16px 24px; border-radius: 16px; flex: 1; min-width: 150px;">
+      <h3 style="color: #22c55e; font-size: 2rem; margin: 0;">
+        {% if usuario.is_active %}✅{% else %}❌{% endif %}
+      </h3>
+      <p style="margin: 5px 0 0; color: #64748b;">{% if usuario.is_active %}Cuenta activa{% else %}Cuenta inactiva{% endif %}</p>
+    </div>
+    <div class="stat-card" style="background: #fef3c7; padding: 16px 24px; border-radius: 16px; flex: 1; min-width: 150px;">
+      <h3 style="color: #d97706; font-size: 2rem; margin: 0;">{{ usuario.date_joined|date:"d/m/Y" }}</h3>
+      <p style="margin: 5px 0 0; color: #64748b;">Fecha de registro</p>
+    </div>
+  </div>
+
+  <!-- Información del perfil -->
+  <div class="profile-info" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
+    
+    <!-- Columna izquierda - Datos personales -->
+    <div class="info-section" style="background: #f8fafc; padding: 20px; border-radius: 12px;">
+      <h4 style="color: #1e293b; margin-top: 0; margin-bottom: 16px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px;">
+        <i class="fas fa-user" style="color: #4f46e5;"></i> Datos personales
+      </h4>
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <div>
+          <strong style="color: #64748b;">Nombre completo:</strong>
+          <p style="margin: 4px 0 0; font-size: 1.1rem;">{{ usuario.first_name }} {{ usuario.last_name }}</p>
+        </div>
+        <div>
+          <strong style="color: #64748b;">Email:</strong>
+          <p style="margin: 4px 0 0; font-size: 1.1rem;">{{ usuario.email }}</p>
+        </div>
+        <div>
+          <strong style="color: #64748b;">Username:</strong>
+          <p style="margin: 4px 0 0; font-size: 1.1rem;">{{ usuario.username }}</p>
+        </div>
+        <div>
+          <strong style="color: #64748b;">Rol:</strong>
+          <p style="margin: 4px 0 0; font-size: 1.1rem;">
+            {% if usuario.rol == 'admin' %}
+              <span style="background: #fee2e2; color: #dc2626; padding: 2px 12px; border-radius: 20px;">Administrador</span>
+            {% elif usuario.rol == 'supervisor' %}
+              <span style="background: #fef3c7; color: #d97706; padding: 2px 12px; border-radius: 20px;">Supervisor</span>
+            {% else %}
+              <span style="background: #e0e7ff; color: #4f46e5; padding: 2px 12px; border-radius: 20px;">Consultor</span>
+            {% endif %}
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Columna derecha - Actividad -->
+    <div class="info-section" style="background: #f8fafc; padding: 20px; border-radius: 12px;">
+      <h4 style="color: #1e293b; margin-top: 0; margin-bottom: 16px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px;">
+        <i class="fas fa-clock" style="color: #4f46e5;"></i> Actividad
+      </h4>
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <div>
+          <strong style="color: #64748b;">Último acceso:</strong>
+          <p style="margin: 4px 0 0; font-size: 1.1rem;">{{ usuario.last_login|date:"d/m/Y H:i:s"|default:"Nunca" }}</p>
+        </div>
+        <div>
+          <strong style="color: #64748b;">Fecha de registro:</strong>
+          <p style="margin: 4px 0 0; font-size: 1.1rem;">{{ usuario.date_joined|date:"d/m/Y H:i:s" }}</p>
+        </div>
+        <div>
+          <strong style="color: #64748b;">Es staff:</strong>
+          <p style="margin: 4px 0 0; font-size: 1.1rem;">
+            {% if usuario.is_staff %}
+              <span style="color: #4f46e5; font-weight: bold;">✅ Sí</span>
+            {% else %}
+              <span style="color: #64748b;">❌ No</span>
+            {% endif %}
+          </p>
+        </div>
+        <div>
+          <strong style="color: #64748b;">Estadísticas de seguridad:</strong>
+          <div style="display: flex; gap: 16px; margin-top: 8px;">
+            <span style="background: #fee2e2; padding: 4px 12px; border-radius: 20px; color: #dc2626;">
+              ❌ {{ intentos_fallidos }} fallidos
+            </span>
+            <span style="background: #fef3c7; padding: 4px 12px; border-radius: 20px; color: #d97706;">
+              ⚠️ {{ accesos_sospechosos }} sospechosos
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sección de acciones -->
+  <div class="actions" style="display: flex; gap: 12px; margin-top: 20px; flex-wrap: wrap; justify-content: space-between;">
+    <div style="display: flex; gap: 12px;">
+      <a href="{% url 'usuarios:cambiar_password' %}" class="btn btn-primary" style="background: #4f46e5; color: white; padding: 10px 20px; border-radius: 10px; text-decoration: none; display: inline-flex; align-items: center; gap: 8px;">
+        <i class="fas fa-key"></i> Cambiar contraseña
+      </a>
+      <a href="{% url 'usuarios:editar_perfil' %}" class="btn btn-secondary" style="background: #64748b; color: white; padding: 10px 20px; border-radius: 10px; text-decoration: none; display: inline-flex; align-items: center; gap: 8px;">
+        <i class="fas fa-edit"></i> Editar perfil
+      </a>
+    </div>
+    <div>
+      <a href="{% url 'logout' %}" class="btn btn-danger" style="background: #dc2626; color: white; padding: 10px 20px; border-radius: 10px; text-decoration: none; display: inline-flex; align-items: center; gap: 8px;">
+        <i class="fas fa-sign-out-alt"></i> Cerrar sesión
+      </a>
+    </div>
+  </div>
+
+  <!-- Últimos logs del usuario -->
+  <div style="margin-top: 30px;">
+    <h4 style="color: #1e293b; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; display: flex; align-items: center; gap: 10px;">
+      <i class="fas fa-history" style="color: #4f46e5;"></i> Últimas actividades
+      <span style="font-size: 0.85rem; font-weight: normal; color: #64748b; margin-left: auto;">
+        Total: {{ total_logs }} registros
+      </span>
+    </h4>
+    
+    {% if logs_usuario %}
+    <div class="table-wrap" style="margin-top: 16px;">
+      <table>
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Acción</th>
+            <th>IP</th>
+            <th>Detalles</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for log in logs_usuario %}
+          <tr>
+            <td>{{ log.fecha|date:"d/m/Y H:i:s" }}</td>
+            <td>
+              {% if log.accion == 'login_exito' %}
+                <span style="background: #e6f7e6; color: #22c55e; padding: 4px 12px; border-radius: 20px;">✅ Login exitoso</span>
+              {% elif log.accion == 'login_fallo' %}
+                <span style="background: #fee2e2; color: #dc2626; padding: 4px 12px; border-radius: 20px;">❌ Login fallido</span>
+              {% elif log.accion == 'logout' %}
+                <span style="background: #e0e7ff; color: #4f46e5; padding: 4px 12px; border-radius: 20px;">🚪 Logout</span>
+              {% elif log.accion == 'intento_bruteforce' %}
+                <span style="background: #fef3c7; color: #d97706; padding: 4px 12px; border-radius: 20px;">⚠️ Fuerza bruta</span>
+              {% elif log.accion == 'cambio_password' %}
+                <span style="background: #e0e7ff; color: #4f46e5; padding: 4px 12px; border-radius: 20px;">🔑 Cambio contraseña</span>
+              {% else %}
+                <span style="background: #f1f5f9; color: #64748b; padding: 4px 12px; border-radius: 20px;">{{ log.accion }}</span>
+              {% endif %}
+            </td>
+            <td>{{ log.ip|default:"-" }}</td>
+            <td>{{ log.detalles|default:"-"|truncatechars:40 }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div style="text-align: center; padding: 40px; background: #f8fafc; border-radius: 12px; margin-top: 16px;">
+      <i class="fas fa-shield-alt" style="font-size: 3rem; color: #cbd5e1; margin-bottom: 10px; display: block;"></i>
+      <p style="color: #64748b; margin: 0;">No hay registros de actividad para este usuario</p>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}
