@@ -186,7 +186,10 @@ if RENDER and REDIS_URL:
             'LOCATION': REDIS_URL,
             'OPTIONS': {
                 'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-                'PARSER_CLASS': 'redis.connection.HiredisParser',
+                # ✅ CORREGIDO: se elimina 'PARSER_CLASS': 'redis.connection.HiredisParser'
+                # redis-py >= 5.0 ya no expone esa clase con ese nombre/ruta.
+                # Si el paquete "hiredis" está instalado (ver requirements.txt),
+                # redis-py lo detecta y lo usa automáticamente sin configuración manual.
                 'CONNECTION_POOL_CLASS': 'redis.BlockingConnectionPool',
                 'CONNECTION_POOL_CLASS_KWARGS': {
                     'max_connections': 50,
@@ -271,4 +274,3 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5MB
 # 6. Health check para Render
 if RENDER:
     HEALTH_CHECK_PATH = '/health/'
-    
