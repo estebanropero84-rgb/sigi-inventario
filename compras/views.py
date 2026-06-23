@@ -211,6 +211,7 @@ def recibir_compra(request, pk):
                 lote = Lote.objects.create(
                     codigo=f'COMPRA-{producto.codigo}-{timezone.now().strftime("%Y%m%d%H%M%S")}',
                     producto=producto,
+                    provider=compra.proveedor,  # ✨ CORREGIDO: Añadido proveedor obligatorio
                     cantidad_total=detalle.cantidad,
                     cantidad_recibida=detalle.cantidad,
                     cantidad_vendida=0,
@@ -221,6 +222,8 @@ def recibir_compra(request, pk):
             else:
                 lote.cantidad_total += detalle.cantidad
                 lote.cantidad_recibida += detalle.cantidad
+                # Actualizar el proveedor por si el lote existente no tenía o cambió
+                lote.provider = compra.proveedor  
                 lote.save()
         
         compra.estado = 'recibido'
