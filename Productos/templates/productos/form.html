@@ -2,276 +2,492 @@
 
 {% block title %}SIGI - {% if producto %}Editar{% else %}Nuevo{% endif %} producto{% endblock %}
 {% block nav_productos %}active{% endblock %}
-{% block page_title %}{% if producto %}Editar{% else %}Nuevo{% endif %} producto{% endblock %}
-{% block page_subtitle %}
-  {% if producto %}Modificar los datos del producto{% else %}Registrar un nuevo producto en el inventario{% endif %}
-{% endblock %}
 
 {% block extra_css %}
 <style>
-  .form-shell{
-    max-width: 1040px;
+  /* ====== VARIABLES ====== */
+  :root {
+    --primary: #4f46e5;
+    --primary-light: #818cf8;
+    --primary-dark: #3730a3;
+    --success: #22c55e;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+    --gray-50: #f8fafc;
+    --gray-100: #f1f5f9;
+    --gray-200: #e2e8f0;
+    --gray-300: #cbd5e1;
+    --gray-400: #94a3b8;
+    --gray-500: #64748b;
+    --gray-600: #475569;
+    --gray-700: #334155;
+    --gray-800: #1e293b;
+    --gray-900: #0f172a;
+    --radius: 12px;
+    --radius-lg: 16px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-lg: 0 10px 40px rgba(0,0,0,0.08);
+    --shadow-focus: 0 0 0 3px rgba(79, 70, 229, 0.15);
+    --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .form-container {
+    max-width: 820px;
     margin: 0 auto;
+    padding: 32px 20px 40px;
   }
 
-  .form-card{
-    background: rgba(255,255,255,0.92);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(226,232,240,0.75);
-    border-radius: 22px;
-    box-shadow: var(--shadow-sm);
-    padding: 18px;
+  /* ====== HEADER ====== */
+  .form-header {
+    margin-bottom: 32px;
+  }
+  .form-header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin: 0 0 6px 0;
+    letter-spacing: -0.5px;
+  }
+  .form-header p {
+    color: var(--gray-500);
+    font-size: 15px;
+    margin: 0;
   }
 
-  .grid-2{
-    display:grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  /* ====== CARD ====== */
+  .form-card {
+    background: #ffffff;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    padding: 32px;
+    border: 1px solid rgba(226, 232, 240, 0.6);
+  }
+
+  /* ====== ALERTA ====== */
+  .alert-info {
+    background: linear-gradient(135deg, #eff6ff, #dbeafe);
+    border: 1px solid #bfdbfe;
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    margin-bottom: 28px;
+    display: flex;
+    align-items: flex-start;
     gap: 12px;
   }
-
-  .field{
-    margin-bottom: 12px;
+  .alert-info .icon {
+    font-size: 20px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .alert-info .text {
+    font-size: 14px;
+    color: #1e40af;
+    line-height: 1.5;
+  }
+  .alert-info .text strong {
+    font-weight: 700;
   }
 
-  .field label{
-    display:block;
-    margin-bottom: 8px;
-    font-weight: 850;
-    font-size: .85rem;
-    color: #1e293b;
+  /* ====== CAMPOS ====== */
+  .field-group {
+    margin-bottom: 20px;
+  }
+  .field-group label {
+    display: block;
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--gray-700);
+    margin-bottom: 5px;
+    letter-spacing: 0.2px;
+  }
+  .field-group label .optional {
+    font-weight: 400;
+    color: var(--gray-400);
+    font-size: 12px;
+    margin-left: 4px;
+  }
+  .field-group label .required {
+    color: var(--danger);
+    margin-left: 2px;
   }
 
-  .row{
-    position:relative;
+  .field-group .control {
+    width: 100%;
+    padding: 10px 14px;
+    border: 2px solid var(--gray-200);
+    border-radius: var(--radius);
+    font-size: 14px;
+    color: var(--gray-800);
+    background: #ffffff;
+    outline: none;
+    transition: var(--transition);
+    box-sizing: border-box;
+    font-family: inherit;
   }
-  .row .icon-left{
-    position:absolute;
-    left: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    color:#94a3b8;
-    font-size: .95rem;
+  .field-group .control:hover {
+    border-color: var(--gray-300);
   }
-
-  .control{
-    width:100%;
-    border-radius: 14px;
-    border: 1px solid var(--border);
-    background:#fff;
-    padding: 12px 12px 12px 42px;
-    font: inherit;
-    outline:none;
-    transition: box-shadow .15s ease, border-color .15s ease;
+  .field-group .control:focus {
+    border-color: var(--primary);
+    box-shadow: var(--shadow-focus);
   }
-  .control:focus{
-    border-color: rgba(59,130,246,0.6);
-    box-shadow: 0 0 0 4px rgba(59,130,246,0.12);
+  .field-group .control::placeholder {
+    color: var(--gray-400);
   }
 
-  select.control{ padding-left: 12px; } /* select sin icono */
-  textarea.control{ padding-left: 12px; } /* textarea sin icono */
-
-  .help{
-    margin-top: 6px;
-    color: var(--muted);
-    font-size: .82rem;
-    font-weight: 650;
+  .field-group .control.is-invalid {
+    border-color: var(--danger);
+    background-color: #fef2f2;
+  }
+  .field-group .control.is-invalid:focus {
+    border-color: var(--danger);
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
   }
 
-  .mini{
-    margin-top: 6px;
-    display:flex;
-    gap:10px;
-    flex-wrap:wrap;
-    align-items:center;
-    color: var(--muted);
-    font-size: .82rem;
-    font-weight: 650;
+  .field-group .control-error {
+    color: var(--danger);
+    font-size: 13px;
+    font-weight: 500;
+    margin-top: 5px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
   }
-  .chip{
-    display:inline-flex;
-    align-items:center;
-    gap:8px;
-    padding: 6px 10px;
-    border-radius: 999px;
-    border: 1px solid rgba(226,232,240,0.85);
-    background: #fff;
-    font-weight: 800;
+  .field-group .control-error .icon {
+    font-size: 14px;
   }
 
-  .actions{
-    display:flex;
-    justify-content:flex-end;
-    gap: 10px;
-    flex-wrap:wrap;
-    margin-top: 16px;
+  .field-group .help-text {
+    font-size: 12px;
+    color: var(--gray-400);
+    margin-top: 4px;
+  }
+  .field-group .help-text a {
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 500;
+  }
+  .field-group .help-text a:hover {
+    text-decoration: underline;
   }
 
-  .btn-secondary{
-    background: linear-gradient(135deg, #64748b, #475569);
-    color:#fff;
+  /* ====== GRID ====== */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .grid-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
   }
 
-  @media (max-width: 860px){
-    .grid-2{ grid-template-columns: 1fr; }
+  /* ====== BOTONES ====== */
+  .form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 28px;
+    padding-top: 24px;
+    border-top: 2px solid var(--gray-100);
+  }
+
+  .btn {
+    padding: 10px 28px;
+    border-radius: var(--radius);
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: var(--transition);
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+  }
+
+  .btn-secondary {
+    background: var(--gray-100);
+    color: var(--gray-600);
+  }
+  .btn-secondary:hover {
+    background: var(--gray-200);
+    color: var(--gray-700);
+    transform: translateY(-1px);
+  }
+
+  .btn-primary {
+    background: var(--primary);
+    color: #ffffff;
+  }
+  .btn-primary:hover {
+    background: var(--primary-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+  }
+  .btn-primary:active {
+    transform: translateY(0);
+  }
+
+  /* ====== RESPONSIVE ====== */
+  @media (max-width: 768px) {
+    .form-card {
+      padding: 20px;
+    }
+    .grid-2 {
+      grid-template-columns: 1fr;
+    }
+    .grid-3 {
+      grid-template-columns: 1fr 1fr;
+    }
+    .form-actions {
+      flex-direction: column-reverse;
+    }
+    .form-actions .btn {
+      justify-content: center;
+      padding: 12px 20px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .form-container {
+      padding: 16px 12px;
+    }
+    .form-card {
+      padding: 16px;
+    }
+    .grid-3 {
+      grid-template-columns: 1fr;
+    }
+    .form-header h1 {
+      font-size: 22px;
+    }
+  }
+
+  /* ====== SELECTOR DE UBICACIÓN ====== */
+  .ubication-link {
+    font-size: 12px;
+    margin-top: 4px;
+  }
+  .ubication-link a {
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 500;
+  }
+  .ubication-link a:hover {
+    text-decoration: underline;
+  }
+
+  /* ====== ANIMACIÓN DE ERROR ====== */
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-6px); }
+    40% { transform: translateX(6px); }
+    60% { transform: translateX(-4px); }
+    80% { transform: translateX(4px); }
+  }
+  .shake {
+    animation: shake 0.4s ease;
   }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="form-shell">
+<div class="form-container">
+
+  <!-- ====== HEADER ====== -->
+  <div class="form-header">
+    <h1>{% if producto %}✏️ Editar{% else %}📦 Nuevo{% endif %} producto</h1>
+    <p>{% if producto %}Modifica los datos del producto{% else %}Registra un nuevo producto en el inventario{% endif %}</p>
+  </div>
+
+  <!-- ====== CARD ====== -->
   <div class="form-card">
+
+    <!-- ====== ALERTA ====== -->
+    <div class="alert-info">
+      <span class="icon">💡</span>
+      <div class="text">
+        <strong>Importante:</strong> El stock se gestiona a través de lotes.
+        Después de crear el producto, deberás crear un lote para agregar inventario.
+      </div>
+    </div>
+
+    <!-- ====== FORMULARIO ====== -->
     <form method="post" novalidate>
       {% csrf_token %}
 
-      <div class="grid-2">
-        <div class="field">
-          <label for="codigo">Código <span style="color: var(--danger);">*</span></label>
-          <div class="row">
-            <i class="fas fa-barcode icon-left"></i>
-            <input id="codigo" type="text" name="codigo" class="control"
-                   value="{{ producto.codigo|default:'' }}" required placeholder="Ej: ELE-001">
-          </div>
-        </div>
+      <!-- ====== CÓDIGO ====== -->
+      <div class="field-group">
+        <label for="id_codigo">Código <span class="required">*</span></label>
+        <input id="id_codigo" type="text" name="codigo"
+               class="control {% if form.codigo.errors %}is-invalid shake{% endif %}"
+               value="{{ form.codigo.value|default:'' }}"
+               placeholder="Ej: ELE-001">
+        {% if form.codigo.errors %}
+          <div class="control-error"><span class="icon">⚠️</span> {% for error in form.codigo.errors %}{{ error }}{% endfor %}</div>
+        {% endif %}
+      </div>
 
-        <div class="field">
-          <label for="nombre">Nombre <span style="color: var(--danger);">*</span></label>
-          <div class="row">
-            <i class="fas fa-box icon-left"></i>
-            <input id="nombre" type="text" name="nombre" class="control"
-                   value="{{ producto.nombre|default:'' }}" required placeholder="Ej: Monitor 24&quot;">
-          </div>
+      <!-- ====== NOMBRE ====== -->
+      <div class="field-group">
+        <label for="id_nombre">Nombre <span class="required">*</span></label>
+        <input id="id_nombre" type="text" name="nombre"
+               class="control {% if form.nombre.errors %}is-invalid shake{% endif %}"
+               value="{{ form.nombre.value|default:'' }}"
+               placeholder="Nombre del producto">
+        {% if form.nombre.errors %}
+          <div class="control-error"><span class="icon">⚠️</span> {% for error in form.nombre.errors %}{{ error }}{% endfor %}</div>
+        {% endif %}
+      </div>
+
+      <!-- ====== CÓDIGO DE BARRAS ====== -->
+      <div class="field-group">
+        <label for="id_codigo_barras">Código de barras <span class="optional">(opcional)</span></label>
+        <input id="id_codigo_barras" type="text" name="codigo_barras"
+               class="control {% if form.codigo_barras.errors %}is-invalid shake{% endif %}"
+               value="{{ form.codigo_barras.value|default:'' }}"
+               placeholder="Opcional">
+        {% if form.codigo_barras.errors %}
+          <div class="control-error"><span class="icon">⚠️</span> {% for error in form.codigo_barras.errors %}{{ error }}{% endfor %}</div>
+        {% endif %}
+      </div>
+
+      <!-- ====== MARCA + MODELO ====== -->
+      <div class="grid-2">
+        <div class="field-group">
+          <label for="id_marca">Marca <span class="required">*</span></label>
+          <input id="id_marca" type="text" name="marca"
+                 class="control {% if form.marca.errors %}is-invalid shake{% endif %}"
+                 value="{{ form.marca.value|default:'' }}"
+                 placeholder="Ej: Samsung, LG, Sony">
+          {% if form.marca.errors %}
+            <div class="control-error"><span class="icon">⚠️</span> {% for error in form.marca.errors %}{{ error }}{% endfor %}</div>
+          {% endif %}
+        </div>
+        <div class="field-group">
+          <label for="id_modelo">Modelo <span class="required">*</span></label>
+          <input id="id_modelo" type="text" name="modelo"
+                 class="control {% if form.modelo.errors %}is-invalid shake{% endif %}"
+                 value="{{ form.modelo.value|default:'' }}"
+                 placeholder="Ej: 24MK600M">
+          {% if form.modelo.errors %}
+            <div class="control-error"><span class="icon">⚠️</span> {% for error in form.modelo.errors %}{{ error }}{% endfor %}</div>
+          {% endif %}
         </div>
       </div>
 
+      <!-- ====== CATEGORÍA + UBICACIÓN ====== -->
       <div class="grid-2">
-        <div class="field">
-          <label for="marca">Marca</label>
-          <div class="row">
-            <i class="fas fa-industry icon-left"></i>
-            <input id="marca" type="text" name="marca" class="control"
-                   value="{{ producto.marca|default:'' }}" placeholder="Ej: LG, Samsung, Sony">
-          </div>
-        </div>
-
-        <div class="field">
-          <label for="modelo">Modelo</label>
-          <div class="row">
-            <i class="fas fa-tag icon-left"></i>
-            <input id="modelo" type="text" name="modelo" class="control"
-                   value="{{ producto.modelo|default:'' }}" placeholder="Ej: 24MK600M">
-          </div>
-        </div>
-      </div>
-
-      <div class="grid-2">
-        <div class="field">
-          <label for="categoria">Categoría</label>
-          <select id="categoria" name="categoria" class="control">
+        <div class="field-group">
+          <label for="id_categoria">Categoría</label>
+          <select id="id_categoria" name="categoria"
+                  class="control {% if form.categoria.errors %}is-invalid{% endif %}">
             <option value="">Seleccionar categoría...</option>
             {% for categoria in categorias %}
               <option value="{{ categoria.id }}"
-                {% if producto and producto.categoria and producto.categoria.id == categoria.id %}selected{% endif %}>
+                {% if form.categoria.value|stringformat:"s" == categoria.id|stringformat:"s" %}selected{% endif %}>
                 {{ categoria.nombre }}
               </option>
             {% endfor %}
           </select>
+          {% if form.categoria.errors %}
+            <div class="control-error"><span class="icon">⚠️</span> {% for error in form.categoria.errors %}{{ error }}{% endfor %}</div>
+          {% endif %}
         </div>
-
-        <div class="field">
-          <label for="ubicacion">Ubicación</label>
-          <div class="row">
-            <i class="fas fa-location-dot icon-left"></i>
-            <input id="ubicacion" type="text" name="ubicacion" class="control"
-                   value="{{ producto.ubicacion|default:'' }}" placeholder="Ej: Estante A1, Bodega 2">
+        <div class="field-group">
+          <label for="id_ubicacion">Ubicación</label>
+          <select id="id_ubicacion" name="ubicacion"
+                  class="control {% if form.ubicacion.errors %}is-invalid{% endif %}">
+            <option value="">Seleccionar ubicación...</option>
+            {% for ubicacion in ubicaciones %}
+              <option value="{{ ubicacion.id }}"
+                {% if form.ubicacion.value|stringformat:"s" == ubicacion.id|stringformat:"s" %}selected{% endif %}>
+                {{ ubicacion.nombre }}
+              </option>
+            {% endfor %}
+          </select>
+          <div class="ubication-link">
+            <a href="{% url 'productos:ubicaciones' %}" target="_blank">➕ Gestionar ubicaciones</a>
           </div>
+          {% if form.ubicacion.errors %}
+            <div class="control-error"><span class="icon">⚠️</span> {% for error in form.ubicacion.errors %}{{ error }}{% endfor %}</div>
+          {% endif %}
         </div>
       </div>
 
+      <!-- ====== STOCK MÍNIMO ====== -->
+      <div class="field-group">
+        <label for="id_stock_minimo">Stock mínimo <span class="required">*</span></label>
+        <input id="id_stock_minimo" type="number" name="stock_minimo"
+               class="control {% if form.stock_minimo.errors %}is-invalid shake{% endif %}"
+               value="{{ form.stock_minimo.value|default:5 }}" min="0"
+               placeholder="5">
+        {% if form.stock_minimo.errors %}
+          <div class="control-error"><span class="icon">⚠️</span> {% for error in form.stock_minimo.errors %}{{ error }}{% endfor %}</div>
+        {% endif %}
+      </div>
+
+      <!-- ====== PRECIOS ====== -->
       <div class="grid-2">
-        <div class="field">
-          <label for="stock_actual">Stock actual</label>
-          <div class="row">
-            <i class="fas fa-cubes icon-left"></i>
-            <input id="stock_actual" type="number" name="stock_actual" class="control"
-                   value="{{ producto.stock_actual|default:0 }}" min="0">
-          </div>
-          <div class="help">Si manejas stock por seriales/lotes, este valor puede actualizarse automáticamente.</div>
+        <div class="field-group">
+          <label for="id_precio_compra">Precio compra <span class="required">*</span></label>
+          <input id="id_precio_compra" type="number" name="precio_compra"
+                 class="control {% if form.precio_compra.errors %}is-invalid shake{% endif %}"
+                 value="{{ form.precio_compra.value|default:'' }}" step="0.01" min="0"
+                 placeholder="0.00">
+          {% if form.precio_compra.errors %}
+            <div class="control-error"><span class="icon">⚠️</span> {% for error in form.precio_compra.errors %}{{ error }}{% endfor %}</div>
+          {% endif %}
         </div>
-
-        <div class="field">
-          <label for="stock_minimo">Stock mínimo</label>
-          <div class="row">
-            <i class="fas fa-triangle-exclamation icon-left"></i>
-            <input id="stock_minimo" type="number" name="stock_minimo" class="control"
-                   value="{{ producto.stock_minimo|default:5 }}" min="0">
-          </div>
-        </div>
-      </div>
-
-      <div class="grid-2">
-        <div class="field">
-          <label for="precio_compra">Precio compra</label>
-          <div class="row">
-            <i class="fas fa-hand-holding-dollar icon-left"></i>
-            <input id="precio_compra" type="number" name="precio_compra" class="control"
-                   value="{{ producto.precio_compra|default:'' }}" step="0.01" placeholder="0.00">
-          </div>
-        </div>
-
-        <div class="field">
-          <label for="precio_venta">Precio venta <span style="color: var(--danger);">*</span></label>
-          <div class="row">
-            <i class="fas fa-cash-register icon-left"></i>
-            <input id="precio_venta" type="number" name="precio_venta" class="control"
-                   value="{{ producto.precio_venta|default:'' }}" step="0.01" required placeholder="0.00">
-          </div>
+        <div class="field-group">
+          <label for="id_precio_venta">Precio venta <span class="required">*</span></label>
+          <input id="id_precio_venta" type="number" name="precio_venta"
+                 class="control {% if form.precio_venta.errors %}is-invalid shake{% endif %}"
+                 value="{{ form.precio_venta.value|default:'' }}" step="0.01" min="0"
+                 placeholder="0.00">
+          {% if form.precio_venta.errors %}
+            <div class="control-error"><span class="icon">⚠️</span> {% for error in form.precio_venta.errors %}{{ error }}{% endfor %}</div>
+          {% endif %}
         </div>
       </div>
 
-      <div class="grid-2">
-        <div class="field">
-          <label for="garantia_meses">Garantía (meses)</label>
-          <div class="row">
-            <i class="fas fa-shield-halved icon-left"></i>
-            <input id="garantia_meses" type="number" name="garantia_meses" class="control"
-                   value="{{ producto.garantia_meses|default:12 }}" min="0">
-          </div>
-          <div class="mini">
-            <span class="chip" title="Valor sugerido"><i class="fas fa-wand-magic-sparkles"></i> Sugerido: 12</span>
-            <span>0 = sin garantía</span>
-          </div>
-        </div>
-
-        <div class="field">
-          <label>&nbsp;</label>
-          <div class="help" style="padding: 12px 12px; border: 1px solid rgba(226,232,240,0.75); border-radius: 18px; background:#fff;">
-            <div style="font-weight:900; color:#0f172a; margin-bottom:4px;">
-              Consejo
-            </div>
-            <div style="color: var(--muted); font-weight:650;">
-              Mantén el código y el nombre consistentes para facilitar búsquedas y reportes.
-            </div>
-          </div>
-        </div>
+      <!-- ====== GARANTÍA ====== -->
+      <div class="field-group">
+        <label for="id_garantia_meses">Garantía <span class="optional">(meses)</span></label>
+        <input id="id_garantia_meses" type="number" name="garantia_meses"
+               class="control {% if form.garantia_meses.errors %}is-invalid shake{% endif %}"
+               value="{{ form.garantia_meses.value|default:12 }}" min="0"
+               placeholder="12">
+        {% if form.garantia_meses.errors %}
+          <div class="control-error"><span class="icon">⚠️</span> {% for error in form.garantia_meses.errors %}{{ error }}{% endfor %}</div>
+        {% endif %}
       </div>
 
-      <div class="field">
-        <label for="descripcion">Descripción</label>
-        <textarea id="descripcion" name="descripcion" rows="4" class="control"
-                  placeholder="Descripción breve del producto...">{{ producto.descripcion|default:'' }}</textarea>
+      <!-- ====== DESCRIPCIÓN ====== -->
+      <div class="field-group">
+        <label for="id_descripcion">Descripción</label>
+        <textarea id="id_descripcion" name="descripcion" rows="4"
+                  class="control {% if form.descripcion.errors %}is-invalid{% endif %}"
+                  placeholder="Descripción detallada del producto...">{{ form.descripcion.value|default:'' }}</textarea>
+        {% if form.descripcion.errors %}
+          <div class="control-error"><span class="icon">⚠️</span> {% for error in form.descripcion.errors %}{{ error }}{% endfor %}</div>
+        {% endif %}
       </div>
 
-      <div class="actions">
+      <!-- ====== BOTONES ====== -->
+      <div class="form-actions">
         <a href="{% url 'productos:listar' %}" class="btn btn-secondary">
-          <i class="fas fa-xmark"></i> Cancelar
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          Cancelar
         </a>
-
         <button type="submit" class="btn btn-primary">
-          <i class="fas fa-floppy-disk"></i>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
           {% if producto %}Actualizar{% else %}Guardar{% endif %} producto
         </button>
       </div>
+
     </form>
   </div>
 </div>

@@ -2,40 +2,15 @@
 
 {% block title %}SIGI - Movimientos{% endblock %}
 {% block nav_movimientos %}active{% endblock %}
-{% block page_title %}Movimientos{% endblock %}
-{% block page_subtitle %}Historial de entradas y salidas de inventario{% endblock %}
 
 {% block extra_css %}
 <style>
-  :root {
-    --primary: #4f46e5;
-    --success: #22c55e;
-    --danger: #ef4444;
-    --warning: #f59e0b;
-    --info: #0ea5e9;
-    --gray-50: #f8fafc;
-    --gray-100: #f1f5f9;
-    --gray-200: #e2e8f0;
-    --gray-300: #cbd5e1;
-    --gray-400: #94a3b8;
-    --gray-500: #64748b;
-    --gray-600: #475569;
-    --gray-700: #334155;
-    --gray-800: #1e293b;
-    --gray-900: #0f172a;
-    --radius: 12px;
-    --shadow: 0 1px 3px rgba(0,0,0,0.06);
-    --shadow-lg: 0 10px 40px rgba(0,0,0,0.08);
-    --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
   .movimientos-container {
     max-width: 1200px;
     margin: 0 auto;
     padding: 24px 20px;
   }
 
-  /* ====== TOOLBAR ====== */
   .toolbar {
     display: flex;
     align-items: center;
@@ -47,11 +22,11 @@
   .toolbar-left .title {
     font-size: 24px;
     font-weight: 700;
-    color: var(--gray-900);
+    color: #0f172a;
     margin: 0;
   }
   .toolbar-left .subtitle {
-    color: var(--gray-500);
+    color: #64748b;
     font-size: 14px;
     margin: 4px 0 0 0;
   }
@@ -61,7 +36,7 @@
     background: linear-gradient(135deg, #4f46e5, #4338ca);
     color: #fff;
     border: none;
-    border-radius: var(--radius);
+    border-radius: 12px;
     font-weight: 600;
     font-size: 14px;
     cursor: pointer;
@@ -69,14 +44,13 @@
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    transition: var(--transition);
+    transition: all 0.2s;
   }
   .btn-primary:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(79,70,229,0.3);
   }
 
-  /* ====== STATS ====== */
   .stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
@@ -86,33 +60,32 @@
   .stat-card {
     background: #fff;
     padding: 14px 18px;
-    border-radius: var(--radius);
-    border: 1px solid var(--gray-200);
-    box-shadow: var(--shadow);
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
   }
   .stat-card .number {
     font-size: 24px;
     font-weight: 700;
-    color: var(--gray-900);
+    color: #0f172a;
   }
   .stat-card .label {
     font-size: 13px;
-    color: var(--gray-500);
+    color: #64748b;
   }
-  .stat-card.entradas .number { color: var(--success); }
-  .stat-card.salidas .number { color: var(--danger); }
-  .stat-card.total .number { color: var(--primary); }
+  .stat-card.entradas .number { color: #22c55e; }
+  .stat-card.salidas .number { color: #ef4444; }
+  .stat-card.total .number { color: #4f46e5; }
 
-  /* ====== FILTROS ====== */
   .filters-bar {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
     align-items: center;
     padding: 14px 18px;
-    background: var(--gray-50);
-    border-radius: var(--radius);
-    border: 1px solid var(--gray-200);
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
     margin-bottom: 20px;
   }
   .filter {
@@ -125,58 +98,88 @@
     left: 12px;
     top: 50%;
     transform: translateY(-50%);
-    color: var(--gray-400);
-    font-size: 14px;
+    color: #94a3b8;
     z-index: 2;
   }
   .filter input,
   .filter select {
     width: 100%;
     padding: 8px 12px 8px 36px;
-    border: 2px solid var(--gray-200);
+    border: 2px solid #e2e8f0;
     border-radius: 10px;
     font-size: 13px;
     outline: none;
     background: #fff;
-    transition: var(--transition);
+    transition: all 0.2s;
   }
   .filter select { padding-left: 12px; }
   .filter input:focus,
   .filter select:focus {
-    border-color: var(--primary);
+    border-color: #4f46e5;
     box-shadow: 0 0 0 3px rgba(79,70,229,0.12);
   }
 
   .btn-filter {
     padding: 8px 20px;
-    background: var(--primary);
+    background: #4f46e5;
     color: #fff;
     border: none;
     border-radius: 10px;
     font-weight: 600;
     cursor: pointer;
-    transition: var(--transition);
+    transition: all 0.2s;
   }
   .btn-filter:hover {
-    background: var(--primary-dark);
+    background: #3730a3;
   }
 
   .btn-clear {
     padding: 8px 16px;
-    background: var(--gray-100);
-    color: var(--gray-600);
+    background: #f1f5f9;
+    color: #475569;
     border: none;
     border-radius: 10px;
     font-weight: 600;
     cursor: pointer;
     text-decoration: none;
-    transition: var(--transition);
+    transition: all 0.2s;
   }
   .btn-clear:hover {
-    background: var(--gray-200);
+    background: #e2e8f0;
   }
 
-  /* ====== BADGES ====== */
+  .table-wrap {
+    overflow-x: auto;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .table-wrap table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+  .table-wrap th {
+    text-align: left;
+    padding: 12px 16px;
+    background: #f8fafc;
+    font-weight: 700;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #64748b;
+    border-bottom: 2px solid #e2e8f0;
+  }
+  .table-wrap td {
+    padding: 12px 16px;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+  }
+  .table-wrap tr:hover td {
+    background: #fafbff;
+  }
+
   .badge {
     display: inline-block;
     padding: 4px 14px;
@@ -188,62 +191,15 @@
   .badge.salida { background: #fee2e2; color: #dc2626; }
   .badge.devolucion { background: #e0e7ff; color: #4338ca; }
   .badge.ajuste { background: #fef3c7; color: #b45309; }
-  .badge.traslado { background: #e0f2fe; color: #0369a1; }
 
-  /* ====== TABLA ====== */
-  .table-wrap {
-    overflow-x: auto;
-    border-radius: var(--radius);
-    border: 1px solid var(--gray-200);
-    background: #fff;
-    box-shadow: var(--shadow);
-  }
-  .table-wrap table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 14px;
-  }
-  .table-wrap th {
-    text-align: left;
-    padding: 12px 16px;
-    background: var(--gray-50);
-    font-weight: 700;
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: var(--gray-500);
-    border-bottom: 2px solid var(--gray-200);
-  }
-  .table-wrap td {
-    padding: 12px 16px;
-    border-bottom: 1px solid var(--gray-100);
-    vertical-align: middle;
-  }
-  .table-wrap tr:hover td {
-    background: #fafbff;
-  }
-  .table-wrap tr:last-child td { border-bottom: none; }
-
-  .w-producto { min-width: 180px; font-weight: 600; }
-  .w-tipo { min-width: 110px; }
-  .w-cantidad { min-width: 80px; text-align: center; font-weight: 700; }
-  .w-motivo { min-width: 140px; }
-  .w-fecha { min-width: 150px; white-space: nowrap; }
-  .w-usuario { min-width: 120px; }
-
-  .text-muted { color: var(--gray-400); }
-  .text-center { text-align: center; }
-
-  /* ====== EMPTY STATE ====== */
   .empty-state {
     text-align: center;
     padding: 48px 20px;
-    color: var(--gray-400);
+    color: #94a3b8;
   }
   .empty-state .icon { font-size: 48px; margin-bottom: 12px; opacity: 0.5; }
-  .empty-state h3 { color: var(--gray-600); margin: 0 0 4px 0; }
+  .empty-state h3 { color: #64748b; margin: 0 0 4px 0; }
 
-  /* ====== PAGINACIÓN ====== */
   .pagination {
     display: flex;
     justify-content: center;
@@ -252,25 +208,24 @@
   }
   .pagination a {
     padding: 8px 16px;
-    background: var(--gray-100);
-    color: var(--gray-600);
+    background: #f1f5f9;
+    color: #475569;
     border-radius: 10px;
     text-decoration: none;
     font-weight: 600;
-    transition: var(--transition);
+    transition: all 0.2s;
   }
   .pagination a:hover {
-    background: var(--gray-200);
+    background: #e2e8f0;
   }
   .pagination .current {
     padding: 8px 16px;
-    background: var(--primary);
+    background: #4f46e5;
     color: #fff;
     border-radius: 10px;
     font-weight: 600;
   }
 
-  /* ====== RESPONSIVE ====== */
   @media (max-width: 768px) {
     .toolbar { flex-direction: column; align-items: stretch; }
     .filters-bar { flex-direction: column; align-items: stretch; }
@@ -288,7 +243,6 @@
 {% block content %}
 <div class="movimientos-container">
 
-  <!-- ====== TOOLBAR ====== -->
   <div class="toolbar">
     <div class="toolbar-left">
       <div class="title">📋 Movimientos</div>
@@ -299,7 +253,6 @@
     </a>
   </div>
 
-  <!-- ====== ESTADÍSTICAS ====== -->
   <div class="stats-grid">
     <div class="stat-card total">
       <div class="number">{{ total_movimientos|default:0 }}</div>
@@ -315,7 +268,6 @@
     </div>
   </div>
 
-  <!-- ====== FILTROS ====== -->
   <div class="filters-bar">
     <div class="filter">
       <i class="fas fa-search icon-left"></i>
@@ -328,7 +280,6 @@
         <option value="salida" {% if request.GET.tipo == 'salida' %}selected{% endif %}>📤 Salida</option>
         <option value="devolucion" {% if request.GET.tipo == 'devolucion' %}selected{% endif %}>🔄 Devolución</option>
         <option value="ajuste" {% if request.GET.tipo == 'ajuste' %}selected{% endif %}>🔧 Ajuste</option>
-        <option value="traslado" {% if request.GET.tipo == 'traslado' %}selected{% endif %}>🚚 Traslado</option>
       </select>
     </div>
     <div class="filter">
@@ -341,9 +292,6 @@
         <option value="devolucion_cliente">Devolución cliente</option>
         <option value="devolucion_proveedor">Devolución proveedor</option>
         <option value="ajuste_inventario">Ajuste inventario</option>
-        <option value="traslado">Traslado</option>
-        <option value="muestra">Muestra</option>
-        <option value="prestamo">Préstamo</option>
       </select>
     </div>
     <div class="filter" style="flex: 0.5;">
@@ -356,17 +304,17 @@
     <a href="{% url 'movimientos:listar' %}" class="btn-clear">Limpiar</a>
   </div>
 
-  <!-- ====== TABLA ====== -->
   <div class="table-wrap">
     <table>
       <thead>
         <tr>
-          <th class="w-producto">Producto</th>
-          <th class="w-tipo">Tipo</th>
-          <th class="w-cantidad">Cantidad</th>
-          <th class="w-motivo">Motivo</th>
-          <th class="w-fecha">Fecha</th>
-          <th class="w-usuario">Usuario</th>
+          <th>Producto</th>
+          <th>Tipo</th>
+          <th>Cantidad</th>
+          <th>Serial</th>
+          <th>Motivo</th>
+          <th>Fecha</th>
+          <th>Usuario</th>
         </tr>
       </thead>
       <tbody id="tablaBody">
@@ -376,28 +324,28 @@
             data-tipo="{{ movimiento.tipo }}"
             data-motivo="{{ movimiento.motivo|default:''|lower }}"
             data-fecha="{{ movimiento.created_at|date:'Y-m-d' }}">
-          <td class="w-producto">{{ movimiento.producto.nombre }}</td>
-          <td class="w-tipo">
+          <td style="font-weight: 600;">{{ movimiento.producto.nombre }}</td>
+          <td>
             <span class="badge {{ movimiento.tipo }}">
               {% if movimiento.tipo == 'entrada' %}📥 Entrada
               {% elif movimiento.tipo == 'salida' %}📤 Salida
               {% elif movimiento.tipo == 'devolucion' %}🔄 Devolución
               {% elif movimiento.tipo == 'ajuste' %}🔧 Ajuste
-              {% elif movimiento.tipo == 'traslado' %}🚚 Traslado
               {% else %}{{ movimiento.get_tipo_display }}
               {% endif %}
             </span>
           </td>
-          <td class="w-cantidad" style="font-weight: 700; color: {% if movimiento.tipo == 'entrada' %}#15803d{% else %}#dc2626{% endif %};">
+          <td style="font-weight: 700; color: {% if movimiento.tipo == 'entrada' %}#15803d{% else %}#dc2626{% endif %};">
             {{ movimiento.cantidad }}
           </td>
-          <td class="w-motivo">{{ movimiento.motivo|default:"-" }}</td>
-          <td class="w-fecha">{{ movimiento.created_at|date:"d/m/Y H:i" }}</td>
-          <td class="w-usuario">{{ movimiento.usuario.username }}</td>
+          <td><code style="font-size: 12px; background: #f1f5f9; padding: 2px 8px; border-radius: 4px;">{{ movimiento.serial|default:"-" }}</code></td>
+          <td>{{ movimiento.motivo|default:"-" }}</td>
+          <td style="font-size: 13px; white-space: nowrap;">{{ movimiento.created_at|date:"d/m/Y H:i" }}</td>
+          <td>{{ movimiento.usuario.username|default:"-" }}</td>
         </tr>
         {% empty %}
         <tr>
-          <td colspan="6">
+          <td colspan="7">
             <div class="empty-state">
               <div class="icon">📭</div>
               <h3>No hay movimientos registrados</h3>
@@ -410,7 +358,6 @@
     </table>
   </div>
 
-  <!-- ====== PAGINACIÓN ====== -->
   {% if movimientos.has_other_pages %}
   <div class="pagination">
     {% if movimientos.has_previous %}
@@ -430,9 +377,7 @@
 </div>
 
 <script>
-  // =============================================
-  // FILTRADO EN TIEMPO REAL (cliente)
-  // =============================================
+  // ====== FILTROS EN TIEMPO REAL ======
   const searchInput = document.getElementById('searchInput');
   const tipoFilter = document.getElementById('tipoFilter');
   const motivoFilter = document.getElementById('motivoFilter');
@@ -462,14 +407,12 @@
     });
   }
 
-  // Eventos en tiempo real
   searchInput.addEventListener('keyup', aplicarFiltros);
   tipoFilter.addEventListener('change', aplicarFiltros);
   motivoFilter.addEventListener('change', aplicarFiltros);
   fechaDesde.addEventListener('change', aplicarFiltros);
   fechaHasta.addEventListener('change', aplicarFiltros);
 
-  // Botón aplicar (redirige con GET para recargar con filtros)
   aplicarBtn.addEventListener('click', function() {
     const params = new URLSearchParams();
     if (searchInput.value) params.set('buscar', searchInput.value);
@@ -480,9 +423,6 @@
     window.location.href = window.location.pathname + '?' + params.toString();
   });
 
-  // =============================================
-  // ENTER para aplicar filtros
-  // =============================================
   searchInput.addEventListener('keydown', function(e) {
     if (e.key === 'Enter') {
       e.preventDefault();

@@ -1,0 +1,172 @@
+﻿{% extends "base.html" %}
+
+{% block title %}SIGI - {% if ubicacion %}Editar{% else %}Nueva{% endif %} ubicación{% endblock %}
+{% block nav_productos %}active{% endblock %}
+
+{% block extra_css %}
+<style>
+  .form-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 24px 20px;
+  }
+  .form-card {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 32px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+    border: 1px solid #e2e8f0;
+  }
+  .form-card h1 {
+    font-size: 24px;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0 0 4px 0;
+  }
+  .form-card .subtitle {
+    color: #64748b;
+    font-size: 14px;
+    margin: 0 0 24px 0;
+  }
+
+  .field-group {
+    margin-bottom: 20px;
+  }
+  .field-group label {
+    display: block;
+    font-weight: 600;
+    font-size: 14px;
+    color: #1e293b;
+    margin-bottom: 5px;
+  }
+  .field-group label .required {
+    color: #ef4444;
+  }
+  .field-group .control {
+    width: 100%;
+    padding: 10px 14px;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 14px;
+    outline: none;
+    transition: all 0.2s;
+    box-sizing: border-box;
+    font-family: inherit;
+  }
+  .field-group .control:focus {
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 3px rgba(79,70,229,0.15);
+  }
+  .field-group .control.is-invalid {
+    border-color: #ef4444;
+    background: #fef2f2;
+  }
+  .field-group .control-error {
+    color: #ef4444;
+    font-size: 13px;
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 2px solid #f1f5f9;
+  }
+
+  .btn-secondary {
+    padding: 10px 24px;
+    background: #f1f5f9;
+    color: #475569;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+  }
+  .btn-secondary:hover {
+    background: #e2e8f0;
+  }
+  .btn-primary {
+    padding: 10px 24px;
+    background: #4f46e5;
+    color: #ffffff;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-primary:hover {
+    background: #3730a3;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(79,70,229,0.3);
+  }
+  textarea.control {
+    resize: vertical;
+    min-height: 80px;
+  }
+
+  @media (max-width: 480px) {
+    .form-card {
+      padding: 20px;
+    }
+    .form-actions {
+      flex-direction: column-reverse;
+    }
+    .form-actions .btn {
+      justify-content: center;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="form-container">
+  <div class="form-card">
+    <h1>{% if ubicacion %}✏️ Editar{% else %}📍 Nueva{% endif %} ubicación</h1>
+    <p class="subtitle">{% if ubicacion %}Modifica los datos de la ubicación{% else %}Crea una nueva ubicación para tus productos{% endif %}</p>
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+
+      <div class="field-group">
+        <label for="id_nombre">Nombre <span class="required">*</span></label>
+        <input id="id_nombre" type="text" name="nombre"
+               class="control {% if form.nombre.errors %}is-invalid{% endif %}"
+               value="{{ form.nombre.value|default:'' }}"
+               placeholder="Ej: Estante A1, Bodega Principal">
+        {% if form.nombre.errors %}
+          <div class="control-error">⚠️ {% for error in form.nombre.errors %}{{ error }}{% endfor %}</div>
+        {% endif %}
+      </div>
+
+      <div class="field-group">
+        <label for="id_descripcion">Descripción</label>
+        <textarea id="id_descripcion" name="descripcion" rows="3"
+                  class="control {% if form.descripcion.errors %}is-invalid{% endif %}"
+                  placeholder="Descripción detallada de la ubicación...">{{ form.descripcion.value|default:'' }}</textarea>
+        {% if form.descripcion.errors %}
+          <div class="control-error">⚠️ {% for error in form.descripcion.errors %}{{ error }}{% endfor %}</div>
+        {% endif %}
+      </div>
+
+      <div class="form-actions">
+        <a href="{% url 'productos:ubicaciones' %}" class="btn-secondary">Cancelar</a>
+        <button type="submit" class="btn-primary">💾 {% if ubicacion %}Actualizar{% else %}Guardar{% endif %}</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

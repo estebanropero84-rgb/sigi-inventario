@@ -1,0 +1,121 @@
+﻿{% extends "base.html" %}
+
+{% block title %}SIGI - Eliminar ubicación{% endblock %}
+{% block nav_productos %}active{% endblock %}
+
+{% block extra_css %}
+<style>
+  .delete-container {
+    max-width: 500px;
+    margin: 40px auto;
+    padding: 0 20px;
+  }
+  .delete-card {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 32px;
+    text-align: center;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+    border: 1px solid #e2e8f0;
+  }
+  .delete-card .icon {
+    font-size: 56px;
+    margin-bottom: 12px;
+  }
+  .delete-card h2 {
+    font-size: 22px;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0 0 8px 0;
+  }
+  .delete-card .message {
+    color: #64748b;
+    font-size: 15px;
+    margin: 0 0 8px 0;
+    line-height: 1.6;
+  }
+  .delete-card .warning {
+    color: #dc2626;
+    font-weight: 600;
+    font-size: 14px;
+    background: #fef2f2;
+    padding: 12px 16px;
+    border-radius: 10px;
+    margin: 16px 0 24px 0;
+    border: 1px solid #fecaca;
+  }
+  .delete-card .actions {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+  }
+  .btn-secondary {
+    padding: 10px 24px;
+    background: #f1f5f9;
+    color: #475569;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+  .btn-secondary:hover {
+    background: #e2e8f0;
+  }
+  .btn-danger {
+    padding: 10px 24px;
+    background: #ef4444;
+    color: #ffffff;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-danger:hover {
+    background: #dc2626;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(239,68,68,0.3);
+  }
+  .btn-danger:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="delete-container">
+  <div class="delete-card">
+    <div class="icon">🗑️</div>
+    <h2>¿Eliminar esta ubicación?</h2>
+    <p class="message">
+      Estás a punto de eliminar la ubicación <strong>{{ ubicacion.nombre }}</strong>.
+    </p>
+
+    {% if ubicacion.productos.count > 0 %}
+      <div class="warning">
+        ⚠️ No se puede eliminar porque tiene <strong>{{ ubicacion.productos.count }}</strong> producto(s) asociado(s).
+      </div>
+    {% else %}
+      <p style="color: #94a3b8; font-size: 13px;">Esta acción no se puede deshacer.</p>
+    {% endif %}
+
+    <div class="actions">
+      <a href="{% url 'productos:ubicaciones' %}" class="btn-secondary">Cancelar</a>
+      {% if ubicacion.productos.count == 0 %}
+        <form method="post">
+          {% csrf_token %}
+          <button type="submit" class="btn-danger">Sí, eliminar</button>
+        </form>
+      {% else %}
+        <button type="button" class="btn-danger" disabled>No se puede eliminar</button>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

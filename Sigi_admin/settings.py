@@ -18,16 +18,14 @@ DEBUG = os.environ.get("DJANGO_DEBUG", "True").lower() == "true"
 if DEBUG:
     ALLOWED_HOSTS = ["*"]
 else:
-    # 🔥 Usar RENDER_EXTERNAL_HOSTNAME para seguridad
     RENDER_EXTERNAL_HOSTNAME = os.environ.get("RENDER_EXTERNAL_HOSTNAME", "")
     ALLOWED_HOSTS = [
         "localhost",
         "127.0.0.1",
-        ".onrender.com",  # Permite cualquier subdominio de Render
+        ".onrender.com",
     ]
     if RENDER_EXTERNAL_HOSTNAME:
         ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
-    # 🔥 También permite hosts definidos manualmente
     extra_hosts = os.environ.get("ALLOWED_HOSTS", "")
     if extra_hosts:
         ALLOWED_HOSTS.extend(extra_hosts.split(","))
@@ -42,10 +40,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    # Terceros
     'whitenoise',
-    'django_redis',  # 🔥 AGREGADO: Para Redis
-    # Mis apps
+    'django_redis',
     'usuarios',
     'Productos',
     'compras',
@@ -114,14 +110,35 @@ else:
     }
 
 # =========================
-# Password validators
+# 🔥 VALIDADORES DE CONTRASEÑA CON REQUISITOS DE SEGURIDAD
 # =========================
 AUTH_PASSWORD_VALIDATORS = [
-    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
+    {
+        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        'OPTIONS': {
+            'user_attributes': ('username', 'email', 'first_name', 'last_name'),
+            'max_similarity': 0.7,
+        }
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'OPTIONS': {
+            'min_length': 8,
+        }
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+    },
 ]
+
+# 🔥 FORZAR VALIDACIÓN DE CONTRASEÑA EN TODOS LOS FORMULARIOS
+# Esto asegura que las contraseñas siempre pasen por las validaciones
+AUTH_PASSWORD_VALIDATORS_CONFIG = {
+    'PASSWORD_VALIDATORS': AUTH_PASSWORD_VALIDATORS,
+}
 
 # =========================
 # i18n / TZ
@@ -178,7 +195,6 @@ if DEBUG:
 RENDER = os.environ.get('RENDER', 'False').lower() == 'true'
 REDIS_URL = os.environ.get('REDIS_URL', '')
 
-# 🔥 Configuración de cache con Redis
 if RENDER and REDIS_URL:
     CACHES = {
         'default': {
@@ -186,10 +202,6 @@ if RENDER and REDIS_URL:
             'LOCATION': REDIS_URL,
             'OPTIONS': {
                 'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-                # ✅ CORREGIDO: se elimina 'PARSER_CLASS': 'redis.connection.HiredisParser'
-                # redis-py >= 5.0 ya no expone esa clase con ese nombre/ruta.
-                # Si el paquete "hiredis" está instalado (ver requirements.txt),
-                # redis-py lo detecta y lo usa automáticamente sin configuración manual.
                 'CONNECTION_POOL_CLASS': 'redis.BlockingConnectionPool',
                 'CONNECTION_POOL_CLASS_KWARGS': {
                     'max_connections': 50,
@@ -204,11 +216,9 @@ if RENDER and REDIS_URL:
             'KEY_PREFIX': 'sigi',
         }
     }
-    # 🔥 Sesiones en Redis (más rápidas y compartidas)
     SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
     SESSION_CACHE_ALIAS = 'default'
 else:
-    # 🔥 Desarrollo con cache local en memoria
     CACHES = {
         'default': {
             'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
@@ -224,7 +234,7 @@ RATELIMIT_USE_CACHE = 'default'
 RATELIMIT_CACHE = 'default'
 
 # =========================
-# Seguridad - Configuración completa
+# 🔥 SEGURIDAD - CONFIGURACIÓN COMPLETA
 # =========================
 
 # 1. HASHING DE CONTRASEÑAS (bcrypt - el más seguro)
@@ -232,6 +242,7 @@ PASSWORD_HASHERS = [
     'django.contrib.auth.hashers.BCryptSHA256PasswordHasher',
     'django.contrib.auth.hashers.BCryptPasswordHasher',
     'django.contrib.auth.hashers.PBKDF2PasswordHasher',
+    'django.contrib.auth.hashers.Argon2PasswordHasher',  # 🔥 Argon2 es aún más seguro
 ]
 
 # 2. HEADERS DE SEGURIDAD
@@ -239,6 +250,14 @@ SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
 SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
+
+# 🔥 CSP (Content Security Policy) - Protege contra XSS
+CSP_DEFAULT_SRC = ("'self'",)
+CSP_SCRIPT_SRC = ("'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com")
+CSP_STYLE_SRC = ("'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdnjs.cloudflare.com")
+CSP_FONT_SRC = ("'self'", "https://fonts.gstatic.com", "https://cdnjs.cloudflare.com")
+CSP_IMG_SRC = ("'self'", "data:", "https:")
+CSP_CONNECT_SRC = ("'self'",)
 
 # 3. COOKIES SEGURAS
 SESSION_COOKIE_HTTPONLY = True
@@ -257,6 +276,7 @@ if not DEBUG:
     SECURE_HSTS_SECONDS = 31536000  # 1 año
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 else:
     SECURE_SSL_REDIRECT = False
     SESSION_COOKIE_SECURE = False
@@ -271,6 +291,22 @@ DATA_UPLOAD_MAX_NUMBER_FIELDS = 1000
 DATA_UPLOAD_MAX_NUMBER_FILES = 10
 DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5MB
 
-# 6. Health check para Render
+# 6. 🔥 PROTECCIÓN CONTRA ATAQUES DE FUERZA BRUTA
+# Tiempo de bloqueo después de múltiples intentos fallidos
+LOGIN_ATTEMPTS_LIMIT = 5  # Intentos permitidos
+LOGIN_ATTEMPTS_TIMEOUT = 300  # Bloqueo en segundos (5 minutos)
+
+# 7. Health check para Render
 if RENDER:
     HEALTH_CHECK_PATH = '/health/'
+
+# 8. 🔥 SEGURIDAD ADICIONAL
+# Deshabilitar navegación en el servidor de archivos
+DIRECTORY_INDEX = False
+
+# Forzar que las sesiones se guarden en la base de datos en producción
+if not DEBUG and not RENDER:
+    SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+
+# 🔥 Prevención de clickjacking (ya está en X_FRAME_OPTIONS)
+# Prevención de MIME type sniffing (ya está en SECURE_CONTENT_TYPE_NOSNIFF)

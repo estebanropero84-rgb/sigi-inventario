@@ -7,12 +7,9 @@
 <style>
   :root {
     --primary: #4f46e5;
-    --primary-light: #818cf8;
     --primary-dark: #3730a3;
     --success: #22c55e;
     --danger: #ef4444;
-    --warning: #f59e0b;
-    --info: #0ea5e9;
     --gray-50: #f8fafc;
     --gray-100: #f1f5f9;
     --gray-200: #e2e8f0;
@@ -454,15 +451,6 @@
     cursor: not-allowed;
     transform: none !important;
   }
-  .btn-success {
-    background: var(--success);
-    color: #fff;
-  }
-  .btn-success:hover {
-    background: #16a34a;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(34,197,94,0.3);
-  }
 
   /* ====== TOAST ====== */
   #toast {
@@ -629,6 +617,8 @@
             <option value="{{ lote.id }}" data-producto="{{ lote.producto_id }}">
               {{ lote.codigo }} - {{ lote.producto.nombre }} ({{ lote.disponible }} disponibles)
             </option>
+          {% empty %}
+            <option value="">No hay lotes disponibles</option>
           {% endfor %}
         </select>
         <div class="help-text">Selecciona un lote específico (opcional)</div>
@@ -685,7 +675,7 @@
         <a href="{% url 'movimientos:listar' %}" class="btn btn-secondary">
           <i class="fas fa-times"></i> Cancelar
         </a>
-        <button type="submit" class="btn btn-primary" id="submitBtn">
+        <button type="submit" class="btn btn-primary" id="submitBtn" disabled>
           <i class="fas fa-save"></i> Registrar movimiento
         </button>
       </div>
@@ -711,8 +701,20 @@
   const selectedProductStock = document.getElementById('selectedProductStock');
   const changeProductBtn = document.getElementById('changeProductBtn');
   const loteSelect = document.getElementById('lote');
+  const submitBtn = document.getElementById('submitBtn');
 
   let searchTimeout;
+
+  // Función para mostrar toast
+  function showToast(message, type = 'success') {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.className = 'show ' + type;
+    clearTimeout(toast._timeout);
+    toast._timeout = setTimeout(() => {
+      toast.classList.remove('show');
+    }, 3500);
+  }
 
   searchInput.addEventListener('input', function() {
     const query = this.value.trim();
@@ -725,7 +727,7 @@
 
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(() => {
-      fetch(`/productos/api/buscar-productos/?q=${encodeURIComponent(query)}`)
+      fetch(`/movimientos/api/buscar-productos/?q=${encodeURIComponent(query)}`)
         .then(response => response.json())
         .then(data => {
           if (data.results && data.results.length > 0) {
@@ -775,7 +777,7 @@
     selectedProductStock.innerHTML = `Stock disponible: <span style="color: ${stockColor};">${stock}</span>`;
     productSelected.classList.add('active');
     searchInput.blur();
-    document.getElementById('submitBtn').disabled = false;
+    submitBtn.disabled = false;
 
     // Filtrar lotes por producto
     filterLotesByProducto(id);
@@ -796,8 +798,6 @@
     });
     if (hasLotes) {
       loteSelect.value = '';
-    } else {
-      loteSelect.innerHTML = '<option value="">Sin lotes disponibles</option>';
     }
   }
 
@@ -806,7 +806,7 @@
     productSelected.classList.remove('active');
     productoIdInput.value = '';
     searchInput.focus();
-    document.getElementById('submitBtn').disabled = true;
+    submitBtn.disabled = true;
     // Restaurar lotes
     loteSelect.querySelectorAll('option').forEach(opt => opt.style.display = '');
   });
@@ -882,7 +882,6 @@
     }
 
     // Deshabilitar botón
-    const submitBtn = document.getElementById('submitBtn');
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Registrando...';
 
@@ -900,6 +899,7 @@
       method: 'POST',
       headers: {
         'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+        'X-Requested-With': 'XMLHttpRequest'
       },
       body: formData
     })
@@ -924,20 +924,7 @@
   });
 
   // =============================================
-  // 4. TOAST NOTIFICATION
-  // =============================================
-  function showToast(message, type = 'success') {
-    const toast = document.getElementById('toast');
-    toast.textContent = message;
-    toast.className = 'show ' + type;
-    clearTimeout(toast._timeout);
-    toast._timeout = setTimeout(() => {
-      toast.classList.remove('show');
-    }, 3500);
-  }
-
-  // =============================================
-  // 5. ENTER PARA BUSCAR
+  // 4. ENTER PARA BUSCAR
   // =============================================
   searchInput.addEventListener('keydown', function(e) {
     if (e.key === 'Enter') {
@@ -948,7 +935,7 @@
   });
 
   // =============================================
-  // 6. ESCANEAR SERIAL (simulación)
+  // 5. ESCANEAR SERIAL (simulación)
   // =============================================
   document.querySelector('.btn-scan').addEventListener('click', function() {
     const serialInput = document.getElementById('serial');
@@ -959,9 +946,24 @@
   });
 
   // =============================================
-  // 7. INICIALIZAR
+  // 6. INICIALIZAR
   // =============================================
-  document.getElementById('submitBtn').disabled = true;
+  // Si hay un producto seleccionado por GET
+  {% if producto_seleccionado %}
+    selectProducto(
+      {{ producto_seleccionado.id }},
+      '{{ producto_seleccionado.nombre|escapejs }}',
+      '{{ producto_seleccionado.codigo|escapejs }}',
+      {{ producto_seleccionado.stock_total }}
+    );
+  {% endif %}
+
+  // Si hay un tipo predefinido
+  {% if tipo_predefinido %}
+    const tab = document.querySelector(`.tipo-tab[data-value="{{ tipo_predefinido }}"]`);
+    if (tab) tab.click();
+  {% endif %}
+
   document.getElementById('serial').focus();
 </script>
 {% endblock %}

@@ -1,0 +1,278 @@
+﻿{% extends "base.html" %}
+
+{% block title %}SIGI - Ubicaciones{% endblock %}
+{% block nav_productos %}active{% endblock %}
+
+{% block extra_css %}
+<style>
+  .ubicaciones-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 24px 20px;
+  }
+
+  .header-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .header-actions h1 {
+    font-size: 26px;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0;
+  }
+  .header-actions p {
+    color: #64748b;
+    margin: 4px 0 0 0;
+    font-size: 14px;
+  }
+
+  .btn-primary {
+    padding: 10px 24px;
+    background: #4f46e5;
+    color: #ffffff;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+  }
+  .btn-primary:hover {
+    background: #3730a3;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(79,70,229,0.3);
+  }
+
+  .btn-secondary {
+    padding: 8px 16px;
+    background: #f1f5f9;
+    color: #475569;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+  }
+  .btn-secondary:hover {
+    background: #e2e8f0;
+  }
+
+  .btn-danger {
+    padding: 6px 12px;
+    background: #fee2e2;
+    color: #dc2626;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-danger:hover {
+    background: #fecaca;
+  }
+
+  .table-wrap {
+    overflow-x: auto;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+  }
+  .table-wrap table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+  .table-wrap th {
+    text-align: left;
+    padding: 12px 16px;
+    background: #f8fafc;
+    font-weight: 700;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    color: #64748b;
+    border-bottom: 2px solid #e2e8f0;
+  }
+  .table-wrap td {
+    padding: 12px 16px;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+  }
+  .table-wrap tr:hover td {
+    background: #fafbff;
+  }
+
+  .badge-count {
+    display: inline-block;
+    padding: 2px 12px;
+    border-radius: 999px;
+    background: #e0e7ff;
+    color: #4338ca;
+    font-weight: 600;
+    font-size: 13px;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 48px 20px;
+    color: #94a3b8;
+  }
+  .empty-state .icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+    opacity: 0.5;
+  }
+  .empty-state h3 {
+    color: #64748b;
+    margin: 0 0 4px 0;
+  }
+
+  .modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(2,6,23,0.5);
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 1000;
+  }
+  .modal.active {
+    display: flex;
+  }
+  .modal-content {
+    max-width: 480px;
+    width: 100%;
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 28px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+  }
+  .modal-content h3 {
+    margin: 0 0 8px 0;
+    font-size: 20px;
+  }
+  .modal-content p {
+    color: #64748b;
+    margin: 0 0 20px 0;
+  }
+  .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+  }
+
+  @media (max-width: 768px) {
+    .header-actions {
+      flex-direction: column;
+      align-items: stretch;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="ubicaciones-container">
+
+  <div class="header-actions">
+    <div>
+      <h1>📍 Ubicaciones</h1>
+      <p>Gestiona las ubicaciones predefinidas para tus productos</p>
+    </div>
+    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+      <a href="{% url 'productos:crear_ubicacion' %}" class="btn-primary">➕ Nueva ubicación</a>
+      <a href="{% url 'productos:listar' %}" class="btn-secondary">← Volver</a>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Descripción</th>
+          <th style="text-align: center;">Productos</th>
+          <th style="text-align: right;">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ubicacion in ubicaciones %}
+        <tr>
+          <td style="font-weight: 600; display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 18px;">📍</span>
+            {{ ubicacion.nombre }}
+          </td>
+          <td style="color: #64748b;">{{ ubicacion.descripcion|default:"Sin descripción" }}</td>
+          <td style="text-align: center;">
+            <span class="badge-count">{{ ubicacion.productos.count }}</span>
+          </td>
+          <td style="text-align: right;">
+            <div style="display: flex; gap: 6px; justify-content: flex-end;">
+              <a href="{% url 'productos:editar_ubicacion' ubicacion.id %}" class="btn-secondary" style="padding: 6px 12px;">
+                ✏️ Editar
+              </a>
+              <button onclick="confirmarEliminar({{ ubicacion.id }}, '{{ ubicacion.nombre|escapejs }}')" class="btn-danger">
+                🗑️
+              </button>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="4">
+            <div class="empty-state">
+              <div class="icon">📍</div>
+              <h3>No hay ubicaciones registradas</h3>
+              <p>Crea tu primera ubicación para organizar tus productos.</p>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal Eliminar -->
+<div id="modalEliminar" class="modal">
+  <div class="modal-content">
+    <h3>⚠️ Confirmar eliminación</h3>
+    <p id="mensajeEliminar">¿Estás seguro de eliminar esta ubicación?</p>
+    <div class="modal-actions">
+      <button onclick="cerrarModal()" class="btn-secondary">Cancelar</button>
+      <a href="#" id="btnEliminarConfirmar" class="btn-primary" style="background: #ef4444;">Sí, eliminar</a>
+    </div>
+  </div>
+</div>
+
+<script>
+  function confirmarEliminar(id, nombre) {
+    document.getElementById('mensajeEliminar').innerHTML = '¿Estás seguro de eliminar la ubicación <strong>' + nombre + '</strong>? Esta acción no se puede deshacer.';
+    document.getElementById('btnEliminarConfirmar').href = '/productos/ubicaciones/eliminar/' + id + '/';
+    document.getElementById('modalEliminar').classList.add('active');
+  }
+
+  function cerrarModal() {
+    document.getElementById('modalEliminar').classList.remove('active');
+  }
+
+  window.addEventListener('click', function(e) {
+    if (e.target === document.getElementById('modalEliminar')) cerrarModal();
+  });
+</script>
+{% endblock %}

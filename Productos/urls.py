@@ -22,13 +22,23 @@ urlpatterns = [
     path('proveedores/editar/<int:pk>/', views.editar_proveedor, name='editar_proveedor'),
     path('proveedores/eliminar/<int:pk>/', views.eliminar_proveedor, name='eliminar_proveedor'),
     
-    # ========== LOTES (Corregido - usa detalle_lote en lugar de ver_lote) ==========
+    # ========== UBICACIONES (NUEVO) ==========
+    path('ubicaciones/', views.listar_ubicaciones, name='ubicaciones'),
+    path('ubicaciones/crear/', views.crear_ubicacion, name='crear_ubicacion'),
+    path('ubicaciones/editar/<int:pk>/', views.editar_ubicacion, name='editar_ubicacion'),
+    path('ubicaciones/eliminar/<int:pk>/', views.eliminar_ubicacion, name='eliminar_ubicacion'),
+    
+    # ========== MOVIMIENTOS / HISTORIAL (NUEVO) ==========
+    path('movimientos/', views.historial_movimientos, name='historial_movimientos'),
+    path('movimientos/producto/<int:producto_id>/', views.historial_movimientos, name='historial_movimientos_producto'),
+    
+    # ========== LOTES ==========
     path('lotes/', views.listar_lotes, name='listar_lotes'),
     path('lotes/crear/', views.crear_lote, name='crear_lote'),
-    path('lotes/<int:pk>/', views.detalle_lote, name='detalle_lote'),  # 🔥 Cambiado de ver_lote a detalle_lote
+    path('lotes/<int:pk>/', views.detalle_lote, name='detalle_lote'),
     path('lotes/<int:pk>/recibir/', views.recibir_lote, name='recibir_lote'),
     
-    # ========== SERIALES (NUEVAS RUTAS) ==========
+    # ========== SERIALES ==========
     path('seriales/', views.listar_seriales, name='listar_seriales'),
     path('seriales/<int:pk>/editar/', views.editar_serial, name='editar_serial'),
     
@@ -38,10 +48,16 @@ urlpatterns = [
     path('bodegas/editar/<int:pk>/', views.editar_bodega, name='editar_bodega'),
     path('bodegas/eliminar/<int:pk>/', views.eliminar_bodega, name='eliminar_bodega'),
     
+    # ========== VENTAS (NUEVO - FIFO) ==========
+    path('vender/<int:pk>/', views.vender_producto, name='vender_producto'),
+    # ========== REPORTES ==========
+    path('reportes/seleccionar/', views.seleccionar_productos_reporte, name='seleccionar_reportes'),
+    # ========== MOVIMIENTOS MANUALES ==========
+    path('movimientos/registrar/', views.registrar_movimiento_manual, name='registrar_movimiento'),
     # ========== UTILIDADES ==========
     path('buscar-codigo-barras/', views.buscar_por_codigo_barras, name='buscar_codigo_barras'),
     path('carga-masiva/', views.cargar_productos_excel, name='carga_masiva'),
     path('exportar/excel/', views.exportar_productos_excel, name='exportar_excel'),
     path('reporte/pdf/', views.reporte_productos_pdf, name='reporte_pdf'),
-    path('api/consultar/', views.consultar_api_productos, name='consultar_api'),
-]
+    # ⚠️ ELIMINADA LA RUTA DE API: path('api/consultar/', views.consultar_api_productos, name='consultar_api'),
+]   

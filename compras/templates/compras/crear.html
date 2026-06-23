@@ -1,420 +1,850 @@
 {% extends "base.html" %}
 
-{% block title %}SIGI - Nueva compra{% endblock %}
+{% block title %}SIGI - Nueva Compra{% endblock %}
 {% block nav_compras %}active{% endblock %}
-{% block page_title %}Nueva compra{% endblock %}
-{% block page_subtitle %}Registrar una nueva orden de compra{% endblock %}
 
 {% block extra_css %}
 <style>
-  .form-shell{ max-width: 1100px; margin: 0 auto; }
-
-  .form-card{
-    background: rgba(255,255,255,0.92);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(226,232,240,0.75);
-    border-radius: 22px;
-    box-shadow: var(--shadow-sm);
-    padding: 18px;
+  :root {
+    --primary: #4f46e5;
+    --primary-dark: #3730a3;
+    --success: #22c55e;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+    --gray-50: #f8fafc;
+    --gray-100: #f1f5f9;
+    --gray-200: #e2e8f0;
+    --gray-300: #cbd5e1;
+    --gray-400: #94a3b8;
+    --gray-500: #64748b;
+    --gray-600: #475569;
+    --gray-700: #334155;
+    --gray-800: #1e293b;
+    --gray-900: #0f172a;
+    --radius: 12px;
+    --radius-lg: 16px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.06);
+    --shadow-lg: 0 10px 40px rgba(0,0,0,0.08);
+    --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
-  .grid-2{
-    display:grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .form-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 24px 20px;
+  }
+
+  .form-card {
+    background: #ffffff;
+    border-radius: var(--radius-lg);
+    padding: 32px;
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--gray-200);
+  }
+
+  /* ====== HEADER ====== */
+  .form-header {
+    margin-bottom: 28px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid var(--gray-100);
+  }
+  .form-header h1 {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin: 0;
+  }
+  .form-header h1 span {
+    color: var(--primary);
+  }
+  .form-header .subtitle {
+    color: var(--gray-500);
+    font-size: 14px;
+    margin: 4px 0 0 0;
+  }
+
+  /* ====== BUSCADOR DE PROVEEDOR ====== */
+  .proveedor-search {
+    position: relative;
+    margin-bottom: 20px;
+  }
+  .proveedor-search .search-box {
+    display: flex;
     gap: 12px;
+    align-items: center;
+    padding: 10px 16px;
+    border: 2px solid var(--gray-200);
+    border-radius: var(--radius);
+    background: #fff;
+    transition: var(--transition);
+  }
+  .proveedor-search .search-box:focus-within {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(79,70,229,0.12);
+  }
+  .proveedor-search .search-box i {
+    color: var(--gray-400);
+    font-size: 18px;
+  }
+  .proveedor-search .search-box input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 15px;
+    padding: 8px 0;
+    background: transparent;
+    color: var(--gray-800);
+  }
+  .proveedor-search .search-box input::placeholder {
+    color: var(--gray-400);
+  }
+  .proveedor-search .search-results {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: #fff;
+    border-radius: var(--radius);
+    border: 1px solid var(--gray-200);
+    box-shadow: var(--shadow-lg);
+    max-height: 300px;
+    overflow-y: auto;
+    display: none;
+    z-index: 100;
+  }
+  .proveedor-search .search-results.active {
+    display: block;
+  }
+  .proveedor-search .result-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--gray-100);
+    cursor: pointer;
+    transition: var(--transition);
+  }
+  .proveedor-search .result-item:hover {
+    background: var(--gray-50);
+  }
+  .proveedor-search .result-item .nombre {
+    font-weight: 600;
+    color: var(--gray-800);
+  }
+  .proveedor-search .result-item .nit {
+    font-size: 12px;
+    color: var(--gray-400);
+  }
+  .proveedor-search .no-results {
+    padding: 24px;
+    text-align: center;
+    color: var(--gray-400);
   }
 
-  .field{ margin-bottom: 12px; }
-
-  .field label{
-    display:block;
-    margin-bottom: 8px;
-    font-weight: 850;
-    font-size: .85rem;
-    color: #1e293b;
+  /* ====== PROVEEDOR SELECCIONADO ====== */
+  .proveedor-selected {
+    display: none;
+    padding: 16px 20px;
+    background: #f0f9ff;
+    border-radius: var(--radius);
+    border: 1px solid #bae6fd;
+    margin-bottom: 24px;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .proveedor-selected.active {
+    display: flex;
+  }
+  .proveedor-selected .info {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .proveedor-selected .info .icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: #e0e7ff;
+    display: grid;
+    place-items: center;
+    color: var(--primary);
+    font-size: 20px;
+  }
+  .proveedor-selected .info .details .nombre {
+    font-weight: 700;
+    color: var(--gray-800);
+  }
+  .proveedor-selected .info .details .nit {
+    font-size: 13px;
+    color: var(--gray-400);
+  }
+  .proveedor-selected .change-btn {
+    background: none;
+    border: none;
+    color: var(--gray-400);
+    cursor: pointer;
+    font-size: 14px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    transition: var(--transition);
+  }
+  .proveedor-selected .change-btn:hover {
+    background: var(--gray-200);
+    color: var(--gray-600);
   }
 
-  .control{
-    width:100%;
-    border-radius: 14px;
-    border: 1px solid var(--border);
-    background:#fff;
-    padding: 12px 12px;
-    font: inherit;
-    outline:none;
-    transition: box-shadow .15s ease, border-color .15s ease;
+  /* ====== CAMPOS ====== */
+  .field-group {
+    margin-bottom: 20px;
   }
-  .control:focus{
-    border-color: rgba(59,130,246,0.6);
-    box-shadow: 0 0 0 4px rgba(59,130,246,0.12);
+  .field-group label {
+    display: block;
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--gray-700);
+    margin-bottom: 6px;
   }
-
-  .help{
-    margin-top: 6px;
-    color: var(--muted);
-    font-size: .82rem;
-    font-weight: 650;
+  .field-group label .required {
+    color: var(--danger);
   }
-
-  .section-title{
-    margin: 8px 0 10px;
-    font-size: 1rem;
-    font-weight: 950;
-    letter-spacing: -0.2px;
-    display:flex;
-    align-items:center;
-    gap: 8px;
-  }
-
-  /* Items */
-  .items{
-    display:flex;
-    flex-direction:column;
-    gap: 10px;
-    margin-bottom: 10px;
-  }
-
-  .item{
-    display:grid;
-    grid-template-columns: minmax(240px, 2fr) minmax(120px, 0.7fr) minmax(160px, 0.9fr) auto;
-    gap: 10px;
-    align-items:end;
-    padding: 12px;
-    border-radius: 18px;
-    border: 1px solid rgba(226,232,240,0.75);
+  .field-group .control {
+    width: 100%;
+    padding: 10px 14px;
+    border: 2px solid var(--gray-200);
+    border-radius: var(--radius);
+    font-size: 14px;
+    outline: none;
+    transition: var(--transition);
+    box-sizing: border-box;
+    font-family: inherit;
     background: #fff;
   }
-
-  .subfield label{
-    display:block;
-    margin-bottom: 8px;
-    font-weight: 850;
-    font-size: .85rem;
-    color: #1e293b;
+  .field-group .control:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(79,70,229,0.12);
   }
-
-  .icon-btn{
-    width: 42px;
-    height: 42px;
-    border-radius: 14px;
-    border: 1px solid rgba(239,68,68,0.20);
-    background: rgba(239,68,68,0.10);
+  .field-group .control.is-invalid {
+    border-color: var(--danger);
+    background: #fef2f2;
+  }
+  .field-group .control-error {
     color: var(--danger);
-    cursor:pointer;
-    font-weight: 900;
-    display:grid;
-    place-items:center;
-    transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
+    font-size: 13px;
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
   }
-  .icon-btn:hover{
-    transform: translateY(-1px);
-    box-shadow: var(--shadow-sm);
-    background: rgba(239,68,68,0.14);
-  }
-
-  .btn-add{
-    background: linear-gradient(135deg, #22c55e, #16a34a);
-    color:#fff;
+  .field-group .help-text {
+    font-size: 12px;
+    color: var(--gray-400);
+    margin-top: 4px;
   }
 
-  .total{
-    margin-top: 10px;
-    padding-top: 12px;
-    border-top: 1px solid rgba(226,232,240,0.85);
-    display:flex;
-    justify-content:flex-end;
-    gap: 10px;
-    align-items:baseline;
+  /* ====== PRODUCTOS (Tabla dinámica) ====== */
+  .productos-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 12px;
   }
-  .total .label{ color: var(--muted); font-weight: 800; }
-  .total .value{
-    font-size: 1.25rem;
-    font-weight: 950;
-    color: var(--success);
-    letter-spacing: -0.2px;
+  .productos-table th {
+    text-align: left;
+    padding: 10px 12px;
+    background: var(--gray-50);
+    font-weight: 700;
+    font-size: 12px;
+    text-transform: uppercase;
+    color: var(--gray-500);
+    border-bottom: 2px solid var(--gray-200);
+  }
+  .productos-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--gray-100);
+    vertical-align: middle;
+  }
+  .productos-table .producto-select {
+    width: 100%;
+    padding: 8px 10px;
+    border: 2px solid var(--gray-200);
+    border-radius: 8px;
+    font-size: 13px;
+    outline: none;
+    background: #fff;
+    transition: var(--transition);
+  }
+  .productos-table .producto-select:focus {
+    border-color: var(--primary);
+  }
+  .productos-table .cantidad-input,
+  .productos-table .precio-input {
+    width: 100%;
+    padding: 8px 10px;
+    border: 2px solid var(--gray-200);
+    border-radius: 8px;
+    font-size: 13px;
+    outline: none;
+    text-align: center;
+    transition: var(--transition);
+  }
+  .productos-table .cantidad-input:focus,
+  .productos-table .precio-input:focus {
+    border-color: var(--primary);
+  }
+  .productos-table .btn-remove {
+    background: none;
+    border: none;
+    color: var(--gray-400);
+    cursor: pointer;
+    font-size: 16px;
+    padding: 4px 8px;
+    transition: var(--transition);
+  }
+  .productos-table .btn-remove:hover {
+    color: var(--danger);
   }
 
-  .actions{
-    display:flex;
-    justify-content:flex-end;
-    gap: 10px;
-    flex-wrap:wrap;
+  .btn-add-producto {
+    padding: 8px 20px;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn-add-producto:hover {
+    background: var(--primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(79,70,229,0.3);
+  }
+
+  /* ====== TOTAL ====== */
+  .total-box {
+    display: flex;
+    justify-content: flex-end;
+    padding: 16px 20px;
+    background: var(--gray-50);
+    border-radius: var(--radius);
+    border: 1px solid var(--gray-200);
     margin-top: 16px;
   }
-
-  .btn-secondary{
-    background: linear-gradient(135deg, #64748b, #475569);
-    color:#fff;
+  .total-box .label {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--gray-600);
+  }
+  .total-box .total-amount {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin-left: 16px;
   }
 
-  /* Toast (nuevo) */
-  .toast-notificacion {
+  /* ====== BOTONES ====== */
+  .form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 28px;
+    padding-top: 24px;
+    border-top: 2px solid var(--gray-100);
+  }
+
+  .btn {
+    padding: 10px 28px;
+    border-radius: var(--radius);
+    font-weight: 600;
+    font-size: 14px;
+    border: none;
+    cursor: pointer;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+  }
+  .btn-secondary {
+    background: var(--gray-100);
+    color: var(--gray-600);
+  }
+  .btn-secondary:hover {
+    background: var(--gray-200);
+    color: var(--gray-700);
+  }
+  .btn-primary {
+    background: var(--primary);
+    color: #fff;
+  }
+  .btn-primary:hover {
+    background: var(--primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(79,70,229,0.3);
+  }
+  .btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+  }
+
+  /* ====== TOAST ====== */
+  #toast {
     position: fixed;
-    bottom: 20px;
-    right: 20px;
-    background: #22c55e;
-    color: white;
-    padding: 12px 20px;
-    border-radius: 12px;
+    bottom: 24px;
+    right: 24px;
+    padding: 14px 24px;
+    border-radius: var(--radius);
+    background: var(--gray-900);
+    color: #fff;
+    font-weight: 600;
+    font-size: 14px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    transform: translateY(100px);
+    opacity: 0;
+    transition: all 0.3s ease;
     z-index: 9999;
-    animation: fadeInOut 3s ease;
-    box-shadow: 0 10px 25px rgba(2,6,23,0.25);
-    display:flex;
-    gap:10px;
-    align-items:center;
-    font-weight: 800;
+    max-width: 400px;
   }
-  @keyframes fadeInOut {
-    0% { opacity: 0; transform: translateY(20px); }
-    15% { opacity: 1; transform: translateY(0); }
-    85% { opacity: 1; transform: translateY(0); }
-    100% { opacity: 0; transform: translateY(-20px); }
+  #toast.show {
+    transform: translateY(0);
+    opacity: 1;
   }
+  #toast.success { background: #15803d; }
+  #toast.error { background: #dc2626; }
+  #toast.warning { background: #b45309; }
 
-  @media (max-width: 980px){
-    .grid-2{ grid-template-columns: 1fr; }
-    .item{ grid-template-columns: 1fr; align-items:stretch; }
-    .icon-btn{ width: 100%; height: 44px; }
+  /* ====== RESPONSIVE ====== */
+  @media (max-width: 768px) {
+    .form-card {
+      padding: 20px;
+    }
+    .productos-table {
+      display: block;
+      overflow-x: auto;
+    }
+    .proveedor-selected {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 8px;
+    }
+    .form-actions {
+      flex-direction: column-reverse;
+    }
+    .form-actions .btn {
+      justify-content: center;
+    }
   }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="form-shell">
+<div class="form-container">
   <div class="form-card">
 
-    <form method="post" novalidate>
+    <!-- ====== HEADER ====== -->
+    <div class="form-header">
+      <h1>📦 <span>Nueva Compra</span></h1>
+      <p class="subtitle">Registrar una nueva orden de compra</p>
+    </div>
+
+    <!-- ====== FORMULARIO ====== -->
+    <form method="post" id="compraForm" novalidate>
       {% csrf_token %}
+      <input type="hidden" name="proveedor" id="proveedorId" value="">
 
-      <div class="grid-2">
-        <!-- Proveedor con datalist -->
-        <div class="field">
-          <label for="proveedor">Proveedor <span style="color: var(--danger);">*</span></label>
-          <input
-            id="proveedor"
-            type="text"
-            name="proveedor"
-            class="control"
-            required
-            placeholder="Nombre del proveedor"
-            autocomplete="off"
-            list="listaProveedores">
-          <datalist id="listaProveedores">
-            {% for proveedor in proveedores %}
-              <option value="{{ proveedor.nombre }}"></option>
-            {% endfor %}
-          </datalist>
-          <div class="help">Escribe o selecciona un proveedor existente.</div>
+      <!-- ====== BUSCADOR DE PROVEEDOR ====== -->
+      <div class="field-group">
+        <label>Proveedor <span class="required">*</span></label>
+        <div class="proveedor-search">
+          <div class="search-box">
+            <i class="fas fa-building"></i>
+            <input type="text"
+                   id="proveedorSearchInput"
+                   placeholder="Buscar proveedor por nombre o NIT..."
+                   autocomplete="off">
+          </div>
+          <div class="search-results" id="proveedorResults"></div>
         </div>
-
-        <div class="field">
-          <label for="fecha">Fecha <span style="color: var(--danger);">*</span></label>
-          <input id="fecha" type="date" name="fecha" class="control" required value="{% now 'Y-m-d' %}">
-        </div>
+        <div class="help-text">Escribe al menos 2 caracteres para buscar</div>
       </div>
 
-      <div class="section-title" style="margin-top: 6px;">
-        <i class="fas fa-list"></i> Productos
-      </div>
-
-      <div id="productos-container" class="items">
-        <!-- Fila inicial con data-index para cargar último precio -->
-        <div class="item producto-item">
-          <div class="subfield">
-            <label>Producto <span style="color: var(--danger);">*</span></label>
-            <select name="producto_0" class="control producto-select" data-index="0" required>
-              <option value="">Seleccionar producto...</option>
-              {% for producto in productos %}
-                <option value="{{ producto.id }}" data-precio="{{ producto.precio_venta }}">
-                  {{ producto.nombre }} - Último precio: ${{ producto.ultimo_precio_compra|default:"0" }}
-                </option>
-              {% endfor %}
-            </select>
-          </div>
-
-          <div class="subfield">
-            <label>Cantidad <span style="color: var(--danger);">*</span></label>
-            <input type="number" name="cantidad_0" class="control cantidad-input" placeholder="1" min="1" required>
-          </div>
-
-          <div class="subfield">
-            <label>Precio unitario <span style="color: var(--danger);">*</span></label>
-            <input type="number" name="precio_0" class="control precio-input" placeholder="0.00" step="0.01" required>
-            <div class="help" style="margin-top:6px;">
-              Al elegir un producto se intentará cargar el <strong>último precio de compra</strong>.
-            </div>
-          </div>
-
-          <div class="subfield">
-            <label>Quitar</label>
-            <button type="button" class="icon-btn" onclick="eliminarProducto(this)" title="Eliminar fila">
-              <i class="fas fa-xmark"></i>
-            </button>
+      <!-- ====== PROVEEDOR SELECCIONADO ====== -->
+      <div class="proveedor-selected" id="proveedorSelected">
+        <div class="info">
+          <div class="icon"><i class="fas fa-building"></i></div>
+          <div class="details">
+            <div class="nombre" id="selectedProveedorNombre">Nombre del proveedor</div>
+            <div class="nit" id="selectedProveedorNit">NIT: ---</div>
           </div>
         </div>
+        <button type="button" class="change-btn" id="changeProveedorBtn">
+          <i class="fas fa-rotate-left"></i> Cambiar
+        </button>
       </div>
 
-      <button type="button" class="btn btn-add" onclick="agregarProducto()">
-        <i class="fas fa-plus"></i> Agregar producto
-      </button>
-
-      <div class="total" aria-label="Total de la compra">
-        <div class="label">Total</div>
-        <div class="value">$<span id="total">0.00</span></div>
+      <!-- ====== FECHA ====== -->
+      <div class="field-group">
+        <label for="fecha">Fecha <span class="required">*</span></label>
+        <input id="fecha" type="date" name="fecha" class="control" 
+               value="{{ today|date:'Y-m-d' }}" required>
       </div>
 
-      <div class="field" style="margin-top: 12px;">
+      <!-- ====== PRODUCTOS ====== -->
+      <div class="field-group">
+        <label>Productos <span class="required">*</span></label>
+        <div style="margin-bottom: 12px;">
+          <button type="button" class="btn-add-producto" id="addProductoBtn">
+            <i class="fas fa-plus"></i> Agregar producto
+          </button>
+        </div>
+
+        <div style="overflow-x: auto;">
+          <table class="productos-table" id="productosTable">
+            <thead>
+              <tr>
+                <th style="min-width: 250px;">Producto</th>
+                <th style="min-width: 100px; text-align: center;">Cantidad</th>
+                <th style="min-width: 150px; text-align: center;">Precio unitario</th>
+                <th style="min-width: 120px; text-align: center;">Subtotal</th>
+                <th style="min-width: 40px;"></th>
+              </tr>
+            </thead>
+            <tbody id="productosBody">
+              <!-- Las filas se agregan dinámicamente con JavaScript -->
+            </tbody>
+          </table>
+        </div>
+        <div class="help-text">Al elegir un producto se intentará cargar el último precio de compra.</div>
+      </div>
+
+      <!-- ====== TOTAL ====== -->
+      <div class="total-box">
+        <span class="label">Total:</span>
+        <span class="total-amount" id="totalCompra">$0.00</span>
+      </div>
+
+      <!-- ====== OBSERVACIONES ====== -->
+      <div class="field-group">
         <label for="observaciones">Observaciones</label>
-        <textarea id="observaciones" name="observaciones" rows="4" class="control"
+        <textarea id="observaciones" name="observaciones" rows="3" class="control"
                   placeholder="Notas adicionales sobre la compra..."></textarea>
       </div>
 
-      <div class="actions">
+      <!-- ====== BOTONES ====== -->
+      <div class="form-actions">
         <a href="{% url 'compras:listar' %}" class="btn btn-secondary">
-          <i class="fas fa-arrow-left"></i> Cancelar
+          <i class="fas fa-times"></i> Cancelar
         </a>
-        <button type="submit" class="btn btn-primary">
-          <i class="fas fa-floppy-disk"></i> Guardar compra
+        <button type="submit" class="btn btn-primary" id="submitBtn" disabled>
+          <i class="fas fa-save"></i> Registrar compra
         </button>
       </div>
 
     </form>
-
   </div>
 </div>
-{% endblock %}
 
-{% block extra_js %}
+<!-- ====== TOAST ====== -->
+<div id="toast"></div>
+
 <script>
-  let productoIndex = 1;
+  // =============================================
+  // VARIABLES GLOBALES
+  // =============================================
+  let proveedorId = null;
+  let productoCount = 0;
+  const productosDisponibles = {{ productos_json|safe|default:'[]' }};
 
-  // 🔥 Función para obtener el último precio de compra de un producto
-  function obtenerUltimoPrecio(productoId, index) {
-    fetch(`/compras/api/ultimo-precio/${productoId}/`)
-      .then(response => response.json())
-      .then(data => {
-        if (data && data.precio !== undefined && data.precio !== null) {
-          const precioInput = document.querySelector(`input[name="precio_${index}"]`);
-          if (precioInput && !precioInput.value) {
-            precioInput.value = data.precio;
-            calcularTotal();
-            mostrarNotificacion(`Precio cargado: $${data.precio} (última compra)`);
-          }
-        }
-      })
-      .catch(error => console.log('Error al obtener precio:', error));
-  }
+  // =============================================
+  // 1. BUSCADOR DE PROVEEDORES (AJAX)
+  // =============================================
+  const proveedorSearch = document.getElementById('proveedorSearchInput');
+  const proveedorResults = document.getElementById('proveedorResults');
+  const proveedorSelected = document.getElementById('proveedorSelected');
+  const proveedorIdInput = document.getElementById('proveedorId');
+  const selectedProveedorNombre = document.getElementById('selectedProveedorNombre');
+  const selectedProveedorNit = document.getElementById('selectedProveedorNit');
+  const changeProveedorBtn = document.getElementById('changeProveedorBtn');
+  const submitBtn = document.getElementById('submitBtn');
 
-  function mostrarNotificacion(mensaje) {
-    const toast = document.createElement('div');
-    toast.className = 'toast-notificacion';
-    toast.innerHTML = `<i class="fas fa-info-circle"></i> ${mensaje}`;
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
-  }
+  let searchTimeout;
 
-  function buildProductoRow(index){
-    const div = document.createElement('div');
-    div.className = 'item producto-item';
-    div.innerHTML = `
-      <div class="subfield">
-        <label>Producto <span style="color: var(--danger);">*</span></label>
-        <select name="producto_${index}" class="control producto-select" data-index="${index}" required>
-          <option value="">Seleccionar producto...</option>
-          {% for producto in productos %}
-            <option value="{{ producto.id }}" data-precio="{{ producto.precio_venta }}">
-              {{ producto.nombre }} - Último precio: ${{ producto.ultimo_precio_compra|default:"0" }}
-            </option>
-          {% endfor %}
-        </select>
-      </div>
+  proveedorSearch.addEventListener('input', function() {
+    const query = this.value.trim();
 
-      <div class="subfield">
-        <label>Cantidad <span style="color: var(--danger);">*</span></label>
-        <input type="number" name="cantidad_${index}" class="control cantidad-input" placeholder="1" min="1" required>
-      </div>
-
-      <div class="subfield">
-        <label>Precio unitario <span style="color: var(--danger);">*</span></label>
-        <input type="number" name="precio_${index}" class="control precio-input" placeholder="0.00" step="0.01" required>
-      </div>
-
-      <div class="subfield">
-        <label>Quitar</label>
-        <button type="button" class="icon-btn" onclick="eliminarProducto(this)" title="Eliminar fila">
-          <i class="fas fa-xmark"></i>
-        </button>
-      </div>
-    `;
-    return div;
-  }
-
-  function agregarProducto() {
-    const container = document.getElementById('productos-container');
-    const row = buildProductoRow(productoIndex);
-    container.appendChild(row);
-
-    // Agregar evento al select para cargar precio automático (último precio)
-    const select = row.querySelector('.producto-select');
-    select.addEventListener('change', function() {
-      const idx = this.getAttribute('data-index');
-      const productoId = this.value;
-      if (productoId) obtenerUltimoPrecio(productoId, idx);
-      calcularTotal();
-    });
-
-    productoIndex++;
-    calcularTotal();
-  }
-
-  function eliminarProducto(btn) {
-    const container = document.getElementById('productos-container');
-    const row = btn.closest('.producto-item');
-
-    if (container.querySelectorAll('.producto-item').length <= 1) {
-      alert('Debe existir al menos un producto en la compra.');
+    if (query.length < 2) {
+      proveedorResults.classList.remove('active');
       return;
     }
 
-    row.remove();
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+      fetch(`/compras/api/proveedores/?q=${encodeURIComponent(query)}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.results && data.results.length > 0) {
+            proveedorResults.innerHTML = data.results.map(p => `
+              <div class="result-item" data-id="${p.id}" data-nombre="${p.nombre}" data-nit="${p.nit || 'N/A'}">
+                <div>
+                  <div class="nombre">${p.nombre}</div>
+                  <div class="nit">NIT: ${p.nit || 'N/A'}</div>
+                </div>
+                <span style="color: var(--primary);">Seleccionar</span>
+              </div>
+            `).join('');
+            proveedorResults.classList.add('active');
+          } else {
+            proveedorResults.innerHTML = `<div class="no-results">No se encontraron proveedores</div>`;
+            proveedorResults.classList.add('active');
+          }
+        })
+        .catch(() => {
+          proveedorResults.innerHTML = `<div class="no-results">Error al buscar</div>`;
+          proveedorResults.classList.add('active');
+        });
+    }, 300);
+  });
+
+  // Seleccionar proveedor
+  proveedorResults.addEventListener('click', function(e) {
+    const item = e.target.closest('.result-item');
+    if (!item) return;
+    const id = item.dataset.id;
+    const nombre = item.dataset.nombre;
+    const nit = item.dataset.nit;
+
+    selectProveedor(id, nombre, nit);
+    proveedorResults.classList.remove('active');
+    proveedorSearch.value = '';
+  });
+
+  function selectProveedor(id, nombre, nit) {
+    proveedorId = id;
+    proveedorIdInput.value = id;
+    selectedProveedorNombre.textContent = nombre;
+    selectedProveedorNit.textContent = `NIT: ${nit}`;
+    proveedorSelected.classList.add('active');
+    proveedorSearch.blur();
+    validarFormulario();
+  }
+
+  // Cambiar proveedor
+  changeProveedorBtn.addEventListener('click', function() {
+    proveedorSelected.classList.remove('active');
+    proveedorId = null;
+    proveedorIdInput.value = '';
+    proveedorSearch.focus();
+    validarFormulario();
+  });
+
+  // Cerrar resultados al hacer clic fuera
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('.proveedor-search')) {
+      proveedorResults.classList.remove('active');
+    }
+  });
+
+  // =============================================
+  // 2. AGREGAR PRODUCTOS
+  // =============================================
+  const productosBody = document.getElementById('productosBody');
+  const addProductoBtn = document.getElementById('addProductoBtn');
+  const totalCompra = document.getElementById('totalCompra');
+
+  // Productos disponibles para el select
+  const productosOptions = productosDisponibles.map(p => 
+    `<option value="${p.id}">${p.codigo} - ${p.nombre}</option>`
+  ).join('');
+
+  addProductoBtn.addEventListener('click', function() {
+    agregarFilaProducto();
+  });
+
+  function agregarFilaProducto(productoId = null) {
+    productoCount++;
+    const row = document.createElement('tr');
+    row.id = `producto-row-${productoCount}`;
+    row.innerHTML = `
+      <td>
+        <select name="producto_${productoCount}" class="producto-select" data-row="${productoCount}" required>
+          <option value="">Seleccionar producto...</option>
+          ${productosOptions}
+        </select>
+      </td>
+      <td style="text-align: center;">
+        <input type="number" name="cantidad_${productoCount}" class="cantidad-input" 
+               value="1" min="1" step="1" data-row="${productoCount}" required>
+      </td>
+      <td style="text-align: center;">
+        <input type="number" name="precio_${productoCount}" class="precio-input" 
+               value="0.00" min="0.01" step="0.01" data-row="${productoCount}" required>
+      </td>
+      <td style="text-align: center; font-weight: 700; color: var(--primary);" id="subtotal-${productoCount}">
+        $0.00
+      </td>
+      <td style="text-align: center;">
+        <button type="button" class="btn-remove" onclick="eliminarFila(${productoCount})" title="Eliminar">
+          <i class="fas fa-trash"></i>
+        </button>
+      </td>
+    `;
+    productosBody.appendChild(row);
+
+    // Eventos para calcular subtotal
+    const select = row.querySelector('.producto-select');
+    const cantidad = row.querySelector('.cantidad-input');
+    const precio = row.querySelector('.precio-input');
+
+    // Cargar precio automático al seleccionar producto
+    select.addEventListener('change', function() {
+      const id = this.value;
+      if (id) {
+        fetch(`/compras/api/ultimo-precio/${id}/`)
+          .then(response => response.json())
+          .then(data => {
+            if (data.success && data.precio > 0) {
+              precio.value = data.precio.toFixed(2);
+              calcularSubtotal(row);
+            }
+          });
+      }
+      validarFormulario();
+    });
+
+    cantidad.addEventListener('input', function() { calcularSubtotal(row); });
+    precio.addEventListener('input', function() { calcularSubtotal(row); });
+
+    // Calcular subtotal inicial
+    calcularSubtotal(row);
+    validarFormulario();
+
+    // Si se pasa un productoId, seleccionarlo
+    if (productoId) {
+      select.value = productoId;
+      select.dispatchEvent(new Event('change'));
+    }
+  }
+
+  function calcularSubtotal(row) {
+    const rowId = row.id.split('-')[2];
+    const cantidad = parseFloat(row.querySelector('.cantidad-input').value) || 0;
+    const precio = parseFloat(row.querySelector('.precio-input').value) || 0;
+    const subtotal = cantidad * precio;
+    const subtotalEl = document.getElementById(`subtotal-${rowId}`);
+    if (subtotalEl) {
+      subtotalEl.textContent = `$${subtotal.toFixed(2)}`;
+    }
     calcularTotal();
   }
 
   function calcularTotal() {
+    const subtotales = document.querySelectorAll('[id^="subtotal-"]');
     let total = 0;
+    subtotales.forEach(el => {
+      const valor = parseFloat(el.textContent.replace('$', '')) || 0;
+      total += valor;
+    });
+    totalCompra.textContent = `$${total.toFixed(2)}`;
+  }
 
-    document.querySelectorAll('.producto-item').forEach(item => {
-      const cantidadEl = item.querySelector('.cantidad-input');
-      const precioEl = item.querySelector('.precio-input');
+  function eliminarFila(rowId) {
+    const row = document.getElementById(`producto-row-${rowId}`);
+    if (row) {
+      row.remove();
+      calcularTotal();
+      validarFormulario();
+    }
+  }
 
-      const cantidad = parseFloat(cantidadEl?.value || '0');
-      const precio = parseFloat(precioEl?.value || '0');
+  // =============================================
+  // 3. VALIDAR FORMULARIO
+  // =============================================
+  function validarFormulario() {
+    const proveedorOk = proveedorId !== null;
+    const productosOk = document.querySelectorAll('.producto-select').length > 0;
+    let productosValidos = true;
+    document.querySelectorAll('.producto-select').forEach(sel => {
+      if (!sel.value) productosValidos = false;
+    });
+    submitBtn.disabled = !(proveedorOk && productosOk && productosValidos);
+  }
 
-      if (!isNaN(cantidad) && !isNaN(precio)) {
-        total += cantidad * precio;
+  // =============================================
+  // 4. SUBMIT DEL FORMULARIO
+  // =============================================
+  document.getElementById('compraForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    // Validar productos
+    const productosOk = document.querySelectorAll('.producto-select');
+    let todosValidos = true;
+    productosOk.forEach(sel => {
+      if (!sel.value) {
+        todosValidos = false;
+        sel.classList.add('is-invalid');
+      } else {
+        sel.classList.remove('is-invalid');
       }
     });
 
-    document.getElementById('total').innerText = total.toFixed(2);
-  }
+    if (!todosValidos) {
+      showToast('⚠️ Todos los productos deben estar seleccionados.', 'error');
+      return;
+    }
 
-  // Inicializar eventos para el select inicial (index 0)
-  document.querySelectorAll('.producto-select').forEach(select => {
-    select.addEventListener('change', function() {
-      const idx = this.getAttribute('data-index');
-      const productoId = this.value;
-      if (productoId) obtenerUltimoPrecio(productoId, idx);
-      calcularTotal();
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Registrando...';
+
+    const formData = new FormData(this);
+    fetch(window.location.href, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+      },
+      body: formData
+    })
+    .then(response => {
+      if (response.redirected) {
+        window.location.href = response.url;
+      } else {
+        return response.json();
+      }
+    })
+    .then(data => {
+      if (data && !data.success && data.error) {
+        showToast('❌ ' + data.error, 'error');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-save"></i> Registrar compra';
+      }
+    })
+    .catch(() => {
+      // Si hay error, el servidor redirige con mensajes
     });
   });
 
-  // Recalcular en tiempo real
-  document.addEventListener('input', function(e){
-    if (e.target && (e.target.classList.contains('cantidad-input') || e.target.classList.contains('precio-input'))) {
-      calcularTotal();
-    }
-  });
+  // =============================================
+  // 5. TOAST NOTIFICATION
+  // =============================================
+  function showToast(message, type = 'success') {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.className = 'show ' + type;
+    clearTimeout(toast._timeout);
+    toast._timeout = setTimeout(() => {
+      toast.classList.remove('show');
+    }, 3500);
+  }
 
-  calcularTotal();
+  // =============================================
+  // 6. INICIALIZAR
+  // =============================================
+  document.addEventListener('DOMContentLoaded', function() {
+    // Agregar primera fila de producto
+    agregarFilaProducto();
+    document.getElementById('proveedorSearchInput').focus();
+  });
 </script>
 {% endblock %}
