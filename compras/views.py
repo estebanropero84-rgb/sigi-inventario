@@ -155,7 +155,7 @@ def ver_compra(request, pk):
     detalles = compra.detalles.all()
     
     return render(request, 'compras/ver.html', {
-        'compra': compra,  # ✅ Corregido el error sintáctico de '_compra'
+        'compra': compra,
         'detalles': detalles
     })
 
@@ -173,17 +173,18 @@ def recibir_compra(request, pk):
         for detalle in compra.detalles.all():
             producto = detalle.producto
             
+            # 🔥 BUSCAR LOTE EXISTENTE
             lote = Lote.objects.filter(
                 producto=producto,
                 estado__in=['activo', 'parcial', 'completado']
             ).order_by('fecha_ingreso').first()
             
             if not lote:
+                # 🔥 CREAR NUEVO LOTE CON PROVEEDOR
                 lote = Lote.objects.create(
                     codigo=f'COMPRA-{producto.codigo}-{timezone.now().strftime("%Y%m%d%H%M%S")}',
                     producto=producto,
-                    # 🔍 NOTA: Si tu modelo Lote requiere proveedor, cambia 'proveedor_id' 
-                    # por el nombre exacto de la columna en tu modelo (ej. 'proveedor_id=compra.proveedor.id')
+                    proveedor=compra.proveedor,  # 🔥 ASIGNAR PROVEEDOR DE LA COMPRA
                     cantidad_total=detalle.cantidad,
                     cantidad_recibida=detalle.cantidad,
                     cantidad_vendida=0,
@@ -192,6 +193,7 @@ def recibir_compra(request, pk):
                     estado='completado'
                 )
             else:
+                # 🔥 ACTUALIZAR LOTE EXISTENTE
                 lote.cantidad_total += detalle.cantidad
                 lote.cantidad_recibida += detalle.cantidad
                 lote.save()
@@ -213,7 +215,9 @@ def api_ultimo_precio(request, producto_id):
         except (ValueError, TypeError):
             return JsonResponse({'precio': None, 'error': 'ID inválido', 'success': False})
         
-        ultimo_detalle = CompraDetalle.objects.filter(producto_id=producto_id).order_by('-compra__fecha').first()
+        ultimo_detalle = CompraDetalle.objects.filter(
+            producto_id=producto_id
+        ).order_by('-compra__fecha').first()
         
         if ultimo_detalle:
             precio = float(ultimo_detalle.precio_unitario)
