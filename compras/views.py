@@ -183,7 +183,7 @@ def ver_compra(request, pk):
     detalles = compra.detalles.all()
     
     return render(request, 'compras/ver.html', {
-        'compra': compra,
+        'compra':_compra,
         'detalles': detalles
     })
 
@@ -211,7 +211,7 @@ def recibir_compra(request, pk):
                 lote = Lote.objects.create(
                     codigo=f'COMPRA-{producto.codigo}-{timezone.now().strftime("%Y%m%d%H%M%S")}',
                     producto=producto,
-                    provider=compra.proveedor,  # ✨ CORREGIDO: Añadido proveedor obligatorio
+                    provider=compra.proveedor,  # ✅ Corregido a 'provider' según el modelo
                     cantidad_total=detalle.cantidad,
                     cantidad_recibida=detalle.cantidad,
                     cantidad_vendida=0,
@@ -222,8 +222,7 @@ def recibir_compra(request, pk):
             else:
                 lote.cantidad_total += detalle.cantidad
                 lote.cantidad_recibida += detalle.cantidad
-                # Actualizar el proveedor por si el lote existente no tenía o cambió
-                lote.provider = compra.proveedor  
+                lote.provider = compra.proveedor  # ✅ Corregido a 'provider' según el modelo
                 lote.save()
         
         compra.estado = 'recibido'
