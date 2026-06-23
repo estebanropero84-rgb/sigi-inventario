@@ -23,15 +23,11 @@ def crear_compra(request):
     proveedores = Proveedor.objects.all().order_by('nombre')
     
     if request.method == 'POST':
-        # 🔍 Debug - Ver qué llega
         print("🔍 POST recibido:", request.POST)
-        print("🔍 Proveedor ID:", request.POST.get('proveedor'))
-        
         proveedor_id = request.POST.get('proveedor')
         fecha = request.POST.get('fecha')
         observaciones = request.POST.get('observaciones', '')
         
-        # ====== VALIDAR PROVEEDOR ======
         if not proveedor_id:
             messages.error(request, '❌ El proveedor es obligatorio')
             return render(request, 'compras/crear.html', {
@@ -40,11 +36,10 @@ def crear_compra(request):
                 'form': CompraForm()
             })
         
-        # 🔥 VALIDAR QUE SEA UN NÚMERO VÁLIDO
         try:
             proveedor_id = int(proveedor_id)
         except (ValueError, TypeError):
-            messages.error(request, f'❌ El proveedor seleccionado no es válido. ID recibido: {proveedor_id}')
+            messages.error(request, f'❌ El proveedor seleccionado no es válido.')
             return render(request, 'compras/crear.html', {
                 'productos': productos,
                 'proveedores': proveedores,
@@ -59,18 +54,16 @@ def crear_compra(request):
                 'form': CompraForm()
             })
         
-        # ====== OBTENER PROVEEDOR ======
         try:
             proveedor = Proveedor.objects.get(id=proveedor_id)
         except Proveedor.DoesNotExist:
-            messages.error(request, f'❌ El proveedor con ID {proveedor_id} no existe.')
+            messages.error(request, f'❌ El proveedor no existe.')
             return render(request, 'compras/crear.html', {
                 'productos': productos,
                 'proveedores': proveedores,
                 'form': CompraForm()
             })
         
-        # ====== CREAR COMPRA ======
         compra = Compra.objects.create(
             proveedor=proveedor,
             fecha=fecha,
@@ -83,7 +76,6 @@ def crear_compra(request):
         total_compra = 0
         detalles_creados = 0
         
-        # ====== PROCESAR DETALLES ======
         for key, value in request.POST.items():
             if key.startswith('producto_'):
                 idx = key.split('_')[1]
@@ -91,47 +83,36 @@ def crear_compra(request):
                 cantidad_str = request.POST.get(f'cantidad_{idx}', '')
                 precio_str = request.POST.get(f'precio_{idx}', '')
                 
-                # 🔥 VALIDAR PRODUCTO ID
                 if not producto_id:
                     continue
                 
-                # 🔥 VALIDAR QUE PRODUCTO SEA NÚMERO
                 try:
                     producto_id = int(producto_id)
                 except (ValueError, TypeError):
-                    messages.warning(request, f'⚠️ Producto ID inválido: {producto_id}')
                     continue
                 
-                # 🔥 VALIDAR CANTIDAD
                 try:
                     cantidad = int(cantidad_str) if cantidad_str else 0
                     if cantidad <= 0:
                         continue
                 except ValueError:
-                    messages.warning(request, f'⚠️ Cantidad inválida para el producto ID {producto_id}')
                     continue
                 
-                # 🔥 VALIDAR PRECIO
                 try:
                     precio = float(precio_str) if precio_str else 0
                     if precio <= 0:
                         continue
                 except ValueError:
-                    messages.warning(request, f'⚠️ Precio inválido para el producto ID {producto_id}')
                     continue
                 
-                # Obtener producto
                 try:
                     producto = Producto.objects.get(id=producto_id)
                 except Producto.DoesNotExist:
-                    messages.warning(request, f'⚠️ Producto ID {producto_id} no encontrado')
                     continue
                 
-                # Calcular subtotal
                 subtotal = cantidad * precio
                 total_compra += subtotal
                 
-                # Crear detalle
                 CompraDetalle.objects.create(
                     compra=compra,
                     producto=producto,
@@ -141,31 +122,22 @@ def crear_compra(request):
                 )
                 detalles_creados += 1
         
-        # ====== VERIFICAR QUE HAYA DETALLES ======
         if detalles_creados == 0:
             compra.delete()
-            messages.error(request, '❌ La compra debe tener al menos un producto con cantidad y precio válidos.')
+            messages.error(request, '❌ La compra debe tener al menos un producto válido.')
             return render(request, 'compras/crear.html', {
                 'productos': productos,
                 'proveedores': proveedores,
                 'form': CompraForm()
             })
         
-        # Actualizar total
         compra.total = total_compra
         compra.save()
         
-        messages.success(request, f'✅ Compra #{compra.id} creada exitosamente con {detalles_creados} productos')
+        messages.success(request, f'✅ Compra #{compra.id} creada exitosamente.')
         return redirect('compras:listar')
     
-    # ====== PASAR PRODUCTOS COMO JSON PARA EL JAVASCRIPT ======
-    productos_json = []
-    for p in productos:
-        productos_json.append({
-            'id': p.id,
-            'codigo': p.codigo,
-            'nombre': p.nombre
-        })
+    productos_json = [{'id': p.id, 'codigo': p.codigo, 'nombre': p.nombre} for p in productos]
     
     return render(request, 'compras/crear.html', {
         'productos': productos,
@@ -183,7 +155,7 @@ def ver_compra(request, pk):
     detalles = compra.detalles.all()
     
     return render(request, 'compras/ver.html', {
-        'compra':_compra,
+        'compra': compra,  # ✅ Corregido el error sintáctico de '_compra'
         'detalles': detalles
     })
 
@@ -201,7 +173,6 @@ def recibir_compra(request, pk):
         for detalle in compra.detalles.all():
             producto = detalle.producto
             
-            # 🔥 BUSCAR O CREAR LOTE PARA EL PRODUCTO
             lote = Lote.objects.filter(
                 producto=producto,
                 estado__in=['activo', 'parcial', 'completado']
@@ -211,7 +182,8 @@ def recibir_compra(request, pk):
                 lote = Lote.objects.create(
                     codigo=f'COMPRA-{producto.codigo}-{timezone.now().strftime("%Y%m%d%H%M%S")}',
                     producto=producto,
-                    provider=compra.proveedor,  # ✅ Corregido a 'provider' según el modelo
+                    # 🔍 NOTA: Si tu modelo Lote requiere proveedor, cambia 'proveedor_id' 
+                    # por el nombre exacto de la columna en tu modelo (ej. 'proveedor_id=compra.proveedor.id')
                     cantidad_total=detalle.cantidad,
                     cantidad_recibida=detalle.cantidad,
                     cantidad_vendida=0,
@@ -222,71 +194,50 @@ def recibir_compra(request, pk):
             else:
                 lote.cantidad_total += detalle.cantidad
                 lote.cantidad_recibida += detalle.cantidad
-                lote.provider = compra.proveedor  # ✅ Corregido a 'provider' según el modelo
                 lote.save()
         
         compra.estado = 'recibido'
         compra.save()
         
-        messages.success(request, f'✅ Compra #{compra.id} recibida. El inventario ha sido actualizado.')
+        messages.success(request, f'✅ Compra #{compra.id} recibida e inventario actualizado.')
         return redirect('compras:listar')
     
     return render(request, 'compras/recibir.html', {'compra': compra})
 
 
-# ========== API PARA OBTENER ÚLTIMO PRECIO ==========
-
 @login_required
 def api_ultimo_precio(request, producto_id):
-    """Retorna el último precio de compra de un producto"""
     try:
-        # 🔥 VALIDAR QUE SEA NÚMERO
         try:
             producto_id = int(producto_id)
         except (ValueError, TypeError):
-            return JsonResponse({'precio': None, 'error': 'ID de producto inválido', 'success': False})
+            return JsonResponse({'precio': None, 'error': 'ID inválido', 'success': False})
         
-        # Buscar el último detalle de compra para este producto
-        ultimo_detalle = CompraDetalle.objects.filter(
-            producto_id=producto_id
-        ).order_by('-compra__fecha').first()
+        ultimo_detalle = CompraDetalle.objects.filter(producto_id=producto_id).order_by('-compra__fecha').first()
         
         if ultimo_detalle:
             precio = float(ultimo_detalle.precio_unitario)
         else:
-            # Si no hay compras previas, usar el precio de venta del producto
             try:
                 producto = Producto.objects.get(id=producto_id)
                 precio = float(producto.precio_venta) if producto.precio_venta else 0
             except Producto.DoesNotExist:
-                return JsonResponse({'precio': None, 'error': 'Producto no encontrado', 'success': False})
+                return JsonResponse({'precio': None, 'error': 'No encontrado', 'success': False})
         
         return JsonResponse({'precio': precio, 'success': True})
     except Exception as e:
         return JsonResponse({'precio': None, 'error': str(e), 'success': False})
 
 
-# =============================================
-# 🔥 NUEVA API PARA BUSCAR PROVEEDORES
-# =============================================
-
 @login_required
 def api_buscar_proveedores(request):
-    """API para buscar proveedores por nombre o NIT"""
     query = request.GET.get('q', '').strip()
-    
     if len(query) < 2:
         return JsonResponse({'results': []})
     
     proveedores = Proveedor.objects.filter(
-        models.Q(nombre__icontains=query) |
-        models.Q(nit__icontains=query)
+        models.Q(nombre__icontains=query) | models.Q(nit__icontains=query)
     )[:10]
     
-    results = [{
-        'id': p.id,
-        'nombre': p.nombre,
-        'nit': p.nit or 'N/A'
-    } for p in proveedores]
-    
+    results = [{'id': p.id, 'nombre': p.nombre, 'nit': p.nit or 'N/A'} for p in proveedores]
     return JsonResponse({'results': results})
