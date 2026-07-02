@@ -6,19 +6,17 @@ from django.http import JsonResponse
 from django.urls import reverse
 from django.utils import timezone
 from django.contrib.auth import get_user_model
-from .models import Movimiento
-from Productos.models import Producto, Lote
+from Productos.models import Movimiento, Producto, Lote  # 🔥 IMPORTAR DESDE PRODUCTOS
 from .forms import MovimientoForm
 import re
 
-# Obtener el modelo de usuario configurado
 User = get_user_model()
 
 
 @login_required
 def listar_movimientos(request):
     """Lista de movimientos con filtros"""
-    movimientos = Movimiento.objects.all().order_by('-created_at')
+    movimientos = Movimiento.objects.all().order_by('-fecha')  # 🔥 Usar 'fecha' en lugar de 'created_at'
     
     # ====== FILTROS ======
     buscar = request.GET.get('buscar')
@@ -35,11 +33,11 @@ def listar_movimientos(request):
     
     fecha_desde = request.GET.get('fecha_desde')
     if fecha_desde:
-        movimientos = movimientos.filter(created_at__date__gte=fecha_desde)
+        movimientos = movimientos.filter(fecha__date__gte=fecha_desde)  # 🔥 Usar 'fecha'
     
     fecha_hasta = request.GET.get('fecha_hasta')
     if fecha_hasta:
-        movimientos = movimientos.filter(created_at__date__lte=fecha_hasta)
+        movimientos = movimientos.filter(fecha__date__lte=fecha_hasta)  # 🔥 Usar 'fecha'
     
     # ====== ESTADÍSTICAS ======
     total_movimientos = movimientos.count()
@@ -81,7 +79,6 @@ def registrar_movimiento(request):
     
     # ====== PROCESAR POST ======
     if request.method == 'POST':
-        # Verificar si es AJAX
         is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
         
         producto_id = request.POST.get('producto')
@@ -113,7 +110,6 @@ def registrar_movimiento(request):
             messages.error(request, f'❌ {error}')
             return redirect('movimientos:registrar')
         
-        # Validar formato del serial
         if not re.match(r'^[A-Za-z0-9\-_]{3,50}$', serial):
             error = 'Formato de serial inválido. Usa letras, números, guiones o guiones bajos.'
             if is_ajax:
@@ -128,7 +124,6 @@ def registrar_movimiento(request):
         lote = None
         if lote_id:
             lote = get_object_or_404(Lote, pk=lote_id)
-            # Verificar que el lote pertenezca al producto
             if lote.producto.id != producto.id:
                 error = 'El lote seleccionado no pertenece a este producto.'
                 if is_ajax:
@@ -138,23 +133,19 @@ def registrar_movimiento(request):
         
         # ====== CALCULAR STOCK ======
         stock_actual = producto.stock_total()
-        cantidad = 1  # Siempre 1 por serial
+        cantidad = 1
         
         # ====== PROCESAR SEGÚN TIPO ======
         if tipo == 'entrada':
-            # Entrada: aumentar stock
             stock_nuevo = stock_actual + cantidad
             
-            # Crear o actualizar lote si no se seleccionó uno
             if not lote:
-                # Buscar un lote activo o crear uno
                 lote = Lote.objects.filter(
                     producto=producto,
                     estado__in=['completado', 'parcial', 'activo']
                 ).order_by('fecha_ingreso').first()
                 
                 if not lote:
-                    # Crear lote automático
                     lote = Lote.objects.create(
                         codigo=f'AUTO-{producto.codigo}-{timezone.now().strftime("%Y%m%d%H%M%S")}',
                         producto=producto,
@@ -166,13 +157,11 @@ def registrar_movimiento(request):
                         estado='activo'
                     )
             
-            # Actualizar lote
             lote.cantidad_recibida += cantidad
             lote.cantidad_total = max(lote.cantidad_total, lote.cantidad_recibida)
             lote.save()
             
         elif tipo in ['salida', 'devolucion']:
-            # Salida/Devolución: disminuir stock
             if cantidad > stock_actual:
                 error = f'No hay suficiente stock. Disponible: {stock_actual}'
                 if is_ajax:
@@ -188,7 +177,6 @@ def registrar_movimiento(request):
             
             stock_nuevo = stock_actual - cantidad
             
-            # Si no se seleccionó lote, buscar uno con stock disponible (FIFO)
             if not lote:
                 lote = Lote.objects.filter(
                     producto=producto,
@@ -208,30 +196,25 @@ def registrar_movimiento(request):
                         'form': MovimientoForm()
                     })
             
-            # Descontar del lote
             lote.cantidad_vendida += cantidad
             lote.actualizar_estado()
             
-            # Actualizar seriales si existen
             seriales_disponibles = producto.unidades.filter(
                 lote=lote,
                 estado='disponible'
             )
             if seriales_disponibles.exists():
-                # Tomar el primer serial disponible
                 serial_obj = seriales_disponibles.first()
                 if tipo == 'salida':
                     serial_obj.estado = 'vendido'
                 elif tipo == 'devolucion':
                     serial_obj.estado = 'devuelto'
                 serial_obj.save()
-        
         else:
-            # Ajuste u otros tipos
             stock_nuevo = stock_actual
         
         # ====== CREAR MOVIMIENTO ======
-        movimiento = Movimiento.objects.create(
+        movimiento = Movimiento.objects.create(  # 🔥 Usar Productos.Movimiento
             producto=producto,
             lote=lote,
             tipo=tipo,
