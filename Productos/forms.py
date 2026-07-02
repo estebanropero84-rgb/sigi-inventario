@@ -60,11 +60,11 @@ class ProductoForm(forms.ModelForm):
     # 🔥 CÓDIGO DE BARRAS - REALMENTE OPCIONAL
     codigo_barras = forms.CharField(
         max_length=100,
-        required=False,  # 🔥 OPCIONAL
+        required=False,  
         label='Código de barras',
         widget=forms.TextInput(attrs={
             'class': 'form-control',
-            'placeholder': 'Opcional'
+            'placeholder': 'Obligatorio'
         }),
         error_messages={
             'invalid': 'Ingresa un código de barras válido.'
