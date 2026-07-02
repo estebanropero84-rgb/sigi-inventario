@@ -216,6 +216,72 @@ def historial_movimientos(request, producto_id=None):
     })
 
 
+# ========== 🔥 NUEVA FUNCIÓN: HISTORIAL POR PRODUCTO ==========
+
+@login_required
+def historial_movimientos_producto(request, producto_id):
+    """Ver historial de movimientos de un producto específico con todos los detalles"""
+    
+    # ====== OBTENER PRODUCTO ======
+    producto = get_object_or_404(Producto, pk=producto_id)
+    movimientos = Movimiento.objects.filter(producto=producto).order_by('-fecha')
+    
+    # ====== APLICAR FILTROS ======
+    tipo = request.GET.get('tipo')
+    if tipo:
+        movimientos = movimientos.filter(tipo=tipo)
+    
+    fecha_desde = request.GET.get('fecha_desde')
+    if fecha_desde:
+        movimientos = movimientos.filter(fecha__date__gte=fecha_desde)
+    
+    fecha_hasta = request.GET.get('fecha_hasta')
+    if fecha_hasta:
+        movimientos = movimientos.filter(fecha__date__lte=fecha_hasta)
+    
+    # ====== BÚSQUEDA POR TEXTO ======
+    busqueda = request.GET.get('buscar')
+    if busqueda:
+        movimientos = movimientos.filter(
+            Q(serial__icontains=busqueda) |
+            Q(descripcion__icontains=busqueda) |
+            Q(motivo__icontains=busqueda)
+        )
+    
+    # ====== CALCULAR RESÚMENES ======
+    resumen = {
+        'total_entradas': movimientos.filter(tipo='entrada').count(),
+        'total_salidas': movimientos.filter(tipo='salida').count(),
+        'total_devoluciones': movimientos.filter(tipo='devolucion').count(),
+        'total_ajustes': movimientos.filter(tipo='ajuste').count(),
+        'total_movimientos': movimientos.count(),
+    }
+    
+    # ====== PAGINACIÓN ======
+    paginator = Paginator(movimientos, 30)
+    page = request.GET.get('page')
+    movimientos_page = paginator.get_page(page)
+    
+    # ====== OBTENER LISTA DE TIPOS PARA FILTRO ======
+    tipos = Movimiento.TIPO_CHOICES
+    
+    # ====== OBTENER LOTES RELACIONADOS ======
+    lotes_ids = movimientos.values_list('lote_id', flat=True).distinct()
+    lotes = Lote.objects.filter(id__in=lotes_ids)
+    
+    context = {
+        'movimientos': movimientos_page,
+        'producto': producto,
+        'resumen': resumen,
+        'tipos': tipos,
+        'lotes': lotes,
+        'busqueda': busqueda,
+        'titulo': f'📋 Historial de movimientos - {producto.nombre}',
+        'subtitulo': f'Código: {producto.codigo} | Stock actual: {producto.stock_total()} unidades',
+    }
+    return render(request, 'productos/movimientos_historial.html', context)
+
+
 # ========== VISTAS DE PRODUCTOS ==========
 
 @login_required
