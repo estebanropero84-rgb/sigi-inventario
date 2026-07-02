@@ -226,7 +226,6 @@
   }
 
   .w-fecha { min-width: 160px; white-space: nowrap; }
-  .w-producto { min-width: 180px; }
   .w-tipo { min-width: 110px; }
   .w-cantidad { min-width: 80px; text-align: center; font-weight: 700; }
   .w-serial { min-width: 120px; }
@@ -322,6 +321,11 @@
           <span class="badge" style="background: #fef3c7; color: #b45309;">
             🏷️ Código: {{ producto.codigo }}
           </span>
+          {% if producto.marca %}
+            <span class="badge" style="background: #fce7f3; color: #be185d;">
+              🏭 Marca: {{ producto.marca }}
+            </span>
+          {% endif %}
           {% if producto.ubicacion %}
             <span class="badge" style="background: #dcfce7; color: #15803d;">
               📍 {{ producto.ubicacion.nombre }}
@@ -363,7 +367,7 @@
   <div class="filters-bar">
     <div class="filter">
       <i class="fas fa-search icon-left"></i>
-      <input type="text" id="searchInput" placeholder="Buscar por producto, serial, motivo..." value="{{ busqueda|default:'' }}">
+      <input type="text" id="searchInput" placeholder="Buscar por serial o motivo..." value="{{ busqueda|default:'' }}">
     </div>
     <div class="filter">
       <select id="tipoFilter">
@@ -382,7 +386,11 @@
       <input type="date" id="fechaHasta" value="{{ request.GET.fecha_hasta|default:'' }}">
     </div>
     <button id="aplicarFiltros" class="btn-filter">Aplicar</button>
-    <a href="{% url 'productos:historial_movimientos' %}{% if producto %}?producto={{ producto.id }}{% endif %}" class="btn-clear">Limpiar</a>
+    {% if producto %}
+      <a href="{% url 'productos:historial_movimientos_producto' producto.id %}" class="btn-clear">Limpiar</a>
+    {% else %}
+      <a href="{% url 'productos:historial_movimientos' %}" class="btn-clear">Limpiar</a>
+    {% endif %}
   </div>
 
   <!-- ====== TABLA ====== -->
@@ -391,7 +399,9 @@
       <thead>
         <tr>
           <th class="w-fecha">Fecha</th>
-          <th class="w-producto">Producto</th>
+          {% if not producto %}
+            <th class="w-producto">Producto</th>
+          {% endif %}
           <th class="w-tipo">Tipo</th>
           <th class="w-cantidad">Cantidad</th>
           <th class="w-serial">Serial</th>
@@ -403,19 +413,21 @@
       <tbody id="tablaBody">
         {% for movimiento in movimientos %}
         <tr class="movimiento-row"
-            data-producto="{{ movimiento.producto.nombre|lower }}"
+            {% if not producto %}data-producto="{{ movimiento.producto.nombre|lower }}"{% endif %}
             data-tipo="{{ movimiento.tipo }}"
             data-serial="{{ movimiento.serial|default:''|lower }}"
             data-motivo="{{ movimiento.motivo|default:''|lower }}"
             data-fecha="{{ movimiento.fecha|date:'Y-m-d' }}">
           <td class="w-fecha">{{ movimiento.fecha|date:"d/m/Y H:i" }}</td>
-          <td class="w-producto">
-            <a href="{% url 'productos:historial_movimientos_producto' movimiento.producto.id %}" 
-               style="color: #4f46e5; text-decoration: none; font-weight: 600;">
-              {{ movimiento.producto.nombre }}
-            </a>
-            <br><span style="font-size: 11px; color: #94a3b8;">{{ movimiento.producto.codigo }}</span>
-          </td>
+          {% if not producto %}
+            <td class="w-producto">
+              <a href="{% url 'productos:historial_movimientos_producto' movimiento.producto.id %}" 
+                 style="color: #4f46e5; text-decoration: none; font-weight: 600;">
+                {{ movimiento.producto.nombre }}
+              </a>
+              <br><span style="font-size: 11px; color: #94a3b8;">{{ movimiento.producto.codigo }}</span>
+            </td>
+          {% endif %}
           <td class="w-tipo">
             <span class="badge {{ movimiento.tipo }}">
               {% if movimiento.tipo == 'entrada' %}📥 Entrada
@@ -449,7 +461,7 @@
         </tr>
         {% empty %}
         <tr>
-          <td colspan="8">
+          <td colspan="{% if not producto %}8{% else %}7{% endif %}">
             <div class="empty-state">
               <div class="icon">📭</div>
               <h3>No hay movimientos registrados</h3>
