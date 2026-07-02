@@ -2,6 +2,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, MaxValueValidator, RegexValidator
 from django.db import models
+from decimal import Decimal  # 🔥 IMPORTANTE: Agregar esta importación
 from .models import Producto, Categoria, Proveedor, Lote, ProductoConSerial, Bodega, Ubicacion, Movimiento
 import re
 
@@ -50,7 +51,7 @@ class ProductoForm(forms.ModelForm):
         },
         validators=[
             RegexValidator(
-                regex=r'^[A-Za-z0-9\-_]{3,50}$',  # 🔥 Validación de longitud mínima 3
+                regex=r'^[A-Za-z0-9\-_]{3,50}$',
                 message='El código debe tener entre 3 y 50 caracteres, solo letras, números, guiones y guiones bajos'
             )
         ]
@@ -134,7 +135,7 @@ class ProductoForm(forms.ModelForm):
         max_digits=12,
         decimal_places=2,
         validators=[
-            MinValueValidator(0.01, message='El precio de compra debe ser mayor a 0')
+            MinValueValidator(Decimal('0.01'), message='El precio de compra debe ser mayor a 0')
         ],
         widget=forms.NumberInput(attrs={
             'class': 'form-control',
@@ -154,7 +155,7 @@ class ProductoForm(forms.ModelForm):
         max_digits=12,
         decimal_places=2,
         validators=[
-            MinValueValidator(0.01, message='El precio de venta debe ser mayor a 0')
+            MinValueValidator(Decimal('0.01'), message='El precio de venta debe ser mayor a 0')
         ],
         widget=forms.NumberInput(attrs={
             'class': 'form-control',
@@ -222,24 +223,21 @@ class ProductoForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['codigo_barras'].required = False
         
-        # 🔥 Agregar clases adicionales para validación visual
         for field_name, field in self.fields.items():
             if 'class' in field.widget.attrs:
                 field.widget.attrs['class'] += ' form-control'
             else:
                 field.widget.attrs['class'] = 'form-control'
     
-    # ====== 🔥 VALIDACIONES MEJORADAS ======
+    # ====== VALIDACIONES MEJORADAS ======
     
     def clean_codigo(self):
         """Validación robusta del código"""
         codigo = self.cleaned_data.get('codigo')
         if codigo:
-            # Validar formato
             if not re.match(r'^[A-Za-z0-9\-_]{3,50}$', codigo):
                 raise ValidationError('El código debe tener entre 3 y 50 caracteres, solo letras, números, guiones y guiones bajos.')
             
-            # Validar unicidad
             if Producto.objects.filter(codigo=codigo).exists():
                 if self.instance and self.instance.pk:
                     if Producto.objects.filter(codigo=codigo).exclude(pk=self.instance.pk).exists():
@@ -309,7 +307,6 @@ class ProductoForm(forms.ModelForm):
         cleaned_data = super().clean()
         precio_compra = cleaned_data.get('precio_compra')
         precio_venta = cleaned_data.get('precio_venta')
-        stock_minimo = cleaned_data.get('stock_minimo')
         
         # Validar que precio_venta > precio_compra
         if precio_compra is not None and precio_venta is not None:
@@ -318,12 +315,13 @@ class ProductoForm(forms.ModelForm):
                     'precio_venta': f'El precio de venta (${precio_venta:,.2f}) debe ser mayor que el precio de compra (${precio_compra:,.2f}).'
                 })
         
-        # Validar margen mínimo de ganancia (10%)
+        # 🔥 CORREGIDO: Validar margen mínimo de ganancia (10%) usando Decimal
         if precio_compra is not None and precio_venta is not None:
             margen = precio_venta - precio_compra
-            if margen < (precio_compra * 0.1):
+            margen_minimo = precio_compra * Decimal('0.1')  # 🔥 Usar Decimal en lugar de 0.1
+            if margen < margen_minimo:
                 raise ValidationError({
-                    'precio_venta': f'El margen de ganancia (${margen:,.2f}) debe ser al menos el 10% del precio de compra (${precio_compra * 0.1:,.2f}).'
+                    'precio_venta': f'El margen de ganancia (${margen:,.2f}) debe ser al menos el 10% del precio de compra (${margen_minimo:,.2f}).'
                 })
         
         return cleaned_data
@@ -332,11 +330,9 @@ class ProductoForm(forms.ModelForm):
         """Validación del código de barras"""
         codigo_barras = self.cleaned_data.get('codigo_barras')
         if codigo_barras:
-            # Validar formato
             if not re.match(r'^[A-Za-z0-9\-_]{0,100}$', codigo_barras):
                 raise ValidationError('El código de barras solo puede contener letras, números, guiones y guiones bajos.')
             
-            # Validar unicidad
             instance = self.instance
             if instance and instance.pk:
                 if Producto.objects.filter(codigo_barras=codigo_barras).exclude(pk=instance.pk).exists():
@@ -490,7 +486,7 @@ class LoteCompletoForm(forms.ModelForm):
         max_digits=12,
         decimal_places=2,
         validators=[
-            MinValueValidator(0.01, message='El costo unitario debe ser mayor a 0')
+            MinValueValidator(Decimal('0.01'), message='El costo unitario debe ser mayor a 0')
         ],
         widget=forms.NumberInput(attrs={
             'class': 'form-control',
@@ -683,12 +679,10 @@ class MovimientoForm(forms.ModelForm):
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Filtrar lotes disponibles (con stock disponible)
         self.fields['lote'].queryset = Lote.objects.filter(
             cantidad_recibida__gt=models.F('cantidad_vendida')
         ).order_by('-created_at')
         
-        # Si se selecciona un producto, filtrar sus lotes
         if 'producto' in self.data:
             try:
                 producto_id = int(self.data.get('producto'))
@@ -710,7 +704,6 @@ class MovimientoForm(forms.ModelForm):
         producto = cleaned_data.get('producto')
         lote = cleaned_data.get('lote')
         
-        # Validar que el lote pertenezca al producto seleccionado
         if producto and lote and lote.producto != producto:
             raise ValidationError({
                 'lote': f'El lote seleccionado ({lote.codigo}) no pertenece al producto {producto.nombre}.'
