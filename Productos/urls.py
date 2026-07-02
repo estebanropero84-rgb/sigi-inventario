@@ -30,7 +30,7 @@ urlpatterns = [
     
     # ========== MOVIMIENTOS / HISTORIAL ==========
     path('movimientos/', views.historial_movimientos, name='historial_movimientos'),
-    path('movimientos/producto/<int:producto_id>/', views.historial_movimientos, name='historial_movimientos_producto'),
+    path('movimientos/producto/<int:producto_id>/', views.historial_movimientos_producto, name='historial_movimientos_producto'),
     
     # ========== LOTES ==========
     path('lotes/', views.listar_lotes, name='listar_lotes'),
@@ -55,7 +55,6 @@ urlpatterns = [
     path('reportes/seleccionar/', views.seleccionar_productos_reporte, name='seleccionar_reportes'),
     
     # ========== MOVIMIENTOS MANUALES ==========
-    # 🔥 CORREGIDO: Usar registrar_movimiento en lugar de registrar_movimiento_manual
     path('movimientos/registrar/', views.registrar_movimiento, name='registrar_movimiento'),
     
     # ========== UTILIDADES ==========
