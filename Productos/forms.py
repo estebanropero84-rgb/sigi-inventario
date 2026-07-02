@@ -57,22 +57,23 @@ class ProductoForm(forms.ModelForm):
         ]
     )
     
-    # 🔥 CÓDIGO DE BARRAS - REALMENTE OPCIONAL
+    # ====== CÓDIGO DE BARRAS - OBLIGATORIO ======
     codigo_barras = forms.CharField(
         max_length=100,
-        required=False,  # 🔥 OPCIONAL
+        required=True,  # 🔥 OBLIGATORIO
         label='Código de barras',
         widget=forms.TextInput(attrs={
             'class': 'form-control',
-            'placeholder': 'Opcional'
+            'placeholder': 'Ej: 1234567890123'
         }),
         error_messages={
+            'required': 'Este campo es obligatorio.',
             'invalid': 'Ingresa un código de barras válido.'
         },
         validators=[
             RegexValidator(
-                regex=r'^[A-Za-z0-9\-_]{0,100}$',
-                message='El código de barras solo puede contener letras, números, guiones y guiones bajos'
+                regex=r'^[A-Za-z0-9\-_]{3,100}$',
+                message='El código de barras debe tener entre 3 y 100 caracteres, solo letras, números, guiones y guiones bajos'
             )
         ]
     )
@@ -225,9 +226,9 @@ class ProductoForm(forms.ModelForm):
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # 🔥 Asegurar que el código de barras sea opcional
-        self.fields['codigo_barras'].required = False
-        self.fields['codigo_barras'].help_text = 'ℹ️ Opcional - Déjalo vacío si no tiene código de barras'
+        # 🔥 Asegurar que el código de barras sea obligatorio
+        self.fields['codigo_barras'].required = True
+        self.fields['codigo_barras'].help_text = '⚠️ Obligatorio - Ingresa el código de barras del producto'
         
         for field_name, field in self.fields.items():
             if 'class' in field.widget.attrs:
@@ -333,18 +334,18 @@ class ProductoForm(forms.ModelForm):
         return cleaned_data
     
     def clean_codigo_barras(self):
-        """Validación del código de barras - OPCIONAL"""
+        """Validación del código de barras - OBLIGATORIO"""
         codigo_barras = self.cleaned_data.get('codigo_barras')
         
-        # 🔥 Si está vacío, permitir sin validación
+        # 🔥 Validar que no esté vacío
         if not codigo_barras:
-            return codigo_barras
+            raise ValidationError('El código de barras es obligatorio. Por favor ingresa un valor.')
         
-        # Si tiene valor, validar formato
-        if not re.match(r'^[A-Za-z0-9\-_]{0,100}$', codigo_barras):
-            raise ValidationError('El código de barras solo puede contener letras, números, guiones y guiones bajos.')
+        # Validar formato
+        if not re.match(r'^[A-Za-z0-9\-_]{3,100}$', codigo_barras):
+            raise ValidationError('El código de barras debe tener entre 3 y 100 caracteres, solo letras, números, guiones y guiones bajos.')
         
-        # Validar unicidad solo si tiene valor
+        # Validar unicidad
         instance = self.instance
         if instance and instance.pk:
             producto_existente = Producto.objects.filter(

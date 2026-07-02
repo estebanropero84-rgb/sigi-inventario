@@ -342,13 +342,13 @@
         {% endif %}
       </div>
 
-      <!-- ====== CÓDIGO DE BARRAS ====== -->
+      <!-- ====== CÓDIGO DE BARRAS - OBLIGATORIO ====== -->
       <div class="field-group">
-        <label for="id_codigo_barras">Código de barras <span class="optional">(opcional)</span></label>
+        <label for="id_codigo_barras">Código de barras <span class="required">*</span></label>
         <input id="id_codigo_barras" type="text" name="codigo_barras"
                class="control {% if form.codigo_barras.errors %}is-invalid shake{% endif %}"
                value="{{ form.codigo_barras.value|default:'' }}"
-               placeholder="Opcional">
+               placeholder="Ej: 1234567890123" required>
         {% if form.codigo_barras.errors %}
           <div class="control-error"><span class="icon">⚠️</span> {% for error in form.codigo_barras.errors %}{{ error }}{% endfor %}</div>
         {% endif %}
