@@ -8,6 +8,7 @@ from django.db import models
 from django.utils import timezone
 from datetime import datetime
 import io
+import re
 import pandas as pd
 import openpyxl
 from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
@@ -223,14 +224,18 @@ def listar_productos(request):
     categorias = Categoria.objects.all()
     ubicaciones = Ubicacion.objects.all()
     
+    # 🔥 NUEVO: Obtener todas las marcas para el filtro
+    marcas = Producto.objects.values_list('marca', flat=True).distinct().exclude(marca__isnull=True).exclude(marca='')
+    
     busqueda = request.GET.get('buscar', '')
     if busqueda:
         productos = productos.filter(
             Q(nombre__icontains=busqueda) |
             Q(codigo__icontains=busqueda) |
             Q(marca__icontains=busqueda) |
-            Q(codigo_barras__icontains=busqueda)
-        )
+            Q(codigo_barras__icontains=busqueda) |
+            Q(unidades__serial__icontains=busqueda)  # 🔥 BÚSQUEDA POR SERIAL
+        ).distinct()
     
     categoria_id = request.GET.get('categoria')
     if categoria_id:
@@ -240,6 +245,11 @@ def listar_productos(request):
     if ubicacion_id:
         productos = productos.filter(ubicacion_id=ubicacion_id)
     
+    # 🔥 NUEVO: Filtro por marca
+    marca_filter = request.GET.get('marca')
+    if marca_filter:
+        productos = productos.filter(marca=marca_filter)
+    
     for producto in productos:
         producto.stock_calculado = producto.stock_total()
     
@@ -247,6 +257,7 @@ def listar_productos(request):
         'productos': productos,
         'categorias': categorias,
         'ubicaciones': ubicaciones,
+        'marcas': marcas,  # 🔥 NUEVO: Pasar marcas al template
         'busqueda': busqueda,
     }
     return render(request, 'productos/lista.html', context)
@@ -505,11 +516,12 @@ def reporte_productos_pdf(request):
 
 @login_required
 def seleccionar_productos_reporte(request):
-    """Vista para seleccionar productos para exportar"""
+    """Vista para seleccionar productos para exportar con filtros avanzados"""
     productos = Producto.objects.all().order_by('nombre')
     categorias = Categoria.objects.all()
+    marcas = Producto.objects.values_list('marca', flat=True).distinct().exclude(marca__isnull=True).exclude(marca='')
     
-    # Filtros
+    # 🔥 Filtros avanzados
     busqueda = request.GET.get('buscar', '')
     if busqueda:
         productos = productos.filter(
@@ -522,14 +534,54 @@ def seleccionar_productos_reporte(request):
     if categoria_id:
         productos = productos.filter(categoria_id=categoria_id)
     
+    # 🔥 Filtro por marca
+    marca_filter = request.GET.get('marca')
+    if marca_filter:
+        productos = productos.filter(marca=marca_filter)
+    
+    # 🔥 Filtro por serial
+    serial_filter = request.GET.get('serial')
+    if serial_filter:
+        productos = productos.filter(unidades__serial__icontains=serial_filter).distinct()
+    
+    # 🔥 Filtro por rango de stock (convierte a lista para poder filtrar)
+    stock_min = request.GET.get('stock_min')
+    stock_max = request.GET.get('stock_max')
+    estado_stock = request.GET.get('estado_stock')
+    
+    # Aplicar filtros de stock después de obtener los productos
+    productos_list = list(productos)
+    if stock_min:
+        try:
+            stock_min_int = int(stock_min)
+            productos_list = [p for p in productos_list if p.stock_total() >= stock_min_int]
+        except ValueError:
+            pass
+    
+    if stock_max:
+        try:
+            stock_max_int = int(stock_max)
+            productos_list = [p for p in productos_list if p.stock_total() <= stock_max_int]
+        except ValueError:
+            pass
+    
+    if estado_stock:
+        if estado_stock == 'bajo':
+            productos_list = [p for p in productos_list if p.stock_total() <= p.stock_minimo and p.stock_total() > 0]
+        elif estado_stock == 'normal':
+            productos_list = [p for p in productos_list if p.stock_total() > p.stock_minimo]
+        elif estado_stock == 'sin':
+            productos_list = [p for p in productos_list if p.stock_total() == 0]
+    
     # Paginación
-    paginator = Paginator(productos, 20)
+    paginator = Paginator(productos_list, 20)
     page = request.GET.get('page')
-    productos = paginator.get_page(page)
+    productos_page = paginator.get_page(page)
     
     context = {
-        'productos': productos,
+        'productos': productos_page,
         'categorias': categorias,
+        'marcas': marcas,  # 🔥 NUEVO
         'busqueda': busqueda,
     }
     return render(request, 'productos/seleccionar_reportes.html', context)
@@ -845,65 +897,8 @@ def editar_serial(request, pk):
         'form': form,
         'serial': serial
     })
-@login_required
-@puede_editar_required
-def registrar_movimiento_manual(request):
-    """Vista para registrar movimientos manuales (devoluciones, garantía, daños, ajustes)"""
-    if request.method == 'POST':
-        form = MovimientoForm(request.POST)
-        if form.is_valid():
-            movimiento = form.save(commit=False)
-            movimiento.usuario = request.user
-            movimiento.ip = request.META.get('REMOTE_ADDR', '')
-            movimiento.save()
-            
-            # Si es una salida (devolución, daño, etc.), descontar del lote
-            if movimiento.tipo in ['salida', 'devolucion']:
-                if movimiento.lote:
-                    # Descontar del lote
-                    movimiento.lote.cantidad_vendida += movimiento.cantidad
-                    movimiento.lote.actualizar_estado()
-                    
-                    # Actualizar seriales si existen
-                    if movimiento.producto.unidades.filter(
-                        lote=movimiento.lote,
-                        estado='disponible'
-                    ).exists():
-                        seriales = movimiento.producto.unidades.filter(
-                            lote=movimiento.lote,
-                            estado='disponible'
-                        )[:movimiento.cantidad]
-                        for serial in seriales:
-                            if movimiento.tipo == 'devolucion':
-                                serial.estado = 'devuelto'
-                            elif movimiento.tipo == 'salida':
-                                serial.estado = 'danado'
-                            serial.save()
-            
-            registrar_log(
-                request.user, 
-                'crear', 
-                'Movimiento', 
-                movimiento.id, 
-                f'{movimiento.get_tipo_display()} - {movimiento.producto.nombre}'
-            )
-            
-            messages.success(
-                request, 
-                f'✅ Movimiento "{movimiento.get_tipo_display()}" registrado correctamente para {movimiento.producto.nombre}'
-            )
-            return redirect('productos:historial_movimientos')
-        else:
-            for field, errors in form.errors.items():
-                for error in errors:
-                    messages.error(request, f'❌ {field}: {error}')
-    else:
-        form = MovimientoForm()
-    
-    return render(request, 'productos/movimiento_registrar.html', {
-        'form': form,
-        'titulo': 'Registrar Movimiento'
-    })    
+
+
 # ========== VISTAS DE BODEGAS ==========
 
 @login_required

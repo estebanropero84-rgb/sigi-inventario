@@ -15,14 +15,21 @@ def dashboard(request):
     total_productos = Producto.objects.count()
     total_proveedores = Proveedor.objects.count()
 
-    # ========== CALCULAR VALOR DEL INVENTARIO ==========
+    # ========== CALCULAR VALOR DEL INVENTARIO Y STOCK TOTAL ==========
     productos = Producto.objects.all()
     valor_inventario = 0
+    stock_total = 0  # 🔥 NUEVO
+    productos_bajo_stock_list = []  # 🔥 NUEVO
 
     for p in productos:
         stock = p.stock_total()
+        stock_total += stock  # 🔥 NUEVO: Sumar stock total
+
         if p.precio_venta and stock > 0:
             valor_inventario += float(p.precio_venta) * int(stock)
+
+        if stock <= p.stock_minimo:
+            productos_bajo_stock_list.append(p)  # 🔥 NUEVO
 
     # Compras del mes actual
     hoy = datetime.now()
@@ -37,18 +44,9 @@ def dashboard(request):
         created_at__date=hoy.date()
     ).count()
 
-    # ========== PRODUCTOS CON BAJO STOCK ==========
-    productos_bajo_stock_count = 0
-    productos_criticos = []
-
-    for producto in Producto.objects.all():
-        stock = producto.stock_total()
-
-        if stock <= producto.stock_minimo:
-            productos_bajo_stock_count += 1
-
-            if len(productos_criticos) < 5:
-                productos_criticos.append(producto)
+    # ========== PRODUCTOS CON BAJO STOCK (CONTEO) ==========
+    productos_bajo_stock_count = len(productos_bajo_stock_list)  # 🔥 ACTUALIZADO
+    productos_criticos = productos_bajo_stock_list[:5]  # 🔥 ACTUALIZADO
 
     # Usuarios activos
     usuarios_activos = Usuario.objects.filter(is_active=True).count()
@@ -131,6 +129,8 @@ def dashboard(request):
         'movimientos_hoy': movimientos_hoy,
         'valor_inventario': int(valor_inventario),
         'total_proveedores': total_proveedores,
+        'stock_total': stock_total,  # 🔥 NUEVO
+        'total_bajo_stock': len(productos_bajo_stock_list),  # 🔥 NUEVO
 
         # Tablas
         'ultimos_movimientos': ultimos_movimientos,

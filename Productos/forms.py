@@ -1,6 +1,7 @@
 from django import forms
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, MaxValueValidator, RegexValidator
+from django.db import models
 from .models import Producto, Categoria, Proveedor, Lote, ProductoConSerial, Bodega, Ubicacion, Movimiento
 import re
 
@@ -49,8 +50,8 @@ class ProductoForm(forms.ModelForm):
         },
         validators=[
             RegexValidator(
-                regex=r'^[A-Za-z0-9\-_]+$',
-                message='El código solo puede contener letras, números, guiones y guiones bajos'
+                regex=r'^[A-Za-z0-9\-_]{3,50}$',  # 🔥 Validación de longitud mínima 3
+                message='El código debe tener entre 3 y 50 caracteres, solo letras, números, guiones y guiones bajos'
             )
         ]
     )
@@ -65,7 +66,7 @@ class ProductoForm(forms.ModelForm):
         }),
         validators=[
             RegexValidator(
-                regex=r'^[A-Za-z0-9\-_]+$',
+                regex=r'^[A-Za-z0-9\-_]{0,100}$',
                 message='El código de barras solo puede contener letras, números, guiones y guiones bajos'
             )
         ]
@@ -220,41 +221,129 @@ class ProductoForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['codigo_barras'].required = False
+        
+        # 🔥 Agregar clases adicionales para validación visual
+        for field_name, field in self.fields.items():
+            if 'class' in field.widget.attrs:
+                field.widget.attrs['class'] += ' form-control'
+            else:
+                field.widget.attrs['class'] = 'form-control'
+    
+    # ====== 🔥 VALIDACIONES MEJORADAS ======
+    
+    def clean_codigo(self):
+        """Validación robusta del código"""
+        codigo = self.cleaned_data.get('codigo')
+        if codigo:
+            # Validar formato
+            if not re.match(r'^[A-Za-z0-9\-_]{3,50}$', codigo):
+                raise ValidationError('El código debe tener entre 3 y 50 caracteres, solo letras, números, guiones y guiones bajos.')
+            
+            # Validar unicidad
+            if Producto.objects.filter(codigo=codigo).exists():
+                if self.instance and self.instance.pk:
+                    if Producto.objects.filter(codigo=codigo).exclude(pk=self.instance.pk).exists():
+                        raise ValidationError(f'El código "{codigo}" ya está en uso por otro producto.')
+                else:
+                    raise ValidationError(f'El código "{codigo}" ya está en uso.')
+        return codigo
+    
+    def clean_nombre(self):
+        """Validación del nombre"""
+        nombre = self.cleaned_data.get('nombre')
+        if nombre:
+            if len(nombre) < 3:
+                raise ValidationError('El nombre debe tener al menos 3 caracteres.')
+            if len(nombre) > 200:
+                raise ValidationError('El nombre no puede tener más de 200 caracteres.')
+        return nombre
+    
+    def clean_marca(self):
+        """Validación de la marca"""
+        marca = self.cleaned_data.get('marca')
+        if marca:
+            if len(marca) < 2:
+                raise ValidationError('La marca debe tener al menos 2 caracteres.')
+        return marca
+    
+    def clean_modelo(self):
+        """Validación del modelo"""
+        modelo = self.cleaned_data.get('modelo')
+        if modelo:
+            if len(modelo) < 2:
+                raise ValidationError('El modelo debe tener al menos 2 caracteres.')
+        return modelo
+    
+    def clean_precio_compra(self):
+        """Validación del precio de compra"""
+        precio = self.cleaned_data.get('precio_compra')
+        if precio is not None:
+            if precio < 0:
+                raise ValidationError('El precio de compra no puede ser negativo.')
+            if precio > 999999999:
+                raise ValidationError('El precio de compra no puede ser mayor a 999,999,999.')
+        return precio
+    
+    def clean_precio_venta(self):
+        """Validación del precio de venta"""
+        precio = self.cleaned_data.get('precio_venta')
+        if precio is not None:
+            if precio <= 0:
+                raise ValidationError('El precio de venta debe ser mayor a 0.')
+            if precio > 999999999:
+                raise ValidationError('El precio de venta no puede ser mayor a 999,999,999.')
+        return precio
+    
+    def clean_stock_minimo(self):
+        """Validación del stock mínimo"""
+        stock = self.cleaned_data.get('stock_minimo')
+        if stock is not None:
+            if stock < 0:
+                raise ValidationError('El stock mínimo no puede ser negativo.')
+            if stock > 999999:
+                raise ValidationError('El stock mínimo no puede ser mayor a 999,999.')
+        return stock
     
     def clean(self):
+        """Validaciones cruzadas entre campos"""
         cleaned_data = super().clean()
         precio_compra = cleaned_data.get('precio_compra')
         precio_venta = cleaned_data.get('precio_venta')
+        stock_minimo = cleaned_data.get('stock_minimo')
         
+        # Validar que precio_venta > precio_compra
         if precio_compra is not None and precio_venta is not None:
             if precio_venta <= precio_compra:
                 raise ValidationError({
-                    'precio_venta': f'El precio de venta debe ser mayor que el precio de compra'
+                    'precio_venta': f'El precio de venta (${precio_venta:,.2f}) debe ser mayor que el precio de compra (${precio_compra:,.2f}).'
+                })
+        
+        # Validar margen mínimo de ganancia (10%)
+        if precio_compra is not None and precio_venta is not None:
+            margen = precio_venta - precio_compra
+            if margen < (precio_compra * 0.1):
+                raise ValidationError({
+                    'precio_venta': f'El margen de ganancia (${margen:,.2f}) debe ser al menos el 10% del precio de compra (${precio_compra * 0.1:,.2f}).'
                 })
         
         return cleaned_data
     
-    def clean_codigo(self):
-        codigo = self.cleaned_data.get('codigo')
-        if codigo:
-            if Producto.objects.filter(codigo=codigo).exists():
-                if self.instance and self.instance.pk:
-                    if Producto.objects.filter(codigo=codigo).exclude(pk=self.instance.pk).exists():
-                        raise ValidationError(f'El código "{codigo}" ya está en uso por otro producto')
-                else:
-                    raise ValidationError(f'El código "{codigo}" ya está en uso')
-        return codigo
-    
     def clean_codigo_barras(self):
+        """Validación del código de barras"""
         codigo_barras = self.cleaned_data.get('codigo_barras')
         if codigo_barras:
+            # Validar formato
+            if not re.match(r'^[A-Za-z0-9\-_]{0,100}$', codigo_barras):
+                raise ValidationError('El código de barras solo puede contener letras, números, guiones y guiones bajos.')
+            
+            # Validar unicidad
             instance = self.instance
             if instance and instance.pk:
                 if Producto.objects.filter(codigo_barras=codigo_barras).exclude(pk=instance.pk).exists():
-                    raise ValidationError('Este código de barras ya está registrado en otro producto')
+                    raise ValidationError('Este código de barras ya está registrado en otro producto.')
             else:
                 if Producto.objects.filter(codigo_barras=codigo_barras).exists():
-                    raise ValidationError('Este código de barras ya está registrado')
+                    raise ValidationError('Este código de barras ya está registrado.')
         return codigo_barras
 
 
@@ -549,7 +638,6 @@ class BuscarSerialForm(forms.Form):
 
 
 # ========== MOVIMIENTO ==========
-# ========== MOVIMIENTO ==========
 class MovimientoForm(forms.ModelForm):
     """Formulario para registrar movimientos con selección de producto y lote"""
     
@@ -616,3 +704,16 @@ class MovimientoForm(forms.ModelForm):
         if cantidad is not None and cantidad <= 0:
             raise ValidationError('La cantidad debe ser mayor a 0')
         return cantidad
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        producto = cleaned_data.get('producto')
+        lote = cleaned_data.get('lote')
+        
+        # Validar que el lote pertenezca al producto seleccionado
+        if producto and lote and lote.producto != producto:
+            raise ValidationError({
+                'lote': f'El lote seleccionado ({lote.codigo}) no pertenece al producto {producto.nombre}.'
+            })
+        
+        return cleaned_data

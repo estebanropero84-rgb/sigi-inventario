@@ -22,13 +22,13 @@ urlpatterns = [
     path('proveedores/editar/<int:pk>/', views.editar_proveedor, name='editar_proveedor'),
     path('proveedores/eliminar/<int:pk>/', views.eliminar_proveedor, name='eliminar_proveedor'),
     
-    # ========== UBICACIONES (NUEVO) ==========
+    # ========== UBICACIONES ==========
     path('ubicaciones/', views.listar_ubicaciones, name='ubicaciones'),
     path('ubicaciones/crear/', views.crear_ubicacion, name='crear_ubicacion'),
     path('ubicaciones/editar/<int:pk>/', views.editar_ubicacion, name='editar_ubicacion'),
     path('ubicaciones/eliminar/<int:pk>/', views.eliminar_ubicacion, name='eliminar_ubicacion'),
     
-    # ========== MOVIMIENTOS / HISTORIAL (NUEVO) ==========
+    # ========== MOVIMIENTOS / HISTORIAL ==========
     path('movimientos/', views.historial_movimientos, name='historial_movimientos'),
     path('movimientos/producto/<int:producto_id>/', views.historial_movimientos, name='historial_movimientos_producto'),
     
@@ -48,16 +48,19 @@ urlpatterns = [
     path('bodegas/editar/<int:pk>/', views.editar_bodega, name='editar_bodega'),
     path('bodegas/eliminar/<int:pk>/', views.eliminar_bodega, name='eliminar_bodega'),
     
-    # ========== VENTAS (NUEVO - FIFO) ==========
+    # ========== VENTAS (FIFO) ==========
     path('vender/<int:pk>/', views.vender_producto, name='vender_producto'),
+    
     # ========== REPORTES ==========
     path('reportes/seleccionar/', views.seleccionar_productos_reporte, name='seleccionar_reportes'),
+    
     # ========== MOVIMIENTOS MANUALES ==========
-    path('movimientos/registrar/', views.registrar_movimiento_manual, name='registrar_movimiento'),
+    # 🔥 CORREGIDO: Usar registrar_movimiento en lugar de registrar_movimiento_manual
+    path('movimientos/registrar/', views.registrar_movimiento, name='registrar_movimiento'),
+    
     # ========== UTILIDADES ==========
     path('buscar-codigo-barras/', views.buscar_por_codigo_barras, name='buscar_codigo_barras'),
     path('carga-masiva/', views.cargar_productos_excel, name='carga_masiva'),
     path('exportar/excel/', views.exportar_productos_excel, name='exportar_excel'),
     path('reporte/pdf/', views.reporte_productos_pdf, name='reporte_pdf'),
-    # ⚠️ ELIMINADA LA RUTA DE API: path('api/consultar/', views.consultar_api_productos, name='consultar_api'),
-]   
+]

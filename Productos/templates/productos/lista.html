@@ -446,6 +446,17 @@
         {% endfor %}
       </select>
     </div>
+    <!-- 🔥 NUEVO: FILTRO POR MARCA -->
+    <div class="filter">
+      <select id="marcaFilter">
+        <option value="">🏷️ Todas las marcas</option>
+        {% for marca in marcas %}
+          <option value="{{ marca }}" {% if request.GET.marca == marca %}selected{% endif %}>
+            {{ marca }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
     <div class="filter">
       <select id="ubicacionFilter">
         <option value="">📍 Todas las ubicaciones</option>
@@ -536,14 +547,14 @@
                 <i class="fas fa-clock-rotate-left"></i>
               </a>
 
-              <!-- ✏️ Editar - SIEMPRE visible para staff/superuser -->
+              <!-- ✏️ Editar -->
               {% if user.is_staff or user.is_superuser %}
                 <a href="{% url 'productos:editar' producto.id %}" class="btn btn-warning btn-sm" title="Editar">
                   <i class="fas fa-edit"></i>
                 </a>
               {% endif %}
 
-              <!-- 🗑️ Eliminar - solo superuser -->
+              <!-- 🗑️ Eliminar -->
               {% if user.is_superuser %}
                 <button type="button"
                         class="btn btn-danger btn-sm"
@@ -612,6 +623,7 @@
     const busqueda = (document.getElementById('searchInput').value || '').toLowerCase().trim();
     const campo = document.getElementById('campoFilter').value;
     const categoria = document.getElementById('categoriaFilter').value;
+    const marca = document.getElementById('marcaFilter').value;  // 🔥 NUEVO
     const ubicacion = document.getElementById('ubicacionFilter').value;
     const stockFiltro = document.getElementById('stockFilter').value;
 
@@ -619,7 +631,7 @@
       const nombre = row.getAttribute('data-nombre') || '';
       const codigo = row.getAttribute('data-codigo') || '';
       const codigoBarras = row.getAttribute('data-codigo-barras') || '';
-      const marca = row.getAttribute('data-marca') || '';
+      const marcaAttr = row.getAttribute('data-marca') || '';  // 🔥 NUEVO
       const rowCategoria = row.getAttribute('data-categoria') || '';
       const rowUbicacion = row.getAttribute('data-ubicacion') || '';
       const stock = parseInt(row.getAttribute('data-stock') || '0', 10);
@@ -629,13 +641,14 @@
       if (busqueda) {
         if (campo === 'nombre') coincideTexto = nombre.includes(busqueda);
         else if (campo === 'codigo') coincideTexto = codigo.includes(busqueda);
-        else if (campo === 'marca') coincideTexto = marca.includes(busqueda);
+        else if (campo === 'marca') coincideTexto = marcaAttr.includes(busqueda);
         else if (campo === 'codigo_barras') coincideTexto = codigoBarras.includes(busqueda);
         else coincideTexto = nombre.includes(busqueda) || codigo.includes(busqueda) ||
-                           marca.includes(busqueda) || codigoBarras.includes(busqueda);
+                           marcaAttr.includes(busqueda) || codigoBarras.includes(busqueda);
       }
 
       const coincideCategoria = !categoria || rowCategoria === categoria;
+      const coincideMarca = !marca || marcaAttr === marca;  // 🔥 NUEVO
       const coincideUbicacion = !ubicacion || rowUbicacion === ubicacion;
 
       let coincideStock = true;
@@ -643,7 +656,7 @@
       else if (stockFiltro === 'normal') coincideStock = stock > stockMinimo;
       else if (stockFiltro === 'sin') coincideStock = stock === 0;
 
-      row.style.display = (coincideTexto && coincideCategoria && coincideUbicacion && coincideStock) ? '' : 'none';
+      row.style.display = (coincideTexto && coincideCategoria && coincideMarca && coincideUbicacion && coincideStock) ? '' : 'none';
     });
   }
 
@@ -651,6 +664,7 @@
     document.getElementById('searchInput').value = '';
     document.getElementById('campoFilter').value = 'todos';
     document.getElementById('categoriaFilter').value = '';
+    document.getElementById('marcaFilter').value = '';  // 🔥 NUEVO
     document.getElementById('ubicacionFilter').value = '';
     document.getElementById('stockFilter').value = '';
     filtrarProductos();
@@ -712,6 +726,7 @@
   document.getElementById('searchInput').addEventListener('keyup', filtrarProductos);
   document.getElementById('campoFilter').addEventListener('change', filtrarProductos);
   document.getElementById('categoriaFilter').addEventListener('change', filtrarProductos);
+  document.getElementById('marcaFilter').addEventListener('change', filtrarProductos);  // 🔥 NUEVO
   document.getElementById('ubicacionFilter').addEventListener('change', filtrarProductos);
   document.getElementById('stockFilter').addEventListener('change', filtrarProductos);
   document.getElementById('limpiarFiltros').addEventListener('click', limpiarFiltros);

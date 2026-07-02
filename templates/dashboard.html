@@ -8,343 +8,421 @@
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
-  // Gráfico de movimientos
-  const ctxLine = document.getElementById('movimientosChart').getContext('2d');
-  new Chart(ctxLine, {
-    type: 'line',
-    data: {
-      labels: {{ fechas_grafico|safe }},
-      datasets: [{
-        label: 'Movimientos',
-        data: {{ movimientos_grafico|safe }},
-        borderColor: '#3b82f6',
-        backgroundColor: 'rgba(59, 130, 246, 0.10)',
-        tension: 0.32,
-        fill: true,
-        pointRadius: 2,
-        pointHoverRadius: 4,
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: true,
-      plugins: { legend: { display: false } },
-      scales: { y: { beginAtZero: true } }
+  document.addEventListener('DOMContentLoaded', function() {
+    // Gráfico de movimientos
+    const ctxLine = document.getElementById('movimientosChart');
+    if (ctxLine) {
+      new Chart(ctxLine.getContext('2d'), {
+        type: 'line',
+        data: {
+          labels: {{ fechas_grafico|safe }},
+          datasets: [{
+            label: 'Movimientos',
+            data: {{ movimientos_grafico|safe }},
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59, 130, 246, 0.10)',
+            tension: 0.32,
+            fill: true,
+            pointRadius: 2,
+            pointHoverRadius: 4,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true } }
+        }
+      });
     }
-  });
 
-  // Gráfico de categorías
-  const ctxPie = document.getElementById('categoriasChart').getContext('2d');
-  new Chart(ctxPie, {
-    type: 'pie',
-    data: {
-      labels: {{ categorias_nombres|safe }},
-      datasets: [{
-        data: {{ categorias_cantidades|safe }},
-        backgroundColor: ['#3b82f6','#22c55e','#f97316','#a855f7','#ef4444','#06b6d4','#eab308']
-      }]
-    },
-    options: { responsive: true, maintainAspectRatio: true }
+    // Gráfico de categorías
+    const ctxPie = document.getElementById('categoriasChart');
+    if (ctxPie) {
+      new Chart(ctxPie.getContext('2d'), {
+        type: 'pie',
+        data: {
+          labels: {{ categorias_nombres|safe }},
+          datasets: [{
+            data: {{ categorias_cantidades|safe }},
+            backgroundColor: ['#3b82f6','#22c55e','#f97316','#a855f7','#ef4444','#06b6d4','#eab308']
+          }]
+        },
+        options: { responsive: true, maintainAspectRatio: true }
+      });
+    }
   });
 </script>
 {% endblock %}
 
 {% block content %}
 
+  <!-- ====== ALERTA STOCK CRÍTICO ====== -->
   {% if productos_criticos %}
-  <div class="alert" style="margin-bottom: 16px;">
-    <div class="alert__icon"><i class="fas fa-exclamation-triangle"></i></div>
+  <div class="alert" style="margin-bottom: 16px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 12px; padding: 16px 20px;">
+    <div class="alert__icon" style="font-size: 20px; color: #dc2626;">
+      <i class="fas fa-exclamation-triangle"></i>
+    </div>
     <div>
-      <div style="font-weight: 800; margin-bottom: 6px;">Atención: Productos con stock bajo</div>
-      <div style="color:#7c2d12; font-weight:600; font-size:.9rem;">
+      <div style="font-weight: 800; margin-bottom: 6px; color: #991b1b;">⚠️ Atención: Productos con stock bajo</div>
+      <div style="color: #7f1d1d; font-weight:600; font-size:.9rem;">
         Los siguientes productos están por debajo del stock mínimo:
       </div>
-      <div style="margin-top: 6px;">
+      <div style="margin-top: 6px; display: flex; flex-wrap: wrap; gap: 6px;">
         {% for producto in productos_criticos %}
-          <span class="pill">{{ producto.nombre }}: {{ producto.stock_actual }} / {{ producto.stock_minimo }}</span>
+          <span class="pill" style="background: #fee2e2; color: #991b1b; padding: 4px 12px; border-radius: 999px; font-weight: 600; font-size: 13px;">
+            {{ producto.nombre }}: {{ producto.stock_actual }} / {{ producto.stock_minimo }}
+          </span>
         {% endfor %}
+        {% if total_bajo_stock > 5 %}
+          <span class="pill" style="background: #fef3c7; color: #b45309; padding: 4px 12px; border-radius: 999px; font-weight: 600; font-size: 13px;">
+            +{{ total_bajo_stock|add:"-5" }} productos más
+          </span>
+        {% endif %}
       </div>
     </div>
   </div>
   {% endif %}
 
-  <!-- Stats -->
-  <div class="grid stats" style="margin-bottom: 16px;">
-    <div class="card stat">
-      <div class="icon blue"><i class="fas fa-boxes"></i></div>
-      <div>
-        <h3>{{ total_productos|default:0 }}</h3>
-        <p>Total Productos</p>
-      </div>
-    </div>
-
-    <div class="card stat">
-      <div class="icon green"><i class="fas fa-shopping-cart"></i></div>
-      <div>
-        <h3>{{ compras_mes|default:0 }}</h3>
-        <p>Compras este mes</p>
-      </div>
-    </div>
-
-    <div class="card stat">
-      <div class="icon orange"><i class="fas fa-users"></i></div>
-      <div>
-        <h3>{{ usuarios_activos|default:0 }}</h3>
-        <p>Usuarios Activos</p>
-      </div>
-    </div>
-
-    <div class="card stat">
-      <div class="icon purple"><i class="fas fa-exchange-alt"></i></div>
-      <div>
-        <h3>{{ movimientos_hoy|default:0 }}</h3>
-        <p>Movimientos hoy</p>
-      </div>
-    </div>
-
-    <div class="card stat">
-      <div class="icon yellow"><i class="fas fa-truck"></i></div>
-      <div>
-        <h3>{{ total_proveedores|default:0 }}</h3>
-        <p>Proveedores</p>
-      </div>
-    </div>
-
-    <!-- 🔥 Tarjeta de Lotes -->
-    <div class="card stat">
-      <div class="icon" style="background: #e0e7ff; color: #4f46e5;">
+  <!-- ====== STATS ====== -->
+  <div class="grid stats" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 16px;">
+    <div class="card stat" style="padding: 16px 20px; background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; display: flex; align-items: center; gap: 16px;">
+      <div class="icon blue" style="width: 48px; height: 48px; border-radius: 12px; background: #dbeafe; color: #2563eb; display: grid; place-items: center; font-size: 20px;">
         <i class="fas fa-boxes"></i>
       </div>
       <div>
-        <h3>{{ total_lotes|default:0 }}</h3>
-        <p>Lotes Registrados</p>
-        <small>Pendientes: {{ lotes_pendientes|default:0 }} | Completados: {{ lotes_completados|default:0 }}</small>
+        <h3 style="font-size: 24px; font-weight: 700; margin: 0; color: #0f172a;">{{ total_productos|default:0 }}</h3>
+        <p style="margin: 0; color: #64748b; font-size: 13px;">Total Productos</p>
       </div>
     </div>
 
-    <!-- 🔥 Tarjeta de Seriales -->
-    <div class="card stat">
-      <div class="icon" style="background: #fef3c7; color: #d97706;">
+    <!-- 🔥 NUEVO: STOCK TOTAL -->
+    <div class="card stat" style="padding: 16px 20px; background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; display: flex; align-items: center; gap: 16px;">
+      <div class="icon" style="width: 48px; height: 48px; border-radius: 12px; background: #dcfce7; color: #16a34a; display: grid; place-items: center; font-size: 20px;">
+        <i class="fas fa-cubes"></i>
+      </div>
+      <div>
+        <h3 style="font-size: 24px; font-weight: 700; margin: 0; color: #0f172a;">{{ stock_total|default:0 }}</h3>
+        <p style="margin: 0; color: #64748b; font-size: 13px;">Stock Total</p>
+      </div>
+    </div>
+
+    <!-- 🔥 NUEVO: VALOR INVENTARIO -->
+    <div class="card stat" style="padding: 16px 20px; background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; display: flex; align-items: center; gap: 16px;">
+      <div class="icon" style="width: 48px; height: 48px; border-radius: 12px; background: #fef3c7; color: #d97706; display: grid; place-items: center; font-size: 20px;">
+        <i class="fas fa-coins"></i>
+      </div>
+      <div>
+        <h3 style="font-size: 24px; font-weight: 700; margin: 0; color: #0f172a;">${{ valor_inventario|floatformat:0|default:0 }}</h3>
+        <p style="margin: 0; color: #64748b; font-size: 13px;">Valor Inventario</p>
+      </div>
+    </div>
+
+    <!-- 🔥 NUEVO: PRODUCTOS CRÍTICOS -->
+    <div class="card stat" style="padding: 16px 20px; background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; display: flex; align-items: center; gap: 16px;">
+      <div class="icon" style="width: 48px; height: 48px; border-radius: 12px; background: #fee2e2; color: #dc2626; display: grid; place-items: center; font-size: 20px;">
+        <i class="fas fa-triangle-exclamation"></i>
+      </div>
+      <div>
+        <h3 style="font-size: 24px; font-weight: 700; margin: 0; color: #0f172a;">{{ total_bajo_stock|default:0 }}</h3>
+        <p style="margin: 0; color: #64748b; font-size: 13px;">Productos Críticos</p>
+      </div>
+    </div>
+
+    <div class="card stat" style="padding: 16px 20px; background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; display: flex; align-items: center; gap: 16px;">
+      <div class="icon green" style="width: 48px; height: 48px; border-radius: 12px; background: #dcfce7; color: #16a34a; display: grid; place-items: center; font-size: 20px;">
+        <i class="fas fa-shopping-cart"></i>
+      </div>
+      <div>
+        <h3 style="font-size: 24px; font-weight: 700; margin: 0; color: #0f172a;">{{ compras_mes|default:0 }}</h3>
+        <p style="margin: 0; color: #64748b; font-size: 13px;">Compras este mes</p>
+      </div>
+    </div>
+
+    <div class="card stat" style="padding: 16px 20px; background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; display: flex; align-items: center; gap: 16px;">
+      <div class="icon orange" style="width: 48px; height: 48px; border-radius: 12px; background: #fef3c7; color: #d97706; display: grid; place-items: center; font-size: 20px;">
+        <i class="fas fa-users"></i>
+      </div>
+      <div>
+        <h3 style="font-size: 24px; font-weight: 700; margin: 0; color: #0f172a;">{{ usuarios_activos|default:0 }}</h3>
+        <p style="margin: 0; color: #64748b; font-size: 13px;">Usuarios Activos</p>
+      </div>
+    </div>
+
+    <div class="card stat" style="padding: 16px 20px; background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; display: flex; align-items: center; gap: 16px;">
+      <div class="icon purple" style="width: 48px; height: 48px; border-radius: 12px; background: #e0e7ff; color: #4f46e5; display: grid; place-items: center; font-size: 20px;">
+        <i class="fas fa-exchange-alt"></i>
+      </div>
+      <div>
+        <h3 style="font-size: 24px; font-weight: 700; margin: 0; color: #0f172a;">{{ movimientos_hoy|default:0 }}</h3>
+        <p style="margin: 0; color: #64748b; font-size: 13px;">Movimientos hoy</p>
+      </div>
+    </div>
+
+    <div class="card stat" style="padding: 16px 20px; background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; display: flex; align-items: center; gap: 16px;">
+      <div class="icon yellow" style="width: 48px; height: 48px; border-radius: 12px; background: #fef3c7; color: #d97706; display: grid; place-items: center; font-size: 20px;">
+        <i class="fas fa-truck"></i>
+      </div>
+      <div>
+        <h3 style="font-size: 24px; font-weight: 700; margin: 0; color: #0f172a;">{{ total_proveedores|default:0 }}</h3>
+        <p style="margin: 0; color: #64748b; font-size: 13px;">Proveedores</p>
+      </div>
+    </div>
+
+    <!-- Tarjeta de Lotes -->
+    <div class="card stat" style="padding: 16px 20px; background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; display: flex; align-items: center; gap: 16px;">
+      <div class="icon" style="width: 48px; height: 48px; border-radius: 12px; background: #e0e7ff; color: #4f46e5; display: grid; place-items: center; font-size: 20px;">
+        <i class="fas fa-boxes"></i>
+      </div>
+      <div>
+        <h3 style="font-size: 24px; font-weight: 700; margin: 0; color: #0f172a;">{{ total_lotes|default:0 }}</h3>
+        <p style="margin: 0; color: #64748b; font-size: 13px;">Lotes Registrados</p>
+        <small style="font-size: 11px; color: #94a3b8;">Pendientes: {{ lotes_pendientes|default:0 }} | Completados: {{ lotes_completados|default:0 }}</small>
+      </div>
+    </div>
+
+    <!-- Tarjeta de Seriales -->
+    <div class="card stat" style="padding: 16px 20px; background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; display: flex; align-items: center; gap: 16px;">
+      <div class="icon" style="width: 48px; height: 48px; border-radius: 12px; background: #fef3c7; color: #d97706; display: grid; place-items: center; font-size: 20px;">
         <i class="fas fa-barcode"></i>
       </div>
       <div>
-        <h3>{{ total_seriales|default:0 }}</h3>
-        <p>Seriales Registrados</p>
-        <small>Disponibles: {{ seriales_disponibles|default:0 }} | Vendidos: {{ seriales_vendidos|default:0 }}</small>
+        <h3 style="font-size: 24px; font-weight: 700; margin: 0; color: #0f172a;">{{ total_seriales|default:0 }}</h3>
+        <p style="margin: 0; color: #64748b; font-size: 13px;">Seriales Registrados</p>
+        <small style="font-size: 11px; color: #94a3b8;">Disponibles: {{ seriales_disponibles|default:0 }} | Vendidos: {{ seriales_vendidos|default:0 }}</small>
       </div>
     </div>
   </div>
 
-  <!-- Charts -->
-  <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); margin-bottom: 16px;">
-    <div class="card pad">
-      <div class="section-header">
-        <h2><i class="fas fa-chart-line"></i> Movimientos últimos 7 días</h2>
+  <!-- ====== CHARTS ====== -->
+  <div class="grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 16px; margin-bottom: 16px;">
+    <div class="card pad" style="background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; padding: 20px;">
+      <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h2 style="font-size: 16px; font-weight: 700; margin: 0; color: #0f172a;"><i class="fas fa-chart-line" style="color: #3b82f6;"></i> Movimientos últimos 7 días</h2>
       </div>
       <canvas id="movimientosChart" height="220"></canvas>
     </div>
 
-    <div class="card pad">
-      <div class="section-header">
-        <h2><i class="fas fa-chart-pie"></i> Productos por categoría</h2>
+    <div class="card pad" style="background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; padding: 20px;">
+      <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h2 style="font-size: 16px; font-weight: 700; margin: 0; color: #0f172a;"><i class="fas fa-chart-pie" style="color: #22c55e;"></i> Productos por categoría</h2>
       </div>
       <canvas id="categoriasChart" height="220"></canvas>
     </div>
   </div>
 
-  <!-- Últimos movimientos -->
-  <div class="card pad" style="margin-bottom: 16px;">
-    <div class="section-header">
-      <h2><i class="fas fa-clock"></i> Últimos Movimientos</h2>
-      <a class="link" href="{% url 'movimientos:listar' %}">Ver todos →</a>
+  <!-- ====== ÚLTIMOS MOVIMIENTOS ====== -->
+  <div class="card pad" style="background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; padding: 20px; margin-bottom: 16px;">
+    <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+      <h2 style="font-size: 16px; font-weight: 700; margin: 0; color: #0f172a;"><i class="fas fa-clock" style="color: #8b5cf6;"></i> Últimos Movimientos</h2>
+      <a class="link" href="{% url 'movimientos:listar' %}" style="color: #4f46e5; text-decoration: none; font-weight: 600; font-size: 14px;">Ver todos →</a>
     </div>
 
-    <div class="table-wrap">
-      <table>
+    <div class="table-wrap" style="overflow-x: auto;">
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
         <thead>
           <tr>
-            <th>Producto</th><th>Tipo</th><th>Cantidad</th><th>Fecha</th><th>Usuario</th>
+            <th style="text-align: left; padding: 10px 12px; background: #f8fafc; font-weight: 700; font-size: 12px; text-transform: uppercase; color: #64748b; border-bottom: 2px solid #e2e8f0;">Producto</th>
+            <th style="text-align: left; padding: 10px 12px; background: #f8fafc; font-weight: 700; font-size: 12px; text-transform: uppercase; color: #64748b; border-bottom: 2px solid #e2e8f0;">Tipo</th>
+            <th style="text-align: left; padding: 10px 12px; background: #f8fafc; font-weight: 700; font-size: 12px; text-transform: uppercase; color: #64748b; border-bottom: 2px solid #e2e8f0;">Cantidad</th>
+            <th style="text-align: left; padding: 10px 12px; background: #f8fafc; font-weight: 700; font-size: 12px; text-transform: uppercase; color: #64748b; border-bottom: 2px solid #e2e8f0;">Fecha</th>
+            <th style="text-align: left; padding: 10px 12px; background: #f8fafc; font-weight: 700; font-size: 12px; text-transform: uppercase; color: #64748b; border-bottom: 2px solid #e2e8f0;">Usuario</th>
           </tr>
         </thead>
         <tbody>
           {% for movimiento in ultimos_movimientos %}
-          <tr>
-            <td>{{ movimiento.producto.nombre }}</td>
-            <td>
+          <tr style="border-bottom: 1px solid #f1f5f9;">
+            <td style="padding: 10px 12px; font-weight: 600;">{{ movimiento.producto.nombre }}</td>
+            <td style="padding: 10px 12px;">
               {% if movimiento.tipo == 'entrada' %}
-                <span class="badge ok">Entrada</span>
+                <span class="badge ok" style="background: #dcfce7; color: #15803d; padding: 4px 12px; border-radius: 999px; font-weight: 600; font-size: 12px;">📥 Entrada</span>
               {% else %}
-                <span class="badge bad">Salida</span>
+                <span class="badge bad" style="background: #fee2e2; color: #dc2626; padding: 4px 12px; border-radius: 999px; font-weight: 600; font-size: 12px;">📤 Salida</span>
               {% endif %}
             </td>
-            <td>{{ movimiento.cantidad }}</td>
-            <td>{{ movimiento.created_at|date:"d/m/Y H:i" }}</td>
-            <td>{{ movimiento.usuario.username }}</td>
+            <td style="padding: 10px 12px; font-weight: 700;">{{ movimiento.cantidad }}</td>
+            <td style="padding: 10px 12px; font-size: 13px;">{{ movimiento.created_at|date:"d/m/Y H:i" }}</td>
+            <td style="padding: 10px 12px;">{{ movimiento.usuario.username }}</td>
           </tr>
           {% empty %}
-          <tr><td colspan="5" style="text-align:center; color:#64748b;">No hay movimientos registrados</td></tr>
+          <tr><td colspan="5" style="text-align:center; color:#64748b; padding: 20px;">No hay movimientos registrados</td></tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
   </div>
 
-  {% if user.rol == 'admin' %}
+  <!-- ====== SECCIÓN ADMIN ====== -->
+  {% if user.is_superuser or user.is_staff %}
   <!-- Usuarios recientes -->
-  <div class="card pad" style="margin-bottom: 16px;">
-    <div class="section-header">
-      <h2><i class="fas fa-users"></i> Usuarios Recientes</h2>
+  <div class="card pad" style="background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; padding: 20px; margin-bottom: 16px;">
+    <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+      <h2 style="font-size: 16px; font-weight: 700; margin: 0; color: #0f172a;"><i class="fas fa-users" style="color: #8b5cf6;"></i> Usuarios Recientes</h2>
       <div style="display:flex; gap:10px; flex-wrap:wrap;">
-        <a class="btn btn-primary btn-sm" href="{% url 'usuarios:crear' %}">
+        <a class="btn btn-primary btn-sm" href="{% url 'usuarios:crear' %}" style="padding: 6px 14px; background: #4f46e5; color: #fff; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 12px; display: inline-flex; align-items: center; gap: 4px;">
           <i class="fas fa-user-plus"></i> Nuevo Usuario
         </a>
-        <a class="link" href="{% url 'usuarios:listar' %}">Ver todos →</a>
+        <a class="link" href="{% url 'usuarios:listar' %}" style="color: #4f46e5; text-decoration: none; font-weight: 600; font-size: 14px;">Ver todos →</a>
       </div>
     </div>
 
-    <div class="table-wrap">
-      <tr>
+    <div class="table-wrap" style="overflow-x: auto;">
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
         <thead>
           <tr>
-            <th>Usuario</th><th>Nombre</th><th>Email</th><th>Rol</th><th>Fecha</th><th>Acciones</th>
+            <th style="text-align: left; padding: 10px 12px; background: #f8fafc; font-weight: 700; font-size: 12px; text-transform: uppercase; color: #64748b; border-bottom: 2px solid #e2e8f0;">Usuario</th>
+            <th style="text-align: left; padding: 10px 12px; background: #f8fafc; font-weight: 700; font-size: 12px; text-transform: uppercase; color: #64748b; border-bottom: 2px solid #e2e8f0;">Nombre</th>
+            <th style="text-align: left; padding: 10px 12px; background: #f8fafc; font-weight: 700; font-size: 12px; text-transform: uppercase; color: #64748b; border-bottom: 2px solid #e2e8f0;">Email</th>
+            <th style="text-align: left; padding: 10px 12px; background: #f8fafc; font-weight: 700; font-size: 12px; text-transform: uppercase; color: #64748b; border-bottom: 2px solid #e2e8f0;">Rol</th>
+            <th style="text-align: left; padding: 10px 12px; background: #f8fafc; font-weight: 700; font-size: 12px; text-transform: uppercase; color: #64748b; border-bottom: 2px solid #e2e8f0;">Fecha</th>
+            <th style="text-align: left; padding: 10px 12px; background: #f8fafc; font-weight: 700; font-size: 12px; text-transform: uppercase; color: #64748b; border-bottom: 2px solid #e2e8f0;">Acciones</th>
           </tr>
         </thead>
         <tbody>
           {% for usuario in ultimos_usuarios %}
-          <tr>
-            <td>{{ usuario.username }}</td>
-            <td>{{ usuario.get_full_name|default:"-" }}</td>
-            <td>{{ usuario.email|default:"-" }}</td>
-            <td>
-              {% if usuario.rol == 'admin' %}
-                <span class="badge admin">Admin</span>
-              {% elif usuario.rol == 'almacenista' %}
-                <span class="badge gray">Almacenista</span>
+          <tr style="border-bottom: 1px solid #f1f5f9;">
+            <td style="padding: 10px 12px; font-weight: 600;">{{ usuario.username }}</td>
+            <td style="padding: 10px 12px;">{{ usuario.get_full_name|default:"-" }}</td>
+            <td style="padding: 10px 12px;">{{ usuario.email|default:"-" }}</td>
+            <td style="padding: 10px 12px;">
+              {% if usuario.is_superuser %}
+                <span class="badge admin" style="background: #e0e7ff; color: #4f46e5; padding: 4px 12px; border-radius: 999px; font-weight: 600; font-size: 12px;">Admin</span>
+              {% elif user.is_staff %}
+                <span class="badge gray" style="background: #f1f5f9; color: #475569; padding: 4px 12px; border-radius: 999px; font-weight: 600; font-size: 12px;">Staff</span>
               {% else %}
-                <span class="badge violet">Consultor</span>
+                <span class="badge violet" style="background: #f3e8ff; color: #7c3aed; padding: 4px 12px; border-radius: 999px; font-weight: 600; font-size: 12px;">Usuario</span>
               {% endif %}
             </td>
-            <td>{{ usuario.date_joined|date:"d/m/Y" }}</td>
-            <td style="white-space:nowrap;">
+            <td style="padding: 10px 12px; font-size: 13px;">{{ usuario.date_joined|date:"d/m/Y" }}</td>
+            <td style="padding: 10px 12px; white-space:nowrap;">
               <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                <a class="btn btn-warning btn-sm" href="{% url 'usuarios:editar' usuario.id %}">
+                <a class="btn btn-warning btn-sm" href="{% url 'usuarios:editar' usuario.id %}" style="padding: 4px 10px; background: #f59e0b; color: #fff; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 11px; display: inline-flex; align-items: center; gap: 4px;">
                   <i class="fas fa-edit"></i> Editar
                 </a>
-
                 {% if usuario.id != user.id %}
-                <a class="btn btn-danger btn-sm" href="{% url 'usuarios:eliminar' usuario.id %}"
-                   onclick="return confirm('¿Eliminar este usuario?')">
-                  <i class="fas fa-trash"></i> Eliminar
-                </a>
+                  <a class="btn btn-danger btn-sm" href="{% url 'usuarios:eliminar' usuario.id %}" style="padding: 4px 10px; background: #ef4444; color: #fff; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 11px; display: inline-flex; align-items: center; gap: 4px;" onclick="return confirm('¿Eliminar este usuario?')">
+                    <i class="fas fa-trash"></i> Eliminar
+                  </a>
                 {% else %}
-                <span style="color:#64748b; font-size:.8rem; font-weight:700;">Actual</span>
+                  <span style="color:#94a3b8; font-size:.8rem; font-weight:600;">Actual</span>
                 {% endif %}
               </div>
             </td>
           </tr>
           {% empty %}
-          <tr><td colspan="6" style="color:#64748b;">No hay usuarios registrados</td></tr>
+          <tr><td colspan="6" style="text-align:center; color:#64748b; padding: 20px;">No hay usuarios registrados</td></tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
   </div>
 
-  <!-- Proveedores -->
-  <div class="card pad" style="margin-bottom: 16px;">
-    <div class="section-header">
-      <h2><i class="fas fa-truck"></i> Últimos Proveedores</h2>
+  <!-- ====== PROVEEDORES RECIENTES ====== -->
+  <div class="card pad" style="background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; padding: 20px; margin-bottom: 16px;">
+    <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+      <h2 style="font-size: 16px; font-weight: 700; margin: 0; color: #0f172a;"><i class="fas fa-truck" style="color: #22c55e;"></i> Últimos Proveedores</h2>
       <div style="display:flex; gap:10px; flex-wrap:wrap;">
-        <a class="btn btn-primary btn-sm" href="{% url 'productos:crear_proveedor' %}">
+        <a class="btn btn-primary btn-sm" href="{% url 'productos:crear_proveedor' %}" style="padding: 6px 14px; background: #22c55e; color: #fff; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 12px; display: inline-flex; align-items: center; gap: 4px;">
           <i class="fas fa-plus"></i> Nuevo Proveedor
         </a>
-        <a class="link" href="{% url 'productos:proveedores' %}">Ver todos →</a>
+        <a class="link" href="{% url 'productos:proveedores' %}" style="color: #4f46e5; text-decoration: none; font-weight: 600; font-size: 14px;">Ver todos →</a>
       </div>
     </div>
 
-    <div class="table-wrap">
-      <table>
+    <div class="table-wrap" style="overflow-x: auto;">
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
         <thead>
           <tr>
-            <th>Nombre</th><th>NIT</th><th>Teléfono</th><th>Contacto</th><th>Lotes</th><th>Acciones</th>
+            <th style="text-align: left; padding: 10px 12px; background: #f8fafc; font-weight: 700; font-size: 12px; text-transform: uppercase; color: #64748b; border-bottom: 2px solid #e2e8f0;">Nombre</th>
+            <th style="text-align: left; padding: 10px 12px; background: #f8fafc; font-weight: 700; font-size: 12px; text-transform: uppercase; color: #64748b; border-bottom: 2px solid #e2e8f0;">NIT</th>
+            <th style="text-align: left; padding: 10px 12px; background: #f8fafc; font-weight: 700; font-size: 12px; text-transform: uppercase; color: #64748b; border-bottom: 2px solid #e2e8f0;">Teléfono</th>
+            <th style="text-align: left; padding: 10px 12px; background: #f8fafc; font-weight: 700; font-size: 12px; text-transform: uppercase; color: #64748b; border-bottom: 2px solid #e2e8f0;">Contacto</th>
+            <th style="text-align: left; padding: 10px 12px; background: #f8fafc; font-weight: 700; font-size: 12px; text-transform: uppercase; color: #64748b; border-bottom: 2px solid #e2e8f0;">Lotes</th>
+            <th style="text-align: left; padding: 10px 12px; background: #f8fafc; font-weight: 700; font-size: 12px; text-transform: uppercase; color: #64748b; border-bottom: 2px solid #e2e8f0;">Acciones</th>
           </tr>
         </thead>
         <tbody>
           {% for proveedor in ultimos_proveedores %}
-          <tr>
-            <td>{{ proveedor.nombre }}</td>
-            <td>{{ proveedor.nit|default:"-" }}</td>
-            <td>{{ proveedor.telefono|default:"-" }}</td>
-            <td>{{ proveedor.contacto|default:"-" }}</td>
-            <td>{{ proveedor.lotes.count }}</td>
-            <td style="white-space:nowrap;">
+          <tr style="border-bottom: 1px solid #f1f5f9;">
+            <td style="padding: 10px 12px; font-weight: 600;">{{ proveedor.nombre }}</td>
+            <td style="padding: 10px 12px;">{{ proveedor.nit|default:"-" }}</td>
+            <td style="padding: 10px 12px;">{{ proveedor.telefono|default:"-" }}</td>
+            <td style="padding: 10px 12px;">{{ proveedor.contacto|default:"-" }}</td>
+            <td style="padding: 10px 12px; font-weight: 700; color: #4f46e5;">{{ proveedor.lotes.count }}</td>
+            <td style="padding: 10px 12px; white-space:nowrap;">
               <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                <a class="btn btn-warning btn-sm" href="{% url 'productos:editar_proveedor' proveedor.id %}">
+                <a class="btn btn-warning btn-sm" href="{% url 'productos:editar_proveedor' proveedor.id %}" style="padding: 4px 10px; background: #f59e0b; color: #fff; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 11px; display: inline-flex; align-items: center; gap: 4px;">
                   <i class="fas fa-edit"></i> Editar
                 </a>
-                <a class="btn btn-danger btn-sm" href="{% url 'productos:eliminar_proveedor' proveedor.id %}"
-                   onclick="return confirm('¿Eliminar este proveedor?')">
+                <a class="btn btn-danger btn-sm" href="{% url 'productos:eliminar_proveedor' proveedor.id %}" style="padding: 4px 10px; background: #ef4444; color: #fff; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 11px; display: inline-flex; align-items: center; gap: 4px;" onclick="return confirm('¿Eliminar este proveedor?')">
                   <i class="fas fa-trash"></i> Eliminar
                 </a>
               </div>
             </td>
           </tr>
           {% empty %}
-          <tr><td colspan="6" style="color:#64748b;">No hay proveedores registrados</td></tr>
+          <tr><td colspan="6" style="text-align:center; color:#64748b; padding: 20px;">No hay proveedores registrados</td></tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
   </div>
 
-  <!-- 🔥 SECCIÓN DE LOTES RECIENTES -->
-  <div class="card pad">
-    <div class="section-header">
-      <h2><i class="fas fa-boxes"></i> Últimos Lotes</h2>
+  <!-- ====== LOTES RECIENTES ====== -->
+  <div class="card pad" style="background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; padding: 20px;">
+    <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+      <h2 style="font-size: 16px; font-weight: 700; margin: 0; color: #0f172a;"><i class="fas fa-boxes" style="color: #22c55e;"></i> Últimos Lotes</h2>
       <div style="display:flex; gap:10px; flex-wrap:wrap;">
-        <a class="btn btn-primary btn-sm" href="{% url 'productos:crear_lote' %}" style="background: #22c55e;">
+        <a class="btn btn-primary btn-sm" href="{% url 'productos:crear_lote' %}" style="padding: 6px 14px; background: #22c55e; color: #fff; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 12px; display: inline-flex; align-items: center; gap: 4px;">
           <i class="fas fa-plus"></i> Nuevo Lote
         </a>
-        <a class="link" href="{% url 'productos:listar_lotes' %}">Ver todos →</a>
+        <a class="link" href="{% url 'productos:listar_lotes' %}" style="color: #4f46e5; text-decoration: none; font-weight: 600; font-size: 14px;">Ver todos →</a>
       </div>
     </div>
 
-    <div class="table-wrap">
-      <table>
+    <div class="table-wrap" style="overflow-x: auto;">
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
         <thead>
           <tr>
-            <th>Código</th>
-            <th>Producto</th>
-            <th>Proveedor</th>
-            <th>Recibido/Total</th>
-            <th>Estado</th>
-            <th>Acciones</th>
+            <th style="text-align: left; padding: 10px 12px; background: #f8fafc; font-weight: 700; font-size: 12px; text-transform: uppercase; color: #64748b; border-bottom: 2px solid #e2e8f0;">Código</th>
+            <th style="text-align: left; padding: 10px 12px; background: #f8fafc; font-weight: 700; font-size: 12px; text-transform: uppercase; color: #64748b; border-bottom: 2px solid #e2e8f0;">Producto</th>
+            <th style="text-align: left; padding: 10px 12px; background: #f8fafc; font-weight: 700; font-size: 12px; text-transform: uppercase; color: #64748b; border-bottom: 2px solid #e2e8f0;">Proveedor</th>
+            <th style="text-align: left; padding: 10px 12px; background: #f8fafc; font-weight: 700; font-size: 12px; text-transform: uppercase; color: #64748b; border-bottom: 2px solid #e2e8f0;">Recibido/Total</th>
+            <th style="text-align: left; padding: 10px 12px; background: #f8fafc; font-weight: 700; font-size: 12px; text-transform: uppercase; color: #64748b; border-bottom: 2px solid #e2e8f0;">Estado</th>
+            <th style="text-align: left; padding: 10px 12px; background: #f8fafc; font-weight: 700; font-size: 12px; text-transform: uppercase; color: #64748b; border-bottom: 2px solid #e2e8f0;">Acciones</th>
           </tr>
         </thead>
         <tbody>
           {% for lote in ultimos_lotes %}
-          <tr>
-            <td><strong>{{ lote.codigo }}</strong></td>
-            <td>{{ lote.producto.nombre }}</td>
-            <td>{{ lote.proveedor.nombre }}</td>
-            <td>{{ lote.cantidad_recibida }}/{{ lote.cantidad_total }} ({{ lote.porcentaje_recibido }}%)</td>
-            <td>
+          <tr style="border-bottom: 1px solid #f1f5f9;">
+            <td style="padding: 10px 12px; font-weight: 700;">{{ lote.codigo }}</td>
+            <td style="padding: 10px 12px;">{{ lote.producto.nombre }}</td>
+            <td style="padding: 10px 12px;">{{ lote.proveedor.nombre }}</td>
+            <td style="padding: 10px 12px; font-weight: 600;">
+              {{ lote.cantidad_recibida }}/{{ lote.cantidad_total }}
+              <span style="font-size: 11px; color: #94a3b8;">({{ lote.porcentaje_recibido }}%)</span>
+            </td>
+            <td style="padding: 10px 12px;">
               {% if lote.estado == 'pendiente' %}
-                <span class="badge" style="background: #fff3e6; color: #f97316;">⏳ Pendiente</span>
+                <span style="background: #fef3c7; color: #b45309; padding: 4px 12px; border-radius: 999px; font-weight: 600; font-size: 12px;">⏳ Pendiente</span>
               {% elif lote.estado == 'parcial' %}
-                <span class="badge" style="background: #e0e7ff; color: #4f46e5;">📦 Parcial</span>
+                <span style="background: #e0e7ff; color: #4f46e5; padding: 4px 12px; border-radius: 999px; font-weight: 600; font-size: 12px;">📦 Parcial</span>
+              {% elif lote.estado == 'completado' %}
+                <span style="background: #dcfce7; color: #15803d; padding: 4px 12px; border-radius: 999px; font-weight: 600; font-size: 12px;">✅ Completado</span>
+              {% elif lote.estado == 'agotado' %}
+                <span style="background: #fee2e2; color: #dc2626; padding: 4px 12px; border-radius: 999px; font-weight: 600; font-size: 12px;">🚫 Agotado</span>
               {% else %}
-                <span class="badge" style="background: #e6f7e6; color: #22c55e;">✅ Completado</span>
+                <span style="background: #f1f5f9; color: #475569; padding: 4px 12px; border-radius: 999px; font-weight: 600; font-size: 12px;">{{ lote.estado|title }}</span>
               {% endif %}
             </td>
-            <td style="white-space:nowrap;">
-              <a class="btn btn-warning btn-sm" href="{% url 'productos:detalle_lote' lote.id %}">
+            <td style="padding: 10px 12px; white-space:nowrap;">
+              <a class="btn btn-warning btn-sm" href="{% url 'productos:detalle_lote' lote.id %}" style="padding: 4px 10px; background: #f59e0b; color: #fff; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 11px; display: inline-flex; align-items: center; gap: 4px;">
                 <i class="fas fa-eye"></i> Ver
               </a>
             </td>
           </tr>
           {% empty %}
-          <tr><td colspan="6" style="text-align:center; color:#64748b;">No hay lotes registrados</td></tr>
+          <tr><td colspan="6" style="text-align:center; color:#64748b; padding: 20px;">No hay lotes registrados</td></tr>
           {% endfor %}
         </tbody>
       </table>
