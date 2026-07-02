@@ -6,6 +6,7 @@ from django.utils import timezone
 from django.db import models
 from .models import Compra, CompraDetalle
 from Productos.models import Producto, Proveedor, Lote
+from Productos.views import registrar_movimiento  # 🔥 IMPORTAR FUNCIÓN DE MOVIMIENTOS
 from .forms import CompraForm
 
 
@@ -184,7 +185,7 @@ def recibir_compra(request, pk):
                 lote = Lote.objects.create(
                     codigo=f'COMPRA-{producto.codigo}-{timezone.now().strftime("%Y%m%d%H%M%S")}',
                     producto=producto,
-                    proveedor=compra.proveedor,  # 🔥 ASIGNAR PROVEEDOR DE LA COMPRA
+                    proveedor=compra.proveedor,
                     cantidad_total=detalle.cantidad,
                     cantidad_recibida=detalle.cantidad,
                     cantidad_vendida=0,
@@ -197,6 +198,17 @@ def recibir_compra(request, pk):
                 lote.cantidad_total += detalle.cantidad
                 lote.cantidad_recibida += detalle.cantidad
                 lote.save()
+            
+            # 🔥🔥🔥 REGISTRAR MOVIMIENTO DE ENTRADA 🔥🔥🔥
+            registrar_movimiento(
+                usuario=request.user,
+                producto=producto,
+                tipo='entrada',
+                cantidad=detalle.cantidad,
+                lote=lote,
+                descripcion=f'Compra #{compra.id} - Recepción de {detalle.cantidad} unidades de {producto.nombre}',
+                ip=request.META.get('REMOTE_ADDR', '')
+            )
         
         compra.estado = 'recibido'
         compra.save()
