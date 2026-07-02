@@ -2,7 +2,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, MaxValueValidator, RegexValidator
 from django.db import models
-from decimal import Decimal  # 🔥 IMPORTANTE: Agregar esta importación
+from decimal import Decimal
 from .models import Producto, Categoria, Proveedor, Lote, ProductoConSerial, Bodega, Ubicacion, Movimiento
 import re
 
@@ -57,14 +57,18 @@ class ProductoForm(forms.ModelForm):
         ]
     )
     
+    # 🔥 CÓDIGO DE BARRAS - REALMENTE OPCIONAL
     codigo_barras = forms.CharField(
         max_length=100,
-        required=False,
+        required=False,  # 🔥 OPCIONAL
         label='Código de barras',
         widget=forms.TextInput(attrs={
             'class': 'form-control',
             'placeholder': 'Opcional'
         }),
+        error_messages={
+            'invalid': 'Ingresa un código de barras válido.'
+        },
         validators=[
             RegexValidator(
                 regex=r'^[A-Za-z0-9\-_]{0,100}$',
@@ -221,7 +225,9 @@ class ProductoForm(forms.ModelForm):
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # 🔥 Asegurar que el código de barras sea opcional
         self.fields['codigo_barras'].required = False
+        self.fields['codigo_barras'].help_text = 'ℹ️ Opcional - Déjalo vacío si no tiene código de barras'
         
         for field_name, field in self.fields.items():
             if 'class' in field.widget.attrs:
@@ -315,10 +321,10 @@ class ProductoForm(forms.ModelForm):
                     'precio_venta': f'El precio de venta (${precio_venta:,.2f}) debe ser mayor que el precio de compra (${precio_compra:,.2f}).'
                 })
         
-        # 🔥 CORREGIDO: Validar margen mínimo de ganancia (10%) usando Decimal
+        # Validar margen mínimo de ganancia (10%) usando Decimal
         if precio_compra is not None and precio_venta is not None:
             margen = precio_venta - precio_compra
-            margen_minimo = precio_compra * Decimal('0.1')  # 🔥 Usar Decimal en lugar de 0.1
+            margen_minimo = precio_compra * Decimal('0.1')
             if margen < margen_minimo:
                 raise ValidationError({
                     'precio_venta': f'El margen de ganancia (${margen:,.2f}) debe ser al menos el 10% del precio de compra (${margen_minimo:,.2f}).'
@@ -327,19 +333,34 @@ class ProductoForm(forms.ModelForm):
         return cleaned_data
     
     def clean_codigo_barras(self):
-        """Validación del código de barras"""
+        """Validación del código de barras - OPCIONAL"""
         codigo_barras = self.cleaned_data.get('codigo_barras')
-        if codigo_barras:
-            if not re.match(r'^[A-Za-z0-9\-_]{0,100}$', codigo_barras):
-                raise ValidationError('El código de barras solo puede contener letras, números, guiones y guiones bajos.')
-            
-            instance = self.instance
-            if instance and instance.pk:
-                if Producto.objects.filter(codigo_barras=codigo_barras).exclude(pk=instance.pk).exists():
-                    raise ValidationError('Este código de barras ya está registrado en otro producto.')
-            else:
-                if Producto.objects.filter(codigo_barras=codigo_barras).exists():
-                    raise ValidationError('Este código de barras ya está registrado.')
+        
+        # 🔥 Si está vacío, permitir sin validación
+        if not codigo_barras:
+            return codigo_barras
+        
+        # Si tiene valor, validar formato
+        if not re.match(r'^[A-Za-z0-9\-_]{0,100}$', codigo_barras):
+            raise ValidationError('El código de barras solo puede contener letras, números, guiones y guiones bajos.')
+        
+        # Validar unicidad solo si tiene valor
+        instance = self.instance
+        if instance and instance.pk:
+            producto_existente = Producto.objects.filter(
+                codigo_barras=codigo_barras
+            ).exclude(pk=instance.pk).first()
+            if producto_existente:
+                raise ValidationError(
+                    f'⚠️ El código de barras "{codigo_barras}" ya está registrado en el producto "{producto_existente.nombre}".'
+                )
+        else:
+            producto_existente = Producto.objects.filter(codigo_barras=codigo_barras).first()
+            if producto_existente:
+                raise ValidationError(
+                    f'⚠️ El código de barras "{codigo_barras}" ya está registrado en el producto "{producto_existente.nombre}".'
+                )
+        
         return codigo_barras
 
 
